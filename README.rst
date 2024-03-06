@@ -4,7 +4,7 @@ evedata
 
 *Importing eveH5 data from synchrotron radiometry measurements conducted at BESSY/MLS in Berlin.*
 
-Welcome! This is evedata, a Python package for a Python package for **importing (synchrotron) radiometry data** obtained at one of the beamlines at **BESSY-II or MLS in Berlin**, mostly operated by the German National Metrology Institute, the `Physikalisch-Technische Bundesanstalt (PTB) <https://www.ptb.de/>`_. This package acts as main interface between the (eveH5) data files and the processing and analysis code and provides abstractions that allow for a convenient and intuitive access to the data and information contained in the data files. For related packages for viewing and analysing those data, have a look at the "related projects" section below.
+Welcome! This is evedata, a Python package for **importing (synchrotron) radiometry data** obtained at one of the beamlines at **BESSY-II or MLS in Berlin**, mostly operated by the German National Metrology Institute, the `Physikalisch-Technische Bundesanstalt (PTB) <https://www.ptb.de/>`_. This package acts as main interface between the (eveH5) data files and the processing and analysis code and provides abstractions that allow for a convenient and intuitive access to the data and information contained in the data files. For related packages for viewing and analysing those data, have a look at the "related projects" section below.
 
 
 Features
