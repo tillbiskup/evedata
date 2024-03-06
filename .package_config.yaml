@@ -1,0 +1,25 @@
+package:
+  name: evedata
+  author: Till Biskup
+  author_email: till.biskup@ptb.de
+  year: '2024'
+  description: 'Importing eveH5 data from synchrotron radiometry measurements conducted at BESSY/MLS in Berlin'
+  urls:
+    main: 'https://www.ptb.de/cms/en/ptb/fachabteilungen/abt7/ptb-sr.html'
+    documentation: 'https://evedata.rtfd.io/'
+    source: 'https://github.com/PTB-SR/evedata'
+  keywords: ['eve', 'radiometry', 'synchrotron', 'metrology', 'PTB', 'BESSY', 'MLS']
+  install_requires: ['h5py']
+  license: GPLv3
+documentation:
+  logo: 'images/evedata-logo.png'
+  favicon: 'images/evedata-logo-favicon.ico'
+  language: en
+options:
+  logging: true
+  git: true
+  gui: false
+gui:
+  splash: true
+  organisation: 'evedata'
+  domain: 'ptb.de'
