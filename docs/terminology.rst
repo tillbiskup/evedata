@@ -2,7 +2,7 @@
 Terminology
 ===========
 
-The evedata package resides within a complex environment, and there are terms from both, the problem domain (radiometry with synchrotron radiation) and the solution domain (measurement program, software development) that either users or developers may not necessarily be familiar with. Hence the idea of a growing list of terms and attempts to define them. A big thanks to all colleagues helping to shed light on all the different aspects.
+The evedata package resides within a complex environment, and there are terms from both, the problem domain (radiometry with synchrotron radiation) and the solution domain (measurement program, software development) that either users or developers may not necessarily be familiar with. Hence the idea of a growing list of terms and attempts to define them. A big thanks to all colleagues helping to shed light on all the different aspects, in particular (and alphabetic order) Jens Eden, Marcus Michalsky, Hartmut Scherr.
 
 
 CA
@@ -14,7 +14,7 @@ channel
     Detector channel, see detector
 
 cruncher
-    The name of the "original" viewer implemented in IDL.
+    The name of the "original" viewer for eve files implemented in IDL.
 
 CSS
     `Control System Studio <https://controlsystemstudio.org/>`_
@@ -33,6 +33,14 @@ detector
 
     Examples are position, angle, temperature, pressure
 
+ECP
+    Engine Control Protocol
+
+    Communication protocol between the engine and the eve GUI
+
+engine
+    engine part of eve, sometimes referred to as eve engine as well.
+
 EPICS
     The `Experimental Physics and Industrial Control System <https://epics-controls.org/>`_
 
@@ -41,6 +49,26 @@ eve
 
     The three (original) components of the PTB measurement program at BESSY-II/MLS the user encounters.
 
+eveFile
+    Python library for reading eveH5 files.
+
+    Basically a thin wrapper (created using SWIG) calling the underlying C++ library used by the (eve) engine. Runs only under Linux, due to depending on the compiled C++ shared library.
+
+    The Python ``evedata`` package is planned to supersede eveFile at some point, at least with regard to the Python interface.
+
+eveH5
+    data format written by the (eve) engine to save the measured data
+
+    Technically an HDF5 file, following a special schema that evolves and may differ between individual eveH5 files.
+
+HDF5
+    Hierarchical Data Format, version 5
+
+    A binary data format of widespread use designed for (very) large datasets. Some noteworthy features are: only parts of data can be read from the file (if the data are larger than the available memory), the format is "self-describing" in sense of providing metadata.
+
+    The eveH5 format used by the eve (engine) is one example of using HDF5 with a particular schema for storing data and (rich) metadata.
+
+    See https://www.hdfgroup.org/solutions/hdf5/ for details.
 
 IDL
     Interactive Data Language
@@ -62,6 +90,9 @@ motor
 
     Examples are physical motors for movements (linear, rotating), but as well devices such as temperature controllers.
 
+MPSKIP
+    EPICS event (?) ...
+
 position count
     Consecutive index for "measurement points".
 
@@ -79,6 +110,22 @@ section
 
     Possible sections are: standard, snapshot, monitor, timestamp
 
+SCML
+    ScanML, definition of a scan in XML format.
+
+    Used (and required) by the engine to perform a scan.
+
+scan module
+    unit of abstraction to structure a scan.
+
+    There are five different types of scan modules:
+
+    * scan module
+    * axis snapshot (static)
+    * channel snapshot (static)
+    * axis snapshot (dynamic)
+    * channel snapshot (dynamic)
+
 SM
     Scan module
 
@@ -94,7 +141,7 @@ standard (section)
 
     In terms of the measurement program, all modules that are *not* snapshot or classical scan modules (with the exception of pre and post scans).
 
-    Eben die Motorbewegungen und Detektorauslesungen und ggf. anschließende Positionierungen (Goto Peak etc.). (Quelle: MM)
+    Contains basically all the motor movements and detector reads, and following positionings (*e.g.*, "Goto Peak").
 
 timestamp (section)
     Section with an artificial detector/device containing both, position counts and timestamps.
