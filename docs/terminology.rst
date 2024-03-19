@@ -33,6 +33,8 @@ detector
 
     Examples are position, angle, temperature, pressure
 
+    Generally a detector has one of three modes which determines its behaviour: standard, interval, and average.
+
 ECP
     Engine Control Protocol
 
@@ -126,13 +128,15 @@ scan module
     * axis snapshot (dynamic)
     * channel snapshot (dynamic)
 
+    For static snapshots, the list of axes/channels to store values for can be selected by the user, while dynamic snapshots determine their list of axes/channels automatically based on the current scan description.
+
 SM
     Scan module
 
 snapshot (section)
     Section of the measurement data representing the current state of the setup.
 
-    There are four kinds of snapshots (two variables with two values each), of which only two are relevant for data processing and analysis: motor and detector snapshots.
+    There are four kinds of snapshots (two variables with two values each: axis/channel, static/dynamic), of which only two are relevant for data processing and analysis: motor and detector snapshots.
 
     In a snapshot, all motor and detector values are stored once.
 
