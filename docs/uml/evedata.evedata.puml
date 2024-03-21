@@ -1,0 +1,53 @@
+@startuml
+
+class EveData {
+    metadata : EveMetadata
+    values : np.ndarray
+    type : String|Enum
+}
+note right: "values" contains a 1D array.\nFor individual values see derived classes\nEveAverageDetectorData and EveIntervalDetectorData
+
+class EveMetadata {
+}
+note bottom: See separate diagram\nfor class hierarchy
+
+class EveMeasureData {
+    {field} position_counter : np.ndarray(dtype=int)
+}
+
+class EveMonitorData {
+    {field} milliseconds : np.ndarray(dtype=int)
+}
+
+class EveAxisData {
+}
+
+class EveDetectorData {
+}
+
+class EveAverageDetectorData {
+    raw_values : raggedarray
+    {field} attempts : np.ndarray(dtype=int)
+    mean()
+    std()
+    averaged_values()
+}
+note bottom: How does mean() differ\nfrom values in EveData?
+note bottom of EveAverageDetectorData: averaged_values() returns only\nthose values used to average over
+
+class EveIntervalDetectorData {
+    raw_values : raggedarray
+    {field} counts : np.ndarray(dtype=int)
+    mean()
+    std()
+}
+
+EveData *-- EveMetadata
+EveData <|-- EveMeasureData
+EveData <|-- EveMonitorData
+EveMeasureData <|-- EveAxisData
+EveMeasureData <|-- EveDetectorData
+EveDetectorData <|-- EveAverageDetectorData
+EveDetectorData <|-- EveIntervalDetectorData
+
+@enduml

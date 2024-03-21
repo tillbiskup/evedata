@@ -1,0 +1,55 @@
+@startuml
+
+class EveMetadata {
+    id : String
+    name : String
+    pv : String
+    transport_type : String
+    section : Section
+}
+
+class EveData {
+}
+note bottom: See separate diagram\nfor class hierarchy
+
+enum Section {
+    standard
+    monitor
+    snapshot
+}
+
+class EveMeasureMetadata {
+    unit : String
+}
+
+class EveMonitorMetadata{
+}
+
+class EveAxisMetadata {
+}
+
+class EveDetectorMetadata {
+    normalise_id : String
+}
+
+class EveAverageDetectorMetadata {
+    n_averages : int
+    low_limit : float
+    max_attempts : int
+    max_deviation : float
+}
+
+class EveIntervalDetectorMetadata {
+    trigger_interval : float
+}
+
+EveMetadata *-- EveData
+EveMetadata <|-- EveMeasureMetadata
+EveMetadata <|-- EveMonitorMetadata
+EveMeasureMetadata <|-- EveDetectorMetadata
+EveMeasureMetadata <|-- EveAxisMetadata
+EveDetectorMetadata <|-- EveAverageDetectorMetadata
+EveDetectorMetadata <|-- EveIntervalDetectorMetadata
+
+
+@enduml

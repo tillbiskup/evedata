@@ -1,0 +1,23 @@
+@startuml
+
+package evedata {
+
+package evedata.evefile {
+}
+
+package evedata.dataset {
+}
+
+}
+
+evedata.evefile <-- evedata.dataset
+
+package eveH5
+eveH5 <-- evedata.evefile
+
+package evedataviewer
+package radiometry
+
+evedata.dataset <-- evedataviewer
+evedata.dataset <-- radiometry
+@enduml

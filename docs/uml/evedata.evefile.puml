@@ -1,0 +1,42 @@
+@startuml
+
+class EveFile {
+    metadata : EveFileMetadata
+    comments[] : Comment
+    scml : SCML
+    data[] : EveData
+}
+
+class EveFileMetadata{
+    h5_version : String
+    eve_version : String
+    xml_version: String
+    location : String
+    start : DateTime
+    end : DateTime
+    preferred_axis : String
+    preferred_channel : String
+    preferred_normalisation_channel : String
+}
+
+class Comment {
+    timestamp : DateTime
+    comment : String
+}
+
+class SCML {
+    metadata : SCMLMetadata
+    xml: String
+}
+
+class SCMLMetadata {
+    author: String
+    version: String
+}
+
+EveFile *-- EveFileMetadata
+EveFile "1" *-- "n" Comment
+EveFile *-- SCML
+SCML *-- SCMLMetadata
+
+@enduml
