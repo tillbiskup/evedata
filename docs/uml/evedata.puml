@@ -1,0 +1,34 @@
+@startuml
+
+package evedata {
+
+    package evedata.evefile {
+    
+        package evedata.evefile.evefile {
+        }
+        package evedata.evefile.evedata {
+        }
+        package evedata.evefile.evemetadata {
+        }
+
+        evedata.evefile.evemetadata <-- evedata.evefile.evedata
+        evedata.evefile.evedata <-- evedata.evefile.evefile
+
+    }
+
+    package evedata.dataset {
+
+        package evedata.dataset.dataset {
+        }
+        package evedata.dataset.metadata {
+        }
+
+        evedata.dataset.metadata <-- evedata.dataset.dataset
+        
+    }
+
+    evedata.evefile <-- evedata.dataset
+
+}
+
+@enduml

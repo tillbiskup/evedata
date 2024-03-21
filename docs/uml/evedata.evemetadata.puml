@@ -17,6 +17,7 @@ enum Section {
     monitor
     snapshot
 }
+note top: These sections may change their names\nand need not reflect the eveH5 structure.
 
 class EveMeasureMetadata {
     unit : String
@@ -25,7 +26,7 @@ class EveMeasureMetadata {
 class EveMonitorMetadata{
 }
 
-class EveAxisMetadata {
+class EveMotorMetadata {
 }
 
 class EveDetectorMetadata {
@@ -47,7 +48,7 @@ EveMetadata *-- EveData
 EveMetadata <|-- EveMeasureMetadata
 EveMetadata <|-- EveMonitorMetadata
 EveMeasureMetadata <|-- EveDetectorMetadata
-EveMeasureMetadata <|-- EveAxisMetadata
+EveMeasureMetadata <|-- EveMotorMetadata
 EveDetectorMetadata <|-- EveAverageDetectorMetadata
 EveDetectorMetadata <|-- EveIntervalDetectorMetadata
 

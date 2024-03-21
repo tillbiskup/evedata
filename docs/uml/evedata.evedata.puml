@@ -3,9 +3,16 @@
 class EveData {
     metadata : EveMetadata
     values : np.ndarray
-    type : String|Enum
+    type : DeviceType
 }
-note right: "values" contains a 1D array.\nFor individual values see derived classes\nEveAverageDetectorData and EveIntervalDetectorData
+note left: "values" contains a 1D array.\nFor individual values see derived classes\nEveAverageDetectorData and\nEveIntervalDetectorData
+
+enum DeviceType {
+    motor
+    detector
+    dumb_device
+}
+note right: dumb_device needs\nto be renamed.\nDoes it occur in eveH5\n files with data anyway?
 
 class EveMetadata {
 }
@@ -19,7 +26,7 @@ class EveMonitorData {
     {field} milliseconds : np.ndarray(dtype=int)
 }
 
-class EveAxisData {
+class EveMotorData {
 }
 
 class EveDetectorData {
@@ -31,6 +38,7 @@ class EveAverageDetectorData {
     mean()
     std()
     averaged_values()
+    has_raw_values()
 }
 note bottom: How does mean() differ\nfrom values in EveData?
 note bottom of EveAverageDetectorData: averaged_values() returns only\nthose values used to average over
@@ -40,12 +48,13 @@ class EveIntervalDetectorData {
     {field} counts : np.ndarray(dtype=int)
     mean()
     std()
+    has_raw_values()
 }
 
 EveData *-- EveMetadata
 EveData <|-- EveMeasureData
 EveData <|-- EveMonitorData
-EveMeasureData <|-- EveAxisData
+EveMeasureData <|-- EveMotorData
 EveMeasureData <|-- EveDetectorData
 EveDetectorData <|-- EveAverageDetectorData
 EveDetectorData <|-- EveIntervalDetectorData

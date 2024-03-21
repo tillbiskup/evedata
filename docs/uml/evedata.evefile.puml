@@ -6,8 +6,10 @@ class EveFile {
     scml : SCML
     data[] : EveData
 }
+note left: Should data be split\ninto sections?
 
 class EveFileMetadata{
+    filename : String
     h5_version : String
     eve_version : String
     xml_version: String
@@ -23,11 +25,13 @@ class Comment {
     timestamp : DateTime
     comment : String
 }
+note bottom: Comments are both, file comment\nand log messages. Discriminating\ncould be done in the EveFile class. 
 
 class SCML {
     metadata : SCMLMetadata
     xml: String
 }
+note top: xml is currently a string, but will\nbe replaced/amended by classes\nrepresenting the SCML contents
 
 class SCMLMetadata {
     author: String
