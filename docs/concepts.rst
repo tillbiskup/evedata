@@ -21,6 +21,8 @@ A first incomplete list:
 
 * two different interfaces: towards eveH5 and towards users of the data
 
+* information contained in SCML files
+
 
 Two interfaces: towards eveH5 and towards users
 ===============================================
@@ -167,3 +169,16 @@ At least the relevant (practically occuring) versions of eveH5 files should be s
 
     How to deal with H4 files? How different are these files? Did the new measurement program (eveCSS) start with H5 from the beginning? Is there any point in trying to map the information contained in H4 files to the data model of the user-facing interface of the ``evedata`` package?
 
+
+Information contained in SCML files
+===================================
+
+Given that most scans have the SCML saved and that in the future (post eveH5 version 7) the option to *not* save the SCML file will be removed, at least all the attributes for the different motors/axes and detectors/channels can and should be read from the SCML.
+
+Questions that need to be addressed at some point:
+
+* To what level shall the information contained in the SCML files be represented in the ``evedata`` package? Only attributes to the elements (groups, datasets) present in the eveH5 file? Or more towards a complete scan description?
+
+* How to deal with the different versions of the SCML schema? Clearly, all (relevant) versions of the schema need to be readable by the ``evedata`` package.
+
+* How to prevent doubling too much code between the different programs (eve GUI: Java, eve Engine: C++, ``evedata``: Python)? ``evedata`` should work "stand-alone", without dependencies on any part of the measurement program.
