@@ -29,11 +29,20 @@ dataset
     A dataset may contain more (but usually not less) information than that contained in the data file.
 
 detector
+    alternative term: channel
+
     A device that can be read and returns a value.
 
     Examples are position, angle, temperature, pressure
 
     Generally a detector has one of three modes which determines its behaviour: standard, interval, and average.
+
+device
+    alternative term: dumb device
+
+    A device that can be set, but not read, *i.e.* that does not communicate back its current state.
+
+    Typical example: shutter
 
 ECP
     Engine Control Protocol
@@ -88,6 +97,8 @@ monitor (section)
     Properties of devices as well as "dumb" devices can be defined as monitors. For a monitor, the value will be stored at the start of a scan and for every change. As changes can occur at any time (parallel to the actual scan), monitor events do not have a position count, but a timestamp (in milliseconds since start of the scan).
 
 motor
+    alternative term: axis
+
     Actuator, device for which values can be set
 
     Examples are physical motors for movements (linear, rotating), but as well devices such as temperature controllers.

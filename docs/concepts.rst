@@ -167,7 +167,7 @@ At least the relevant (practically occuring) versions of eveH5 files should be s
 
 .. note::
 
-    How to deal with H4 files? How different are these files? Did the new measurement program (eveCSS) start with H5 from the beginning? Is there any point in trying to map the information contained in H4 files to the data model of the user-facing interface of the ``evedata`` package?
+    How to deal with H4 files? How different are these files? Is there any point in trying to map the information contained in H4 files to the data model of the user-facing interface of the ``evedata`` package? (Even the predecessor of eveCSS used H5 at one point -- with whatever schema.)
 
 
 Information contained in SCML files
