@@ -1,22 +1,23 @@
 @startuml
+'skinparam dpi 150
 
 package evedata {
 
-package evedata.evefile {
-}
+    package evedata.evefile {
+    }
 
-package evedata.dataset {
-}
+    package evedata.dataset {
+    }
 
 }
 
 evedata.evefile <-- evedata.dataset
 
-package eveH5
+package eveH5 #fff9c4
 eveH5 <-- evedata.evefile
 
-package evedataviewer
-package radiometry
+package evedataviewer #fff9c4
+package radiometry #fff9c4
 
 evedata.dataset <-- evedataviewer
 evedata.dataset <-- radiometry

@@ -18,7 +18,9 @@ A list of (planned) features:
 
 * Complete information available that is contained in an eveH5 file
 
-* Powerful and intuitive abstractions, allowing for associative access to data and information
+* Access to the information stored in the scan description
+
+* Powerful and intuitive abstractions, allowing for associative access to data and information -- beyond a purely tabular view of the data
 
 
 And to make it even more convenient for users and future-proof:

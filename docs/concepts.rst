@@ -38,6 +38,12 @@ The reasoning behind these two interfaces is, once again, Dijkstra's "separation
 In short: The interface towards the eveH5 files is what the IT group is primarily concerned with, but this is nothing the average user should care about. The user-facing interface addresses those *operating* on the data and is the realm of the engineers and scientists, providing useful abstractions for their dealing with the data.
 
 
+.. figure:: uml/evedata-in-context.*
+    :align: center
+
+    The two interfaces of the evedata package: eveH5 is the persistence layer of the recorded data and metadata, and evedataviewer and radiometry are Python packages for graphically displaying and processing and analysing these data, respectively. Most people concerned with the actual data will use either use evedataviewer or the radiometry package, but not evedata directly.
+
+
 .. note::
 
     When both interfaces reside in separate subpackages, there will be at least one additional subpackage providing the "glue" between the two interfaces, at least a mapping from one data model to the other.
