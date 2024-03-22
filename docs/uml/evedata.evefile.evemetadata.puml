@@ -13,9 +13,9 @@ class EveData {
 note bottom: See separate diagram\nfor class hierarchy
 
 enum Section {
-    standard
-    monitor
-    snapshot
+    STANDARD
+    MONITOR
+    SNAPSHOT
 }
 note top: These sections may change their names\nand need not reflect the eveH5 structure.
 

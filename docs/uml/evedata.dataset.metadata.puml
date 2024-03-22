@@ -1,0 +1,70 @@
+@startuml
+
+class Metadata {
+    measurement : Measurement
+    file : File
+    devices{} : Device
+}
+
+class Dataset
+note bottom: See separate diagram\nfor class hierarchy
+
+class Measurement {
+    start : DateTime
+    end : DateTime
+    location : String
+    preferred_axis : String
+    preferred_channel : String
+    preferred_normalisation_channel : String
+}
+
+class File {
+    filename : String
+    h5_version : String
+    eve_version : String
+    xml_version: String
+}
+
+class Device {
+    id : String
+    name : String
+    pv : String
+    transport_type : String
+    section : Section
+}
+
+class Motor {
+}
+
+class Detector {
+    normalise_id : String
+}
+
+class AverageDetector {
+    n_averages : int
+    low_limit : float
+    max_attempts : int
+    max_deviation : float
+}
+
+class IntervalDetector {
+    trigger_interval : float
+}
+
+class DumbDevice {
+}
+note bottom: We need to find\na better name. ;-)
+
+Metadata *-- Dataset
+Metadata *-- Measurement
+Metadata "1" *-- "n" Device
+Metadata *-- File
+
+Device <|-- Motor
+Device <|-- Detector
+Device <|-- DumbDevice
+
+Detector <|-- AverageDetector
+Detector <|-- IntervalDetector
+
+@enduml

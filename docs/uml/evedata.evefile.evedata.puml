@@ -9,9 +9,9 @@ class EveData {
 note left: "values" contains a 1D array.\nFor individual values see derived classes\nEveAverageDetectorData and\nEveIntervalDetectorData
 
 enum DeviceType {
-    motor
-    detector
-    dumb_device
+    MOTOR
+    DETECTOR
+    DUMB_DEVICE
 }
 note right: dumb_device needs\nto be renamed.\nDoes it occur in eveH5\n files with data anyway?
 

@@ -1,0 +1,42 @@
+@startuml
+
+class Dataset {
+    data : Data
+    device_data{} : Data
+    metadata : Metadata
+    fill_mode : FillMode
+
+    preferred_data()
+}
+
+enum FillMode {
+    LASTFILL
+    NANFILL
+    LASTNANFILL
+    NOFILL
+}
+note left: Are these modes sufficient?\nAre they all needed?\nIs something missing?
+
+class Metadata
+note bottom: See separate diagram\nfor class hierarchy
+
+
+class Data {
+    data : numpy.ndarray
+    axes[] : Axis
+}
+
+class Axis {
+    quantity : String
+    symbol : String
+    unit : String
+    values : numpy.ndarray
+
+    label()
+}
+
+Dataset *-- Metadata
+Dataset *-- Data
+Data *-- Axis
+
+@enduml

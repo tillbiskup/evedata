@@ -131,7 +131,7 @@ dataset subpackage
     The name of this subpackage is most probably not final yet.
 
 
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. In the future, a series of (still higher-level) UML schemata for the dataset subpackage will be shown, reflecting the current state of affairs (and thinking).
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
 
 Generally, the dataset subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
 
@@ -153,6 +153,13 @@ dataset.dataset module
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step.
+
+
+.. figure:: uml/evedata.dataset.dataset.*
+    :align: center
+
+    Class hierarchy of the dataset.dataset module, closely resembling the dataset concept of the ASpecD framework (while lacking the history component). For the corresponding metadata class see the dataset.metadata module.
+
 
 Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detectors saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
 
@@ -179,6 +186,13 @@ dataset.metadata module
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 The (original) idea behind this module stems from the ASpecD framework and its representation of a dataset. There, a dataset contains data (with corresponding axes), metadata (of different kind, such as measurement metadata and device metadata), and a history.
+
+
+.. figure:: uml/evedata.dataset.metadata.*
+    :align: center
+
+    Class hierarchy of the dataset.metadata module, closely resembling the dataset concept of the ASpecD framework and the current rough implementation in the evedataviewer package. For the corresponding dataset class see the dataset.dataset module.
+
 
 In the given context of the evedata package, this would mean to separate data and metadata for the different datasets as represented in the eveH5 file, and store the data (as "device data") in the dataset, the "primary" data as data, and the corresponding metadata as a composition of metadata classes in the Dataset.metadata attribute. Not yet sure whether this makes sense.
 
