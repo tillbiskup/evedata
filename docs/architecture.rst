@@ -131,13 +131,102 @@ dataset subpackage
     The name of this subpackage is most probably not final yet.
 
 
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. In the future, a series of (still higher-level) UML schemata for the dataset subpackage will be shown, reflecting the current state of affairs (and thinking).
+
+Generally, the dataset subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
+
+
+Arguments against the 2D data array as sensible representation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Currently, one very common and heavily used abstraction of the data contained in an eveH5 file is a two-dimensional data array (basically a table with column headers, implemented as pandas dataframe). As it stands, many problems in the data analysis and preprocessing of data come from the inability of this abstraction to properly represent the data. Two obvious cases, where this 2D approach simply breaks down, are:
+
+* subscans -- essentially a 2D dataset on its own
+* adaptive average detector saving the individual, non-averaged values (implemented using MPSKIP)
+
+Furthermore, as soon as spectra (1D) or images (2D) are recorded for a given position (count), the 2D data array abstraction breaks down as well.
+
+Other problems inherent in the 2D data array abstraction are the necessary filling of values that have not been obtained. Currently, once filled there is no way to figure out for an individual position whether values have been recorded (in case of LastFill) or whether a value has not been recorded or recording failed (in case of NaNFill).
+
+
+dataset.dataset module
+~~~~~~~~~~~~~~~~~~~~~~
+
+Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step.
+
+Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detectors saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
+
+Points to discuss further (without claiming to be complete):
+
+* How to handle data filling? (But: see discussion on fill modi in the section below)
+
+  * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data (*i.e.* axes) need to be made compatible.
+  * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
+  * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other?
+
+* Do we care here about reproducibility, *i.e.* a history?
+
+  * Background: In the ASpecD framework, reproducibility is an essential concept, and this revolves about having a dataset with one clear data array and *n* corresponding axes. The original data array is stored internally, making undo and redo possible, and each processing and analysis step always operates on the (current state of the) data array. In case of the datasets we deal with here, there is usually no such thing as the one obvious data array, and users can at any time decide to focus on another set of "axes", *i.e.* data and corresponding axis values, to operate on.
+  * One option would be to *not* deal with the concept of reproducibility here, but delegate this to the ``radiometry`` package. There, the first step would be to decide which of the available channels accounts as the "primary" data (if not set as preferred in the scan already and read from the eveH5 file accordingly).
+
+* How to deal with images stored in files separate from the eveH5 file?
+
+  * The evefile subpackage will most probably only provide the links (*i.e.* filenames) to these files, but nothing else.
+  * Should these files be imported into the dataset already and made available? Probably, the same discussion as that regarding importing data from the eveH5 file (reading everything at once or deferred reading on demand, see section on interfaces below) applies here as well.
+
+
+dataset.metadata module
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The (original) idea behind this module stems from the ASpecD framework and its representation of a dataset. There, a dataset contains data (with corresponding axes), metadata (of different kind, such as measurement metadata and device metadata), and a history.
+
+In the given context of the evedata package, this would mean to separate data and metadata for the different datasets as represented in the eveH5 file, and store the data (as "device data") in the dataset, the "primary" data as data, and the corresponding metadata as a composition of metadata classes in the Dataset.metadata attribute. Not yet sure whether this makes sense.
+
+
 Business rules
 ==============
 
-...
+What may be in here:
+
+* Fill modes
+* Converting MPSKIP scans into average detector with adaptive number of recorded points
+* Converting scan with subscans into appropriate subscan data structure
+
+
+Points to discuss further (without claiming to be complete):
+
+* Fill modes
+
+  * Which ones are relevant/needed?
+  * How to cope with the current practice of applying (dirty) fixes to the already filled data to account for such things as scans using MPSKIP?
+  * Even worse: How to deal with data that (mis)use a "detector" to kind of monitoring a motor state, just to have it appear in the famous 2D data table? In these cases, filling does not help, as we end up with NaN vs. NaN without special post-processing (and hence simply no plot).
+
+* Monitors
+
+  * How to map monitors (with time as primary axis) to other devices (motors or detectors, with position counts as primary axis)?
 
 
 Interfaces
 ==========
 
-...
+What may be in here:
+
+* Interfaces towards eveH5 and SCML
+
+  * including reading separate SCML files if present (https://redmine.ahf.ptb.de/issues/2740)
+  * handling different versions of both eveH5 scheme and SCML scheme
+  * mapping the eveH5 and SCML contents to the data structures of the evefile subpackage
+
+* Interfaces towards additional files, *e.g.* images
+
+  * Images in particular are usually not stored in the eveH5 files, but only pointers to these files.
+  * Import routines for the different files (or at least a sensible modular mechanism involving an importer factory) need to be implemented.
+
+
+Points to discuss further (without claiming to be complete):
+
+* How to deal with reading the entire content of an eveH5 file at once vs. deferred reading?
+
+  * Reading relevant metadata (*e.g.*, to decide about what data to plot) should be rather fast. And generally, only two "columns" will be displayed (as f(x,y) plot) at any given time - at least if we don't radically change the way data are looked at compared to the IDL Cruncher.
+  * If references to the internal datasets of a given HDF5 file could be stored in the corresponding Python data structures, one could even close the HDF5 file after each operation, such as not to have open file handles that may be problematic (no clue how Python garbage collection deals with HDF5 file handles, as they are opened by the underlying C++ library).
+
