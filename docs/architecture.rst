@@ -56,15 +56,15 @@ Despite the opposite chain of dependencies, starting with the ``evefile.evefile`
     Most probably, once digging deeper into the SCML, this class will be moved to its own module and become a composition of a series of other classes, each reflecting the building blocks of a scan description (in SCML).
 
 
-Points to discuss further (without claiming to be complete):
+.. admonition:: Points to discuss further (without claiming to be complete)
 
-* Split data according to sections (standard, monitor, snapshot)?
+    * Split data according to sections (standard, monitor, snapshot)?
 
-  At least the HDF5 datasets in the "monitor" section are clearly distinct from the others, as they don't have PosCounts as reference axis.
+      At least the HDF5 datasets in the "monitor" section are clearly distinct from the others, as they don't have PosCounts as reference axis.
 
-* SCML: How to represent the contents sensibly? What are the relevant abstractions/concepts?
+    * SCML: How to represent the contents sensibly? What are the relevant abstractions/concepts?
 
-  Perhaps storing the "plain" XML in a variable is still a sensible idea.
+      Perhaps (additionally) storing the "plain" XML in a variable is still a sensible idea.
 
 
 
@@ -80,15 +80,15 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
     Class hierarchy of the evefile.evedata module. Each class has a corresponding metadata class in the evefile.evemetadata module. While in this diagram, EveMotorData and EveDetectorData seem to have no difference, at least they have a different type of metadata (see the evefile.evemetadata module below), besides the type attribute set accordingly.
 
 
-Points to discuss further (without claiming to be complete):
+.. admonition:: Points to discuss further (without claiming to be complete)
 
-* Are "dumb devices" such as shutters actually represented in an eveH5 file? Can they be part of the "monitor" section?
+    * Are "dumb devices" such as shutters actually represented in an eveH5 file? Can they be part of the "monitor" section?
 
-  If they occur, latest in the SCML, and are relevant to be modelled, how to properly name them?
+      If they occur, latest in the SCML, and are relevant to be modelled, how to properly name them?
 
-* Mapping MonitorData to MeasureData
+    * Mapping MonitorData to MeasureData
 
-  There is an age-long discussion how to map monitor data (with time in milliseconds as primary axis) to measured data (with position counts as primary axis). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place? Here in the evefile subpackage? Or in the "convenience interface" layer, *i.e.* the dataset subpackage?
+      There is an age-long discussion how to map monitor data (with time in milliseconds as primary axis) to measured data (with position counts as primary axis). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place? Here in the evefile subpackage? Or in the "convenience interface" layer, *i.e.* the dataset subpackage?
 
 
 evefile.evemetadata module
@@ -108,19 +108,19 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     Class hierarchy of the evefile.evemetadata module. Each class in the evefile.evedata module has a corresponding metadata class in this module.
 
 
-Points to discuss further (without claiming to be complete):
+.. admonition:: Points to discuss further (without claiming to be complete)
 
-* Names of the sections
+    * Names of the sections
 
-  The names of the sections are currently modelled as Enumeration ("Section"). AFAIK, the names of the sections in the eveH5 file have changed over time. What would be sensible names for the different sections? Are the three sections mentioned (standard, monitor, snapshot) sufficient? Is anything missing? Will there likely be more in the future?
+      The names of the sections are currently modelled as Enumeration ("Section"). AFAIK, the names of the sections in the eveH5 file have changed over time. What would be sensible names for the different sections? Are the three sections mentioned (standard, monitor, snapshot) sufficient? Is anything missing? Will there likely be more in the future?
 
-* Metadata from SCML file
+    * Metadata from SCML file
 
-  There is likely more information contained in the SCML file (and the end station/beam line description). What kind of (relevant) information is available there, and how to map this to the respective metadata classes?
+      There is likely more information contained in the SCML file (and the end station/beam line description). What kind of (relevant) information is available there, and how to map this to the respective metadata classes?
 
-* Monitor metadata
+    * Monitor metadata
 
-  Clearly, monitor metadata are not sufficiently modelled yet.
+      Clearly, monitor metadata are not sufficiently modelled yet.
 
 
 dataset subpackage
@@ -163,23 +163,24 @@ Currently, the idea is to model the dataset close to the dataset in the ASpecD f
 
 Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detectors saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
 
-Points to discuss further (without claiming to be complete):
 
-* How to handle data filling? (But: see discussion on fill modi in the section below)
+.. admonition:: Points to discuss further (without claiming to be complete)
 
-  * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data (*i.e.* axes) need to be made compatible.
-  * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
-  * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other?
+    * How to handle data filling? (But: see discussion on fill modi in the section below)
 
-* Do we care here about reproducibility, *i.e.* a history?
+      * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data (*i.e.* axes) need to be made compatible.
+      * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
+      * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other?
 
-  * Background: In the ASpecD framework, reproducibility is an essential concept, and this revolves about having a dataset with one clear data array and *n* corresponding axes. The original data array is stored internally, making undo and redo possible, and each processing and analysis step always operates on the (current state of the) data array. In case of the datasets we deal with here, there is usually no such thing as the one obvious data array, and users can at any time decide to focus on another set of "axes", *i.e.* data and corresponding axis values, to operate on.
-  * One option would be to *not* deal with the concept of reproducibility here, but delegate this to the ``radiometry`` package. There, the first step would be to decide which of the available channels accounts as the "primary" data (if not set as preferred in the scan already and read from the eveH5 file accordingly).
+    * Do we care here about reproducibility, *i.e.* a history?
 
-* How to deal with images stored in files separate from the eveH5 file?
+      * Background: In the ASpecD framework, reproducibility is an essential concept, and this revolves about having a dataset with one clear data array and *n* corresponding axes. The original data array is stored internally, making undo and redo possible, and each processing and analysis step always operates on the (current state of the) data array. In case of the datasets we deal with here, there is usually no such thing as the one obvious data array, and users can at any time decide to focus on another set of "axes", *i.e.* data and corresponding axis values, to operate on.
+      * One option would be to *not* deal with the concept of reproducibility here, but delegate this to the ``radiometry`` package. There, the first step would be to decide which of the available channels accounts as the "primary" data (if not set as preferred in the scan already and read from the eveH5 file accordingly).
 
-  * The evefile subpackage will most probably only provide the links (*i.e.* filenames) to these files, but nothing else.
-  * Should these files be imported into the dataset already and made available? Probably, the same discussion as that regarding importing data from the eveH5 file (reading everything at once or deferred reading on demand, see section on interfaces below) applies here as well.
+    * How to deal with images stored in files separate from the eveH5 file?
+
+      * The evefile subpackage will most probably only provide the links (*i.e.* filenames) to these files, but nothing else.
+      * Should these files be imported into the dataset already and made available? Probably, the same discussion as that regarding importing data from the eveH5 file (reading everything at once or deferred reading on demand, see section on interfaces below) applies here as well.
 
 
 dataset.metadata module
@@ -205,19 +206,22 @@ What may be in here:
 * Fill modes
 * Converting MPSKIP scans into average detector with adaptive number of recorded points
 * Converting scan with subscans into appropriate subscan data structure
+* Mapping between ``EveFile`` and ``Dataset`` objects, *i.e.* low-level and high-level interface
+
+  * Assumes a 1:1 mapping between files and datasets (for the time being)
 
 
-Points to discuss further (without claiming to be complete):
+.. admonition:: Points to discuss further (without claiming to be complete)
 
-* Fill modes
+    * Fill modes
 
-  * Which ones are relevant/needed?
-  * How to cope with the current practice of applying (dirty) fixes to the already filled data to account for such things as scans using MPSKIP?
-  * Even worse: How to deal with data that (mis)use a "detector" to kind of monitoring a motor state, just to have it appear in the famous 2D data table? In these cases, filling does not help, as we end up with NaN vs. NaN without special post-processing (and hence simply no plot).
+      * Which ones are relevant/needed?
+      * How to cope with the current practice of applying (dirty) fixes to the already filled data to account for such things as scans using MPSKIP?
+      * Even worse: How to deal with data that (mis)use a "detector" to kind of monitoring a motor state, just to have it appear in the famous 2D data table? In these cases, filling does not help, as we end up with NaN vs. NaN without special post-processing (and hence simply no plot).
 
-* Monitors
+    * Monitors
 
-  * How to map monitors (with time as primary axis) to other devices (motors or detectors, with position counts as primary axis)?
+      * How to map monitors (with time as primary axis) to other devices (motors or detectors, with position counts as primary axis)?
 
 
 Interfaces
@@ -236,11 +240,22 @@ What may be in here:
   * Images in particular are usually not stored in the eveH5 files, but only pointers to these files.
   * Import routines for the different files (or at least a sensible modular mechanism involving an importer factory) need to be implemented.
 
+* Interface towards users (*i.e.*, mainly the ``radiometry`` and ``evedataviewer`` packages)
 
-Points to discuss further (without claiming to be complete):
+  * Given a filename of an eveH5 file, returns a ``Dataset`` object.
 
-* How to deal with reading the entire content of an eveH5 file at once vs. deferred reading?
 
-  * Reading relevant metadata (*e.g.*, to decide about what data to plot) should be rather fast. And generally, only two "columns" will be displayed (as f(x,y) plot) at any given time - at least if we don't radically change the way data are looked at compared to the IDL Cruncher.
-  * If references to the internal datasets of a given HDF5 file could be stored in the corresponding Python data structures, one could even close the HDF5 file after each operation, such as not to have open file handles that may be problematic (no clue how Python garbage collection deals with HDF5 file handles, as they are opened by the underlying C++ library).
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * How to deal with reading the entire content of an eveH5 file at once vs. deferred reading?
+
+      * Reading relevant metadata (*e.g.*, to decide about what data to plot) should be rather fast. And generally, only two "columns" will be displayed (as f(x,y) plot) at any given time - at least if we don't radically change the way data are looked at compared to the IDL Cruncher.
+      * If references to the internal datasets of a given HDF5 file are stored in the corresponding Python data structures (together with the HDF5 file name), one could even close the HDF5 file after each operation, such as not to have open file handles that may be problematic (but see the quote from A. Collette below).
+
+
+    From the book "Python and HDF5" by Andrew Collette:
+
+        You might wonder what happens if your program crashes with open files. If the program exits with a Python exception, don't worry! The HDF library will automatically close every open file for you when the application exits.
+
+        -- Andrew Collette, 2014 (p. 18)
 
