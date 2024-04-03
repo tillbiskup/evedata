@@ -3,11 +3,13 @@
 class Dataset {
     data : Data
     device_data{} : Data
+    raw_data{} : Data
     metadata : Metadata
     fill_mode : FillMode
 
     preferred_data()
 }
+note left: raw_data contain the\nunfilled values of all\ndevice_data and share\nthe same key.\n\nData and device_data\ncontain the filled values.
 
 enum FillMode {
     LASTFILL
@@ -15,7 +17,7 @@ enum FillMode {
     LASTNANFILL
     NOFILL
 }
-note left: Are these modes sufficient?\nAre they all needed?\nIs something missing?
+note bottom: Are these modes sufficient?\nAre they all needed?\nIs something missing?
 
 class Metadata
 note bottom: See separate diagram\nfor class hierarchy
@@ -25,6 +27,7 @@ class Data {
     data : numpy.ndarray
     axes[] : Axis
 }
+note left: Can data be\nragged arrays?
 
 class Axis {
     quantity : String

@@ -39,6 +39,15 @@ Generally, the evefile subpackage, as mentioned already in the :doc:`Concepts <c
 As usual, the core domain provides the (abstract) entities representing the different types of content. Hence, it is *not* concerned with the actual layout of an eveH5 file nor any importers nor the mapping of different eveH5 schema versions.
 
 
+.. note::
+
+    Shall we rename the modules omitting the "eve" prefix, as this context is already given by ``evefile``? This would imply the following renamings::
+
+        evefile.evefile     => evefile.file
+        evefile.evedata     => evefile.data
+        evefile.evemetadata => evefile.metadata
+
+
 evefile.evefile module
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -90,6 +99,10 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
 
       There is an age-long discussion how to map monitor data (with time in milliseconds as primary axis) to measured data (with position counts as primary axis). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place? Here in the evefile subpackage? Or in the "convenience interface" layer, *i.e.* the dataset subpackage?
 
+    * Can MonitorData have more than one value per time?
+
+      This would be similar to AverageDetector and IntervalDetector, thus requiring an additional attribute (and probably a ragged array).
+
 
 evefile.evemetadata module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,7 +141,9 @@ dataset subpackage
 
 .. note::
 
-    The name of this subpackage is most probably not final yet.
+    The name of this subpackage is most probably not final yet. Other options for naming the subpackage may be: ``measurement``, ``scan``.
+
+    Another option would be to keep the subpackage name ``dataset``, but to import the modules into the global ``evedata`` namespace, as this subpackage is meant to be the main user interface. This would reduce *e.g.* ``evedata.dataset.dataset.Dataset`` to ``evedata.dataset.Dataset``.
 
 
 The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
@@ -152,7 +167,7 @@ Other problems inherent in the 2D data array abstraction are the necessary filli
 dataset.dataset module
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step.
+Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step. Reproducibility and history are concerns of the ``radiometry`` package, the ``dataset.dataset`` module should nevertheless allow for a rather straight-forward mapping to the ASpecD-inspired dataset structure.
 
 
 .. figure:: uml/evedata.dataset.dataset.*
@@ -224,6 +239,66 @@ What may be in here:
       * How to map monitors (with time as primary axis) to other devices (motors or detectors, with position counts as primary axis)?
 
 
+Fill modes
+----------
+
+For each motor and detector, in the original eveH5 file only those values appear---typically together with a "position counter" (PosCount) value---that are actually set or measured. Hence, generally the number of values (*i.e.*, the length of the data vector) will generally be different for different detectors/channels and devices/axes. To be able to plot arbitrary data against each other, the corresponding data vectors need to be brought to the same dimensions (*i.e.*, "filled").
+
+Currently, there are four fill modes available for data: LastFill, NaNFill, LastNaNFill, NoFill. From the `documentation of eveFile <https://www.ahf.ptb.de/messpl/sw/python/common/eveFile/doc/html/Section-Fillmode.html#evefile.Fillmode>`_:
+
+
+NoFill
+    Use only data from positions where at least one axis and one channel have values
+
+LastFill
+    Use all channel data and fill in the last known position for all axes without values
+
+NaNFill
+    Use all axis data and fill in NaN for all channels without values
+
+LastNaNFill
+    Use all data and fill in NaN for all channels without values and fill in the last known position for all axes without values
+
+
+For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:`numpy.union1d`. Operating on more than two arrays can be done using :func:`functools.reduce`, as mentioned in the numpy documentation (with examples).
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Where/when to apply filling?
+
+      The :class:`evefile.evefile.EveFile` class contains the data *as read* from the eveH5 file, *i.e.* the not at all filled data for each channel/detector and axis/motor (faithful representation of the eveH5 file contents). Hence, filling is a task performed when transitioning to a :obj:`dataset.dataset.Dataset` object with data read from an eveH5 file (and originally stored in an :obj:`evefile.evefile.EveFile` object).
+
+      Is filling always necessary when creating a :obj:`dataset.dataset.Dataset` object? Probably yes, as otherwise, plotting will usually not be possible (except detector/motor values *vs.* position count).
+
+    * Will there always be only one fill mode for one dataset?
+
+      Currently, this seems to be the case for the interfaces (IDL, eveFile) used, although one could probably create multiple datasets with different fill modes (and different channels/detectors and axes/motors involved) from a single ``EveFile`` object.
+
+    * How to deal with "lazy loading" combined with filling?
+
+      For filling any axis, we need to have the position counts of *all* HDF5 datasets (aka :obj:`evefile.evedata.EveData` objects). This seems to contradict the idea of *not* reading all data at once before filling.
+
+      Of course, if one uses the preferred channel/detector and axis/motor (and there are "established" ways how to determine those if they are not set in the eveH5 file explicitly, though this most probably involves again accessing *all* data), one could only fill those and refill once a user wants to see something different. However, this would imply changing the fill mode "on the fly". If the original :obj:`evefile.evefile.EveFile` object is gone by then, the relevant information may no longer be available, resulting in reimporting the data from the original eveH5 file.
+
+    * How to deal with monitors?
+
+      It seems that currently, the monitors are not used at all/too much by the users, as they are not part of the famous pandas dataframe.
+
+    * How to deal with channel/detector snapshots?
+
+      Currently, fill modes do not care about channel/detector snapshots, as channel/detector values are never filled. So what is the purpose of these snapshots, and are they (currently) used in any sensible way beyond recording the data? (Technically speaking, people should be able to read the data using eveFile, though...)
+
+    * How to deal with "fancy" scans "monitoring" axes as pseudo-detectors?
+
+      Some scans additionally "monitor" an axis by means of a pseudo-detector. This generally leads to an additional position count for reading this "detector", and without manually post-processing the filled data matrix, we end up plotting NaN vs. NaN values when trying to plot a real detector vs. the pseudo-detector reused as an axis.
+
+      There was the idea of "compressing" all position counts for detector reads where no axis moves in between into one position count. Can we make sure that this is valid in all cases?
+
+
+If filling is an operation on an :obj:`evefile.evefile.EveFile` object returning a :obj:`dataset.dataset.Dataset` object, how to call this operation and from where? One possibility would be to have a :meth:`evefile.evefile.EveFile.fill` method that takes an appropriate argument for the fill mode, another option would be a method of the :class:`dataset.dataset.Dataset` class or an implicit call when getting data from a file (via an :obj:`evefile.evefile.EveFile` object).
+
+
 Interfaces
 ==========
 
@@ -249,8 +324,9 @@ What may be in here:
 
     * How to deal with reading the entire content of an eveH5 file at once vs. deferred reading?
 
-      * Reading relevant metadata (*e.g.*, to decide about what data to plot) should be rather fast. And generally, only two "columns" will be displayed (as f(x,y) plot) at any given time - at least if we don't radically change the way data are looked at compared to the IDL Cruncher.
+      * Reading relevant metadata (*e.g.*, to decide about what data to plot) should be rather fast. And generally, only two "columns" will be displayed (as f(x,y) plot) at any given time -- at least if we don't radically change the way data are looked at compared to the IDL Cruncher.
       * If references to the internal datasets of a given HDF5 file are stored in the corresponding Python data structures (together with the HDF5 file name), one could even close the HDF5 file after each operation, such as not to have open file handles that may be problematic (but see the quote from A. Collette below).
+      * However, plotting requires data to be properly filled, and this may require reading all data. See the discussion on fill modes above.
 
 
     From the book "Python and HDF5" by Andrew Collette:
