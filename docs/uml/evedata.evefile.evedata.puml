@@ -11,9 +11,9 @@ note left: "values" contains a 1D array.\nFor individual values see derived clas
 enum DeviceType {
     MOTOR
     DETECTOR
-    DUMB_DEVICE
+    DUMB
 }
-note right: dumb_device needs\nto be renamed.\nDoes it occur in eveH5\n files with data anyway?
+note right: dumb needs renaming.\nHow about "monitor",\n"device" or "passive"?
 
 class EveMetadata {
 }

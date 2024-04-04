@@ -14,10 +14,11 @@ note bottom: See separate diagram\nfor class hierarchy
 
 enum Section {
     STANDARD
-    MONITOR
     SNAPSHOT
+    MONITOR
+    TIMESTAMP
 }
-note top: These sections may change their names\nand need not reflect the eveH5 structure.
+note top: These sections may have different\nnames in the final data model\nand need not reflect the eveH5 structure.
 
 class EveMeasureMetadata {
     unit : String

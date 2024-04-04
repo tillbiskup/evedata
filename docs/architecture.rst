@@ -30,6 +30,8 @@ The overall package structure of the evedata package is shown in :numref:`Fig. %
 
 Generally, the evefile subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the persistence layer (eveH5 files). This is a rather low-level interface focussing at a faithful representation of all information available in an eveH5 file as well as the corresponding scan description (SCML), as long as the latter is available.
 
+Furthermore, the evefile subpackage provides a stable abstraction of the contents of an eveH5 file and is hence *not* concerned with different versions of both, the eveH5 file structure and the SCML schema. The data model provided here needs to be powerful (and modular) enough to allow for representing all currently existing data files (regardless of their eveH5 and SCML schema versions) and future-proof to not change incompatibly (open-closed principle, the "O" in "SOLID) when new requirements arise.
+
 
 .. important::
 
@@ -41,11 +43,14 @@ As usual, the core domain provides the (abstract) entities representing the diff
 
 .. note::
 
-    Shall we rename the modules omitting the "eve" prefix, as this context is already given by ``evefile``? This would imply the following renamings::
+    Shall we rename the modules omitting the "eve" prefix, as this context is already given by ``evefile`` (and the "Eve" prefix of most classes contained therein)? This would imply the following renamings::
 
         evefile.evefile     => evefile.file
         evefile.evedata     => evefile.data
         evefile.evemetadata => evefile.metadata
+
+
+    Omitting the "Eve" prefix for the class names may be a bad idea, though, as with the prefix, it is always obvious whether we are dealing with an evefile-related class or the user-facing dataset-centric abstraction.
 
 
 evefile.evefile module
@@ -69,12 +74,15 @@ Despite the opposite chain of dependencies, starting with the ``evefile.evefile`
 
     * Split data according to sections (standard, monitor, snapshot)?
 
-      At least the HDF5 datasets in the "monitor" section are clearly distinct from the others, as they don't have PosCounts as reference axis.
+      At least the HDF5 datasets in the "monitor" section are clearly distinct from the others, as they don't have PosCounts as reference axis. However, due to the different classes, making the separation would be trivial and possible using, *e.g.*, a list comprehension in Python.
 
     * SCML: How to represent the contents sensibly? What are the relevant abstractions/concepts?
 
       Perhaps (additionally) storing the "plain" XML in a variable is still a sensible idea.
 
+    * Comments
+
+      Is there a need to distinguish between file-level comments and life comments (aka log messages)? If so, shall this be done in the ``EveFile`` class or in the ``Comment`` class (possibly by means of two subtypes of the ``Comment`` class)?
 
 
 evefile.evedata module
@@ -91,9 +99,11 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Are "dumb devices" such as shutters actually represented in an eveH5 file? Can they be part of the "monitor" section?
+    * Dealing with the "PosCountTimer" dataset in the timestamp/meta section
 
-      If they occur, latest in the SCML, and are relevant to be modelled, how to properly name them?
+      There is one special dataset in an eveH5 file containing the mapping table between Position Counts and milliseconds since start of the scan. Does this need to be represented by a distinct subclass of ``EveData``? Or would it better be a subclass of ``EveMeasureData``? And what would be a sensible name? ``EvePosCountTimerData``?
+
+      What DeviceType entry shall this special dataset have? Is it a separate type of its own ("TIMESTAMP"?), or is it a "DUMB" device?
 
     * Mapping MonitorData to MeasureData
 
@@ -102,6 +112,14 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
     * Can MonitorData have more than one value per time?
 
       This would be similar to AverageDetector and IntervalDetector, thus requiring an additional attribute (and probably a ragged array).
+
+    * Values of MonitorData
+
+      MonitorData can have textual (non-numeric) values. This should not be too much of a problem given that numpy can handle string arrays (though <v2.0 only fixed-size string values, AFAIK, with v2.0 not yet released, as of 2024-04-04).
+
+    * raw_values of EveAverageDetectorData and EveIntervalDetectorData
+
+      Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this.
 
 
 evefile.evemetadata module
@@ -125,15 +143,33 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
 
     * Names of the sections
 
-      The names of the sections are currently modelled as Enumeration ("Section"). AFAIK, the names of the sections in the eveH5 file have changed over time. What would be sensible names for the different sections? Are the three sections mentioned (standard, monitor, snapshot) sufficient? Is anything missing? Will there likely be more in the future?
+      The names of the sections are currently modelled as Enumeration ("Section"). AFAIK, the names of the sections in the eveH5 file have changed over time. What would be sensible names for the different sections? Are the sections mentioned (standard, snapshot, monitor, timestamp) sufficient? Is anything missing? Will there likely be more in the future? Do we really need "timestamp" as separate section (probably yes)?
 
     * Metadata from SCML file
 
       There is likely more information contained in the SCML file (and the end station/beam line description). What kind of (relevant) information is available there, and how to map this to the respective metadata classes?
 
+    * PosCountTimer metadata
+
+      There exists one special dataset in the "meta"/"timestamp" section of an eveH5 file: "PosCountTimer". If we model this one with its own ``EveData`` class (see above), it would probably need its own metadata class, too. It seems, though, that this class has much less attributes as compared to the ``EveMetadata`` class. However, we shall *not* break the ``EveMetadata`` class hierarchy, as ``EveData`` has an attribute of type ``EveMetadata``.
+
     * Monitor metadata
 
-      Clearly, monitor metadata are not sufficiently modelled yet.
+      Clearly, monitor metadata are not sufficiently modelled yet. In recent eveH5 files, they have only few attributes. Are the other attributes (comparable to the attributes of ``EveMeasureMetadata``) contained in the SCML file and could be read from there?
+
+      Is there any sensible chance to relate monitor datasets to datasets in the standard section? Currently, it looks like the eveH5 monitor datasets have no sensible/helpful "name" attribute, only an ID that partly resembles IDs in the standard section. (And of course, there are usually monitors that do not appear in any other section, hence cannot be related to other devices/datasets.)
+
+    * Attribute "pv"
+
+      "pv" most probably means EPICS process variable. Is this the best name? Would "access" (as in eveH5) be better? Is there any chance to confuse this in the future (EPICS v7 introduced a new transport layer: pvAccess instead of the still existing CA)?
+
+    * Attribute "transport_type"
+
+      What is in here? It seems not present in current eveH5 files...
+
+    * Attributes of the EveMetadata base class
+
+      Given that there will probably be a special EveData subclass for the PosCountTimer dataset from eveH5 files that has only very few metadata, many of the current metadata present in the EveMetadata class would need to be moved down.
 
 
 dataset subpackage
