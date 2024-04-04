@@ -228,12 +228,6 @@ What may be in here:
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Fill modes
-
-      * Which ones are relevant/needed?
-      * How to cope with the current practice of applying (dirty) fixes to the already filled data to account for such things as scans using MPSKIP?
-      * Even worse: How to deal with data that (mis)use a "detector" to kind of monitoring a motor state, just to have it appear in the famous 2D data table? In these cases, filling does not help, as we end up with NaN vs. NaN without special post-processing (and hence simply no plot).
-
     * Monitors
 
       * How to map monitors (with time as primary axis) to other devices (motors or detectors, with position counts as primary axis)?
@@ -242,28 +236,54 @@ What may be in here:
 Fill modes
 ----------
 
-For each motor and detector, in the original eveH5 file only those values appear---typically together with a "position counter" (PosCount) value---that are actually set or measured. Hence, generally the number of values (*i.e.*, the length of the data vector) will generally be different for different detectors/channels and devices/axes. To be able to plot arbitrary data against each other, the corresponding data vectors need to be brought to the same dimensions (*i.e.*, "filled").
+For each motor and detector, in the original eveH5 file only those values appear---typically together with a "position counter" (PosCount) value---that are actually set or measured. Hence, the number of values (*i.e.*, the length of the data vector) will generally be different for different detectors/channels and devices/axes. To be able to plot arbitrary data against each other, the corresponding data vectors need to be brought to the same dimensions (*i.e.*, "filled").
 
-Currently, there are four fill modes available for data: LastFill, NaNFill, LastNaNFill, NoFill. From the `documentation of eveFile <https://www.ahf.ptb.de/messpl/sw/python/common/eveFile/doc/html/Section-Fillmode.html#evefile.Fillmode>`_:
+Currently, there are four fill modes available for data: NoFill, LastFill, NaNFill, LastNaNFill. From the `documentation of eveFile <https://www.ahf.ptb.de/messpl/sw/python/common/eveFile/doc/html/Section-Fillmode.html#evefile.Fillmode>`_:
 
 
 NoFill
-    Use only data from positions where at least one axis and one channel have values
+    Use only data from positions where at least one axis and one channel have values.
 
 LastFill
-    Use all channel data and fill in the last known position for all axes without values
+    Use all channel data and fill in the last known position for all axes without values.
 
 NaNFill
-    Use all axis data and fill in NaN for all channels without values
+    Use all axis data and fill in NaN for all channels without values.
 
 LastNaNFill
-    Use all data and fill in NaN for all channels without values and fill in the last known position for all axes without values
+    Use all data and fill in NaN for all channels without values and fill in the last known position for all axes without values.
+
+
+Furthermore, for the Last*Fill modes, snapshots are inspected for axes values that are newer than the last recorded axis in the main/standard section.
+
+Note that none of the fill modes guarantees that there are no NaNs (or comparable null values) in the resulting data.
+
+
+.. important::
+
+    The IDL Cruncher seems to use LastNaNFill combined with applying some "dirty" fixes to account for scans using MPSKIP and those scans "monitoring" a motor position via a pseudo-detector. The ``EveHDF`` class (DS) uses LastNaNFill as a default as well but does *not* apply some additional post-processing.
+
+    Shall fill modes be something to change in a viewer? And which fill modes are used in practice (and do we have any chance to find this out)?
 
 
 For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:`numpy.union1d`. Operating on more than two arrays can be done using :func:`functools.reduce`, as mentioned in the numpy documentation (with examples).
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Which fill modes are relevant/needed?
+
+      It seems that LastNaNFill is widely used as a default fill mode. Depending on the origin of the data, additional post-processing (see below) is necessary to have usable data.
+
+      As NoFill does not only not fill, but actually reduce data, "fill mode" may not be the ideal term. Other opinions/ideas/names?
+
+      Given that the :class:`evefile.evefile.Evefile` class provides a faithful representation of the actual data contained in an eveH5 file, one could think of mechanisms to highlight those values that were actually recorded (as compared to filled afterwards). Would this help to reduce the number of fill modes available?
+
+    * How to cope with the current practice of applying (dirty) fixes to the already filled data to account for such things as scans using MPSKIP?
+
+      In case of the MPSKIP scans, this is "faking" an average detector adaptively recording the individual data points. Hence, it should probably be represented already on the :class:`evefile.evefile.EveFile` level as such a detector. How does this agree with the idea of a "faithful representation" of the eveH5 file contents?
+
+      Anyway: Is this a fill-mode related topic? And where does it belong to?
 
     * Where/when to apply filling?
 
@@ -291,7 +311,7 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
 
     * How to deal with "fancy" scans "monitoring" axes as pseudo-detectors?
 
-      Some scans additionally "monitor" an axis by means of a pseudo-detector. This generally leads to an additional position count for reading this "detector", and without manually post-processing the filled data matrix, we end up plotting NaN vs. NaN values when trying to plot a real detector vs. the pseudo-detector reused as an axis.
+      Some scans additionally "monitor" an axis by means of a pseudo-detector. This generally leads to an additional position count for reading this "detector", and without manually post-processing the filled data matrix, we end up plotting NaN vs. NaN values when trying to plot a real detector vs. the pseudo-detector reused as an axis (and as a result seeing no plotted data).
 
       There was the idea of "compressing" all position counts for detector reads where no axis moves in between into one position count. Can we make sure that this is valid in all cases?
 
