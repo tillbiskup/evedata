@@ -217,7 +217,7 @@ Furthermore, the dataset should provide appropriate abstractions for things such
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * How to handle data filling? (But: see discussion on fill modi in the section below)
+    * How to handle data filling? (But: see discussion on fill modes in the section below)
 
       * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data (*i.e.* axes) need to be made compatible.
       * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
