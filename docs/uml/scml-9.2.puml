@@ -1,0 +1,561 @@
+@startuml
+
+class scml {
+    +location : string
+    +version : string
+    +scan : scan
+    +plugins : plugins
+    +detectors : detectors
+    +motors : motors
+    +devices : devices
+}
+scml *-- scan
+scml +-- plugins
+scml *-- detectors
+scml *-- motors
+scml +-- devices
+
+class plugins {
+    +plugin : plugin[]
+}
+plugins *-- plugin
+
+class devices {
+    +device : device[]
+}
+devices *-- device
+
+class scan {
+    +repeatcount : nonNegativeInteger
+    +comment : string
+    +savefilename : string
+    +confirmsave : boolean
+    +autonumber : boolean
+    +savescandescription : boolean
+    +saveplugin : controller
+    +chain : chain[]
+    +monitoroptions : monitoroptions
+}
+scan *-- controller
+scan *-- chain
+scan *-- monitoroptions
+
+class chain {
+    +startevent : smevent
+    +redoevent : smevent[]
+    +breakevent : smevent[]
+    +stopevent : smevent[]
+    +pauseconditions : pauseconditions
+    +scanmodules : scanmodules
+    +id : positiveInteger
+}
+chain +-- pauseconditions
+chain *-- scanmodules
+chain *-- smevent
+
+class pauseconditions {
+    +pausecondition : pausecondition[]
+}
+pauseconditions *-- pausecondition
+
+class detectors {
+    +detector : detector[]
+}
+detectors *-- detector
+
+class motors {
+    +motor : motor[]
+}
+motors *-- motor
+
+class scanmodules {
+    +scanmodule : scanmodule[]
+}
+scanmodules +-- scanmodule
+
+class scanmodule {
+    +name : string
+    +xpos : nonNegativeInteger
+    +ypos : nonNegativeInteger
+    +parent : integer
+    +nested : positiveInteger
+    +appended : positiveInteger
+    +classic : smClassic
+    +save_axis_positions : smSaveAxisPositions
+    +save_channel_values : smSaveChannelValues
+    +dynamic_axis_positions : smDynamicAxisPositions
+    +dynamic_channel_values : smDynamicChannelValues
+    +id : positiveInteger
+}
+scanmodule *-- smClassic
+scanmodule *-- smSaveAxisPositions
+scanmodule *-- smSaveChannelValues
+scanmodule *-- smDynamicAxisPositions
+scanmodule *-- smDynamicChannelValues
+
+class access {
+    +access : accessProperty
+    +value : typevalue
+}
+access *-- accessProperty
+access *-- typevalue
+
+class accessProperty {
+    +value : string
+    +method : method
+    +type : data
+    +count : positiveInteger
+    +transport : transport
+    +timeout : double
+    +monitor : boolean
+}
+accessProperty *- method
+accessProperty *-- data
+accessProperty *- transport
+
+enum autoacquire {
+    snapshot = snapshot
+    measurement = measurement
+    no = no
+}
+
+class axis {
+    +class : string
+    +name : string
+    +id : string
+    +goto : access
+    +position : access
+    +stop : access
+    +highlimit : access
+    +lowlimit : access
+    +limitviolation : access
+    +status : access
+    +movedone : access
+    +trigger : access
+    +unit : unit
+    +deadband : access
+    +offset : access
+    +tweakvalue : access
+    +tweakforward : access
+    +tweakreverse : access
+    +option : option[]
+    +saveValue : boolean
+}
+axis *-- access
+axis *-- option
+axis *-- unit
+
+enum axismodifier {
+    NONE = NONE
+    INVERSE = INVERSE
+}
+
+class channel {
+    +class : string
+    +name : string
+    +id : string
+    +read : access
+    +unit : unit
+    +trigger : access
+    +stop : access
+    +status : access
+    +option : option[]
+    +deferred : boolean
+    +saveValue : boolean
+}
+channel *-- access
+channel *-- unit
+channel *--option
+
+enum comparison {
+    eq = eq
+    ne = ne
+    gt = gt
+    lt = lt
+}
+
+class conditionlimit {
+    +value : string
+    +type : data
+}
+conditionlimit *-- data
+
+class controller {
+    +parameter : parameter[]
+    +name : string
+}
+controller *-- parameter
+
+enum data {
+    int = int
+    double = double
+    string = string
+    datetime = datetime
+}
+
+class detector {
+    +class : string
+    +name : string
+    +id : string
+    +unit : unit
+    +trigger : access
+    +stop : access
+    +status : access
+    +channel : channel[]
+    +option : option[]
+}
+detector *-- unit
+detector *-- access
+detector *-- channel
+detector *-- option
+
+class detectorevent {
+    +id : string
+}
+
+class device {
+    +class : string
+    +name : string
+    +id : string
+    +value : access
+    +unit : unit
+    +displaygroup : string
+    +option : option[]
+}
+device *-- access
+device *-- option
+device *-- unit
+
+class eqcondition {
+    +operator : equality
+    +pauselimit : conditionlimit
+}
+eqcondition *- pausecondition
+eqcondition *- equality
+eqcondition *-- conditionlimit
+
+enum equality {
+    eq = eq
+    ne = ne
+}
+
+enum incident {
+    Start = Start
+    End = End
+}
+
+class ineqcondition {
+    +operator : inequality
+    +pauselimit : conditionlimit
+    +continuelimit : conditionlimit
+}
+ineqcondition *-- pausecondition
+ineqcondition *- inequality
+ineqcondition *-- conditionlimit
+
+enum inequality {
+    gt = gt
+    lt = lt
+}
+
+class intervalchannel {
+    +triggerinterval : double
+    +stoppedby : string
+    +redoevent : smevent[]
+    +deferredtrigger : boolean
+}
+intervalchannel *-- smevent
+
+class limit {
+    +value : string
+    +type : data
+    +comparison : comparison
+}
+limit *- comparison
+limit *-- data
+
+enum method {
+    PUT = PUT
+    PUTCB = PUTCB
+    GET = GET
+    GETCB = GETCB
+    GETPUT = GETPUT
+    GETPUTCB = GETPUTCB
+}
+
+class monitorevent {
+    +id : string
+    +limit : limit
+}
+monitorevent *-- limit
+
+class monitoroptions {
+    +id : string[]
+    +type : string
+}
+
+class motor {
+    +class : string
+    +name : string
+    +id : string
+    +trigger : access
+    +unit : unit
+    +axis : axis[]
+    +option : option[]
+}
+motor *-- access
+motor *-- unit
+motor *-- axis
+motor *-- option
+
+class option {
+    +class : string
+    +name : string
+    +id : string
+    +value : access
+    +unit : unit
+    +displaygroup : string
+    +monitor : boolean
+    +autoacquire : autoacquire
+}
+option *-- access
+option *-- unit
+option *- autoacquire
+
+class parameter {
+    +value : string
+    +name : string
+}
+
+class pausecondition {
+    +deviceid : string
+    +id : integer
+}
+
+class plot {
+    +name : string
+    +xaxis : xaxis
+    +init : boolean
+    +yaxis : plotaxis[]
+    +id : positiveInteger
+}
+plot +-- xaxis
+plot *-- plotaxis
+
+class xaxis {
+    +id : string
+    +mode : plotmode
+}
+xaxis *- plotmode
+
+class plotaxis {
+    +id : string
+    +mode : plotmode
+    +modifier : axismodifier
+    +normalize_id : string
+    +linestyle : string
+    +color : string
+    +markstyle : string
+}
+plotaxis *- plotmode
+plotaxis *- axismodifier
+
+enum plotmode {
+    linear = linear
+    log = log
+}
+
+class plugin {
+    +name : string
+    +location : string
+    +parameter : pluginParameter[]
+    +type : pluginType
+}
+plugin *-- pluginParameter
+plugin *- pluginType
+
+enum pluginData {
+    int = int
+    double = double
+    string = string
+    axisid = axisid
+    channelid = channelid
+    deviceid = deviceid
+}
+
+class pluginParameter {
+    +value : string
+    +name : string
+    +datatype : pluginData
+    +default : string
+    +mandatory : boolean
+}
+pluginParameter *- pluginData
+
+enum pluginType {
+    position = position
+    save = save
+    display = display
+    postscanpositioning = postscanpositioning
+}
+
+class positioning {
+    +axis_id : string
+    +channel_id : string
+    +normalize_id : string
+    +plugin : controller
+}
+positioning *-- controller
+
+class scheduleevent {
+    +incident : incident
+    +chainid : integer
+    +smid : integer
+}
+scheduleevent *- incident
+
+class smClassic {
+    +valuecount : positiveInteger
+    +settletime : double
+    +triggerdelay : double
+    +triggerconfirmaxis : boolean
+    +triggerconfirmchannel : boolean
+    +triggerevent : smevent[]
+    +redoevent : smevent[]
+    +breakevent : smevent[]
+    +prescan : prescan[]
+    +smaxis : smaxis[]
+    +smchannel : smchannel[]
+    +postscan : postscan[]
+    +positioning : positioning[]
+    +plot : plot[]
+}
+smClassic *-- smevent
+smClassic +-- prescan
+smClassic +-- smaxis
+smClassic +-- smchannel
+smClassic +-- postscan
+smClassic +-- positioning
+smClassic +-- plot
+
+class prescan {
+    +id : string
+    +value : typevalue
+}
+prescan *-- typevalue
+
+class postscan {
+    +id : string
+    +value : typevalue
+    +reset_originalvalue : boolean
+}
+postscan *-- typevalue
+
+class smDynamicAxisPositions {
+}
+
+class smDynamicChannelValues {
+}
+
+class smSaveAxisPositions {
+    +smaxis : smaxis[]
+}
+smSaveAxisPositions *-- smaxis
+
+class smSaveChannelValues {
+    +smchannel : smchannel[]
+}
+smSaveChannelValues *-- smchannel
+
+class smaxis {
+    +axisid : string
+    +stepfunction : stepfunction
+    +positionmode : smaxis_positionmode
+    +startstopstep : startstopstep
+    +stepfilename : string
+    +plugin : controller
+    +positionlist : string
+    +range : stepfunctionrange
+}
+smaxis *- stepfunction
+smaxis *- smaxis_positionmode
+smaxis *-- startstopstep
+smaxis *-- controller
+smaxis *-- stepfunctionrange
+
+enum smaxis_positionmode {
+    relative = relative
+    absolute = absolute
+}
+
+class smchannel {
+    +channelid : string
+    +normalize_id : string
+    +standard : standardchannel
+    +interval : intervalchannel
+}
+smchannel *-- standardchannel
+smchannel *-- intervalchannel
+
+class smevent {
+    +detectorevent : detectorevent
+    +monitorevent : monitorevent
+    +scheduleevent : scheduleevent
+}
+smevent *-- detectorevent
+smevent *-- monitorevent
+smevent *-- scheduleevent
+
+class standardchannel {
+    +averagecount : nonNegativeInteger
+    +maxdeviation : double
+    +minimum : double
+    +maxattempts : nonNegativeInteger
+    +sendreadyevent : boolean
+    +redoevent : smevent[]
+    +deferredtrigger : boolean
+}
+standardchannel *-- smevent
+
+class startstopstep {
+    +start : typevalue
+    +stop : typevalue
+    +stepwidth : typevalue
+    +ismainaxis : boolean
+}
+startstopstep *-- typevalue
+
+enum stepfunction {
+    Add = Add
+    Multiply = Multiply
+    File = File
+    Plugin = Plugin
+    Positionlist = Positionlist
+    Range = Range
+}
+
+class stepfunctionrange {
+    +expression : string
+    +positionlist : string
+}
+
+enum transport {
+    ca = ca
+    local = local
+}
+
+class typevalue {
+    +value : string
+    +type : data
+}
+typevalue *-- data
+
+class unit {
+    +access : accessProperty
+    +value : typevalue
+    +unitstring : string
+}
+unit *-- typevalue
+unit *-- accessProperty
+
+@enduml
