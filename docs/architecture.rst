@@ -129,6 +129,10 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
 
       Generally, detectors can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector beyond the XML-ID/PV.
 
+    * References to spectra/images
+
+      There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. How is this currently represented in eveH5 files, and how to model this situation with the given :class:`EveData` classes?
+
 
 evefile.evemetadata module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -201,6 +205,8 @@ dataset subpackage
 The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
 
 Generally, the dataset subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
+
+What is the main difference between the ``evefile`` and the ``dataset`` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the ``evefile`` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the ``dataset`` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
 
 
 Arguments against the 2D data array as sensible representation

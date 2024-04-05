@@ -116,6 +116,9 @@ position count
 PV
     Process variable (EPICS)
 
+RBV
+    ?
+
 section
     alternative terms: region, area
 
