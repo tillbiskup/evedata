@@ -2,8 +2,8 @@
 
 class Dataset {
     data : Data
-    device_data{} : Data
-    raw_data{} : Data
+    device_data : Data{}
+    raw_data : Data{}
     metadata : Metadata
     fill_mode : FillMode
 
@@ -25,7 +25,7 @@ note bottom: See separate diagram\nfor class hierarchy
 
 class Data {
     data : numpy.ndarray
-    axes[] : Axis
+    axes : Axis[]
 }
 note left: Can data be\nragged arrays?
 

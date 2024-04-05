@@ -2,9 +2,9 @@
 
 class EveFile {
     metadata : EveFileMetadata
-    comments[] : Comment
+    comments : Comment[]
     scml : SCML
-    data[] : EveData
+    data : EveData[]
 }
 note left: Should data be split\ninto sections?
 
