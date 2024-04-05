@@ -109,6 +109,10 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
 
       There is an age-long discussion how to map monitor data (with time in milliseconds as primary axis) to measured data (with position counts as primary axis). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place? Here in the evefile subpackage? Or in the "convenience interface" layer, *i.e.* the dataset subpackage?
 
+      Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon.
+
+      The individual ``EveMonitorData`` class cannot do the mapping without having access to the mapping table. Probably mapping is something done in the intermediate layer between the ``evefile`` and ``dataset`` subpackages and belonging to the business rules. How are monitor data represented in the :class:`Dataset` class?
+
     * Can MonitorData have more than one value per time?
 
       This would be similar to AverageDetector and IntervalDetector, thus requiring an additional attribute (and probably a ragged array).
@@ -120,6 +124,10 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
     * raw_values of EveAverageDetectorData and EveIntervalDetectorData
 
       Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this.
+
+    * Detectors that are redefined within an experiment/scan
+
+      Generally, detectors can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector beyond the XML-ID/PV.
 
 
 evefile.evemetadata module
@@ -170,6 +178,14 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     * Attributes of the EveMetadata base class
 
       Given that there will probably be a special EveData subclass for the PosCountTimer dataset from eveH5 files that has only very few metadata, many of the current metadata present in the EveMetadata class would need to be moved down.
+
+    * Information on the individual devices
+
+      Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup. If so, what kind of information is available and how to map this?
+
+    * Options for individual devices
+
+      There seem to be many options for devices that can be set from within the measurement program/SCML file. What kind of options are there, and how to map them in a class hierarchy? The information probably comes from the SCML file. Shall this be separated in the ``evefile`` subpackage and go to an ``scml`` module? Latest in the ``dataset`` subpackage, the metadata should be mapped to the devices.
 
 
 dataset subpackage
@@ -255,6 +271,7 @@ Business rules
 What may be in here:
 
 * Fill modes
+* Mapping monitor time stamps to position counts
 * Converting MPSKIP scans into average detector with adaptive number of recorded points
 * Converting scan with subscans into appropriate subscan data structure
 * Mapping between ``EveFile`` and ``Dataset`` objects, *i.e.* low-level and high-level interface
