@@ -1,0 +1,484 @@
+@startuml
+
+class scml {
+    +location : string
+    +version : string
+    +scan : scan
+    +plugins : plugin[]
+    +detectors : detector[]
+    +motors : motor[]
+    +devices : dumbDevice[]
+}
+scml *-- scan
+scml *-- "n" plugin
+scml *-- "n" detector
+scml *-- "n" motor
+scml *-- "n" dumbDevice
+
+class scan {
+    +repeatcount : nonNegativeInteger
+    +comment : string
+    +savefilename : string
+    +confirmsave : boolean
+    +autonumber : boolean
+    +savescandescription : boolean
+    +saveplugin : controller
+    +monitoroptions : monitoroptions
+    +startevent : smevent
+    +redoevent : smevent[]
+    +breakevent : smevent[]
+    +stopevent : smevent[]
+    +pauseconditions : pausecondition[]
+    +scanmodules : scanmodule[]
+}
+scan *-- controller
+scan *-- "n" scanmodule
+scan *-- "n" pausecondition
+scan *-- "n" smevent
+scan *-- monitoroptions
+
+class device {
+    +class : string
+    +name : string
+    +id : string
+    +unit : unit
+}
+device <|-- detector
+device <|-- motor
+device <|-- dumbDevice
+device <|-- axis
+device <|-- channel
+device <|-- option
+device *-- unit
+
+class scanmodule {
+    +name : string
+    +xpos : nonNegativeInteger
+    +ypos : nonNegativeInteger
+    +parent : integer
+    +nested : positiveInteger
+    +appended : positiveInteger
+    +id : positiveInteger
+}
+scanmodule <|-- smClassic
+scanmodule <|-- smSaveAxisPositions
+scanmodule <|-- smSaveChannelValues
+scanmodule <|-- smDynamicAxisPositions
+scanmodule <|-- smDynamicChannelValues
+
+class access {
+    +value : typevalue
+    +method : method
+    +count : positiveInteger
+    +transport : transport
+    +timeout : double
+    +monitor : boolean
+}
+access *-- typevalue
+access <|-- unit
+access *-- method
+access *-- transport
+
+enum autoacquire {
+    snapshot = snapshot
+    measurement = measurement
+    no = no
+}
+
+class axis {
+    +goto : access
+    +position : access
+    +stop : access
+    +highlimit : access
+    +lowlimit : access
+    +limitviolation : access
+    +status : access
+    +movedone : access
+    +trigger : access
+    +deadband : access
+    +offset : access
+    +tweakvalue : access
+    +tweakforward : access
+    +tweakreverse : access
+    +option : option[]
+    +saveValue : boolean
+}
+axis *-- "n" access
+axis *-- "n" option
+
+enum axismodifier {
+    NONE = NONE
+    INVERSE = INVERSE
+}
+
+class channel {
+    +read : access
+    +trigger : access
+    +stop : access
+    +status : access
+    +option : option[]
+    +deferred : boolean
+    +saveValue : boolean
+}
+channel *-- "n" access
+channel *-- "n" option
+
+enum comparison {
+    eq = eq
+    ne = ne
+    gt = gt
+    lt = lt
+}
+
+class controller {
+    +parameter : parameter[]
+    +name : string
+}
+controller *-- "n" parameter
+
+enum data {
+    int = int
+    double = double
+    string = string
+    datetime = datetime
+}
+
+class detector {
+    +trigger : access
+    +stop : access
+    +status : access
+    +channel : channel[]
+    +option : option[]
+}
+detector *-- "n" access
+detector *-- "n" channel
+detector *-- "n" option
+
+class dumbDevice {
+    +value : access
+    +displaygroup : string
+    +option : option[]
+}
+dumbDevice *-- access
+dumbDevice *-- "n" option
+
+class pausecondition {
+    +deviceid : string
+    +id : integer
+    +pauselimit : typevalue
+}
+pausecondition <|-- eqcondition
+pausecondition <|-- ineqcondition
+pausecondition *-- typevalue
+
+class eqcondition {
+    +operator : equality
+}
+eqcondition *-- equality
+
+enum equality {
+    eq = eq
+    ne = ne
+}
+
+enum incident {
+    Start = Start
+    End = End
+}
+
+class ineqcondition {
+    +operator : inequality
+    +continuelimit : typevalue
+}
+ineqcondition *-- inequality
+ineqcondition *-- typevalue
+
+enum inequality {
+    gt = gt
+    lt = lt
+}
+
+class intervalchannel {
+    +triggerinterval : double
+    +stoppedby : string
+}
+
+class limit {
+    +comparison : comparison
+}
+limit *-- comparison
+
+enum method {
+    PUT = PUT
+    PUTCB = PUTCB
+    GET = GET
+    GETCB = GETCB
+    GETPUT = GETPUT
+    GETPUTCB = GETPUTCB
+}
+
+class monitoroptions {
+    +id : string[]
+    +type : string
+}
+
+class motor {
+    +trigger : access
+    +axis : axis[]
+    +option : option[]
+}
+motor *-- access
+motor *-- "n" axis
+motor *-- "n" option
+
+class option {
+    +value : access
+    +displaygroup : string
+    +monitor : boolean
+    +autoacquire : autoacquire
+}
+option *-- access
+option *- autoacquire
+
+class parameter {
+    +value : string
+    +name : string
+}
+
+class plot {
+    +name : string
+    +xaxis : xaxis
+    +init : boolean
+    +yaxis : yaxis[]
+    +id : positiveInteger
+}
+plot *-- xaxis
+plot *-- "n" yaxis
+
+class plotaxis {
+    +id : string
+    +mode : plotmode
+}
+plotaxis <|-- xaxis
+plotaxis <|-- yaxis
+plotaxis *-- plotmode
+
+class xaxis {
+}
+
+class yaxis {
+    +modifier : axismodifier
+    +normalize_id : string
+    +linestyle : string
+    +color : string
+    +markstyle : string
+}
+yaxis *-- axismodifier
+
+enum plotmode {
+    linear = linear
+    log = log
+}
+
+together {
+    class plugin
+    class pluginParameter
+    class pluginData
+    class pluginType
+}
+
+class plugin {
+    +name : string
+    +location : string
+    +parameter : pluginParameter[]
+    +type : pluginType
+}
+plugin *-- "n" pluginParameter
+plugin *-- pluginType
+
+enum pluginType {
+    position = position
+    save = save
+    display = display
+    postscanpositioning = postscanpositioning
+}
+
+enum pluginData {
+    int = int
+    double = double
+    string = string
+    axisid = axisid
+    channelid = channelid
+    deviceid = deviceid
+}
+
+class pluginParameter {
+    +value : string
+    +name : string
+    +datatype : pluginData
+    +default : string
+    +mandatory : boolean
+}
+pluginParameter *-- pluginData
+
+class positioning {
+    +axis_id : string
+    +channel_id : string
+    +normalize_id : string
+    +plugin : controller
+}
+positioning *-- controller
+
+class smClassic {
+    +valuecount : positiveInteger
+    +settletime : double
+    +triggerdelay : double
+    +triggerconfirmaxis : boolean
+    +triggerconfirmchannel : boolean
+    +triggerevent : smevent[]
+    +redoevent : smevent[]
+    +breakevent : smevent[]
+    +prescan : prescan[]
+    +smaxis : smaxis[]
+    +smchannel : smchannel[]
+    +postscan : postscan[]
+    +positioning : positioning[]
+    +plot : plot[]
+}
+smClassic *-- "n" smevent
+smClassic *-- "n" prescan
+smClassic *-- "n" smaxis
+smClassic *-- "n" smchannel
+smClassic *-- "n" postscan
+smClassic *-- "n" positioning
+smClassic *-- "n" plot
+
+class prescan {
+    +id : string
+    +value : typevalue
+}
+prescan *-- typevalue
+
+class postscan {
+    +id : string
+    +value : typevalue
+    +reset_originalvalue : boolean
+}
+postscan *-- typevalue
+
+class smDynamicAxisPositions {
+}
+
+class smDynamicChannelValues {
+}
+
+class smSaveAxisPositions {
+    +smaxis : smaxis[]
+}
+smSaveAxisPositions *-- "n" smaxis
+
+class smSaveChannelValues {
+    +smchannel : smchannel[]
+}
+smSaveChannelValues *-- "n" smchannel
+
+class smaxis {
+    +axisid : string
+    +stepfunction : stepfunction
+    +positionmode : smaxis_positionmode
+    +startstopstep : startstopstep
+    +stepfilename : string
+    +plugin : controller
+    +positionlist : string
+    +range : stepfunctionrange
+}
+smaxis *-- stepfunction
+smaxis *-- smaxis_positionmode
+smaxis *-- startstopstep
+smaxis *-- controller
+smaxis *-- stepfunctionrange
+
+enum smaxis_positionmode {
+    relative = relative
+    absolute = absolute
+}
+
+class smchannel {
+    +channelid : string
+    +normalize_id : string
+    +redoevent : smevent[]
+    +deferredtrigger : boolean
+}
+smchannel <|-- standardchannel
+smchannel <|-- intervalchannel
+smchannel *-- "n" smevent
+
+class smevent {
+}
+smevent <|-- detectorevent
+smevent <|-- monitorevent
+smevent <|-- scheduleevent
+
+class detectorevent {
+    +id : string
+}
+
+class monitorevent {
+    +id : string
+    +limit : limit
+}
+monitorevent *-- limit
+
+class scheduleevent {
+    +incident : incident
+    +smid : integer
+}
+scheduleevent *-- incident
+
+class standardchannel {
+    +averagecount : nonNegativeInteger
+    +maxdeviation : double
+    +minimum : double
+    +maxattempts : nonNegativeInteger
+    +sendreadyevent : boolean
+}
+
+class startstopstep {
+    +start : typevalue
+    +stop : typevalue
+    +stepwidth : typevalue
+    +ismainaxis : boolean
+}
+startstopstep *-- "n" typevalue
+
+enum stepfunction {
+    Add = Add
+    Multiply = Multiply
+    File = File
+    Plugin = Plugin
+    Positionlist = Positionlist
+    Range = Range
+}
+
+class stepfunctionrange {
+    +expression : string
+    +positionlist : string
+}
+
+enum transport {
+    ca = ca
+    local = local
+}
+
+class typevalue {
+    +value : string
+    +type : data
+}
+typevalue *-- data
+typevalue <|-- limit
+
+class unit {
+    +unitstring : string
+}
+
+@enduml
