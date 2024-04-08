@@ -93,6 +93,7 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
 
 .. figure:: uml/evedata.evefile.evedata.*
     :align: center
+    :width: 750px
 
     Class hierarchy of the evefile.evedata module. Each class has a corresponding metadata class in the evefile.evemetadata module. While in this diagram, EveMotorData and EveDetectorData seem to have no difference, at least they have a different type of metadata (see the evefile.evemetadata module below), besides the type attribute set accordingly.
 

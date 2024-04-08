@@ -6,7 +6,12 @@ class EveData {
     values : np.ndarray
     type : DeviceType
 }
-note left: "values" contains a 1D array.\nFor individual values see derived classes\nEveAverageDetectorData and\nEveIntervalDetectorData
+note left of EveData::values
+    "values" contains a 1D array.
+    For individual values see derived classes
+    EveAverageDetectorData and
+    EveIntervalDetectorData
+end note
 
 enum DeviceType {
     MOTOR
