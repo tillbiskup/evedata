@@ -41,28 +41,16 @@ Furthermore, the evefile subpackage provides a stable abstraction of the content
 As usual, the core domain provides the (abstract) entities representing the different types of content. Hence, it is *not* concerned with the actual layout of an eveH5 file nor any importers nor the mapping of different eveH5 schema versions.
 
 
-.. note::
-
-    Shall we rename the modules omitting the "eve" prefix, as this context is already given by ``evefile`` (and the "Eve" prefix of most classes contained therein)? This would imply the following renamings::
-
-        evefile.evefile     => evefile.file
-        evefile.evedata     => evefile.data
-        evefile.evemetadata => evefile.metadata
-
-
-    Omitting the "Eve" prefix for the class names may be a bad idea, though, as with the prefix, it is always obvious whether we are dealing with an evefile-related class or the user-facing dataset-centric abstraction.
-
-
-evefile.evefile module
-~~~~~~~~~~~~~~~~~~~~~~
+evefile.file module
+~~~~~~~~~~~~~~~~~~~
 
 Despite the opposite chain of dependencies, starting with the ``evefile.evefile`` module seems sensible, as its ``EveFile`` class represents a single eveH5 file and provides kind of an entry point.
 
 
-.. figure:: uml/evedata.evefile.evefile.*
+.. figure:: uml/evedata.evefile.file.*
     :align: center
 
-    Class hierarchy of the evefile.evefile module. The EveFile class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage.
+    Class hierarchy of the evefile.file module. The EveFile class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage.
 
 
 .. note::
@@ -85,17 +73,17 @@ Despite the opposite chain of dependencies, starting with the ``evefile.evefile`
       Is there a need to distinguish between file-level comments and life comments (aka log messages)? If so, shall this be done in the ``EveFile`` class or in the ``Comment`` class (possibly by means of two subtypes of the ``Comment`` class)?
 
 
-evefile.evedata module
-~~~~~~~~~~~~~~~~~~~~~~
+evefile.data module
+~~~~~~~~~~~~~~~~~~~
 
 Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module provides the relevant entities to describe these datasets. Although currently (as of 03/2024, eve version 2.0) neither average nor interval detectors save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
 
 
-.. figure:: uml/evedata.evefile.evedata.*
+.. figure:: uml/evedata.evefile.data.*
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.evedata module. Each class has a corresponding metadata class in the evefile.evemetadata module. While in this diagram, EveMotorData and EveDetectorData seem to have no difference, at least they have a different type of metadata (see the evefile.evemetadata module below), besides the type attribute set accordingly.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, EveMotorData and EveDetectorData seem to have no difference, at least they have a different type of metadata (see the evefile.metadata module below), besides the type attribute set accordingly.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -103,8 +91,6 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
     * Dealing with the "PosCountTimer" dataset in the timestamp/meta section
 
       There is one special dataset in an eveH5 file containing the mapping table between Position Counts and milliseconds since start of the scan. Does this need to be represented by a distinct subclass of ``EveData``? Or would it better be a subclass of ``EveMeasureData``? And what would be a sensible name? ``EvePosCountTimerData``?
-
-      What DeviceType entry shall this special dataset have? Is it a separate type of its own ("TIMESTAMP"?), or is it a "DUMB" device?
 
     * Mapping MonitorData to MeasureData
 
@@ -135,8 +121,8 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
       There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. How is this currently represented in eveH5 files, and how to model this situation with the given :class:`EveData` classes?
 
 
-evefile.evemetadata module
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+evefile.metadata module
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Data without context (*i.e.* metadata) are mostly useless. Hence, to every class (type) of data in the evefile.evedata module, there exists a corresponding metadata class.
 
@@ -146,10 +132,10 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. Furthermore, there seems to be some (immutable) information currently stored in a dataset in HDF5 that could easily be stored as attribute, due to not changing.
 
 
-.. figure:: uml/evedata.evefile.evemetadata.*
+.. figure:: uml/evedata.evefile.metadata.*
     :align: center
 
-    Class hierarchy of the evefile.evemetadata module. Each class in the evefile.evedata module has a corresponding metadata class in this module.
+    Class hierarchy of the evefile.metadata module. Each class in the evefile.data module has a corresponding metadata class in this module.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)

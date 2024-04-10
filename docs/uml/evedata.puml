@@ -5,15 +5,15 @@ package evedata {
 
     package evedata.evefile {
     
-        package evedata.evefile.evefile {
+        package evedata.evefile.file {
         }
-        package evedata.evefile.evedata {
+        package evedata.evefile.data {
         }
-        package evedata.evefile.evemetadata {
+        package evedata.evefile.metadata {
         }
 
-        evedata.evefile.evemetadata <-- evedata.evefile.evedata
-        evedata.evefile.evedata <-- evedata.evefile.evefile
+        evedata.evefile.metadata <-- evedata.evefile.data
+        evedata.evefile.data <-- evedata.evefile.file
 
     }
 

@@ -4,7 +4,6 @@
 class EveData {
     metadata : EveMetadata
     values : np.ndarray
-    type : DeviceType
 }
 note left of EveData::values
     "values" contains a 1D array.
@@ -12,13 +11,6 @@ note left of EveData::values
     EveAverageDetectorData and
     EveIntervalDetectorData
 end note
-
-enum DeviceType {
-    MOTOR
-    DETECTOR
-    DUMB
-}
-note right: dumb needs renaming.\nHow about "monitor",\n"device" or "passive"?
 
 class EveMetadata {
 }

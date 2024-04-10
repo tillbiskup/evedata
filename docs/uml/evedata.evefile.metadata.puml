@@ -40,6 +40,7 @@ class EveAverageDetectorMetadata {
     max_attempts : int
     max_deviation : float
 }
+note left: These attributes may\nchange for individual\nvalues.\n\nIs that true even for\n only one detector\n in one scan module?
 
 class EveIntervalDetectorMetadata {
     trigger_interval : float

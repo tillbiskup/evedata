@@ -6,10 +6,6 @@ class EveFile {
     scml : SCML
     data : EveData[]
 }
-note left of EveFile::data
-    Should data be split
-    into sections?
-end note
 
 class EveFileMetadata{
     filename : String
