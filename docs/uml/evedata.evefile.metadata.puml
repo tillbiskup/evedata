@@ -58,13 +58,10 @@ class AverageDetectorMetadata {
     max_deviation : float
 }
 note bottom
-    These attributes may change
-     for individual values.
+    These attributes may change      for individual values.
 
-     Is that true even for only one
-     detector in one scan module?
-     If we go for separate detectors
-     in this case, would it solve
+     Is that true even for only one detector in one scan module?
+     If we go for separate detectors in this case, would it solve
      the problem?
 end note
 

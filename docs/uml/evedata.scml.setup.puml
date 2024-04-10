@@ -48,7 +48,7 @@ class Axis {
     tweakvalue : Access
     tweakforward : Access
     tweakreverse : Access
-    option : Option[]
+    options : Option[]
     save_value : boolean
 }
 Axis *-- "n" Access
@@ -59,7 +59,7 @@ class Channel {
     trigger : Access
     stop : Access
     status : Access
-    option : Option[]
+    options : Option[]
     deferred : boolean
     save_value : boolean
 }
@@ -70,8 +70,8 @@ class Detector {
     trigger : Access
     stop : Access
     status : Access
-    channel : Channel[]
-    option : Option[]
+    channels : Channel[]
+    options : Option[]
 }
 Detector *-- "n" Access
 Detector *-- "n" Channel
@@ -80,7 +80,7 @@ Detector *-- "n" Option
 class Monitor {
     value : Access
     displaygroup : string
-    option : Option[]
+    options : Option[]
 }
 Monitor *-- Access
 Monitor *-- "n" Option
@@ -96,8 +96,8 @@ enum Method {
 
 class Motor {
     trigger : Access
-    axis : Axis[]
-    option : Option[]
+    axes : Axis[]
+    options : Option[]
 }
 Motor *-- Access
 Motor *-- "n" Axis

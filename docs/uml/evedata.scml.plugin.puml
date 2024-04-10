@@ -5,7 +5,7 @@
 class Plugin {
      name : string
      location : string
-     parameter : PluginParameter[]
+     parameters : PluginParameter[]
      type : PluginType
 }
 
@@ -14,7 +14,7 @@ PluginType *- Plugin
 
 enum PluginType {
     position = position
-    save = HDF
+    save = "HDF5"
     display = display
     postscanpositioning = postscanpositioning
 }

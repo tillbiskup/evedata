@@ -20,7 +20,39 @@ Core domain
 
 The core domain contains the central entities and their abstract interactions, or, in terms of the "Domain Driven Design" (Eric Evans), the implementation of the abstract model of the application.
 
-In the evedata package, due to being split into two separate subpackages, each of them has its own core domain that will be described below.
+In the evedata package, due to being split into separate subpackages, each of them has its own core domain that will be described below.
+
+
+.. admonition:: General remarks on the UML class diagrams
+
+    The UML class diagrams displayed below try to consistently follow a series of conventions listed below.
+
+    * Capitalising attribute types
+
+      Attribute types that are default types of the (Python) language are not capitalised.
+
+      Attribute types that are instances of self-defined classes are capitalised and spelled exactly as the corresponding class.
+
+    * Singular and plural forms of attributes
+
+      Scalar attributes have singular names.
+
+      Attributes containing containers (lists, dictionaries, ...) have plural names.
+
+    * Naming conventions
+
+      Generally, naming conventions follow PEP8: class names are in CamelCase, attributes and methods in snake_case.
+
+    * Attributes of enumerations
+
+      No convention has yet been agreed upon. Possibilities would be ALLCAPS (as the attributes could be interpreted as constants) or snake_case.
+
+    * Dictionaries
+
+      Attributes that contain dictionaries as container have the container type followed by curly braces ``{}``, although this seems not to be part of the UML standard.
+
+
+
 
 
 evefile subpackage
@@ -256,6 +288,7 @@ The (original) idea behind this module stems from the ASpecD framework and its r
 
 .. figure:: uml/evedata.dataset.metadata.*
     :align: center
+    :width: 750px
 
     Class hierarchy of the dataset.metadata module, closely resembling the dataset concept of the ASpecD framework and the current rough implementation in the evedataviewer package. For the corresponding dataset class see the dataset.dataset module.
 
@@ -311,7 +344,7 @@ This module contains the main ``SCML`` class and probably as well the ``Plugin``
 scml.scan module
 ~~~~~~~~~~~~~~~~
 
-This module contains all classes storing information on the actual scan. An SCML file can contain exactly one scan. Furthermore, as has been decided to remove multiple chains in one scan, and hence the concept of chains altogether, the hierarchy is a bit simpler as compared to the current (as of 04/2024) SCML XML schema. One scan consists of *n* scan modules.
+This module contains all classes storing information on the actual scan. An SCML file can contain exactly one scan. Furthermore, as has been decided to remove multiple chains in one scan, and hence the concept of chains altogether, the hierarchy is a bit simpler as compared to the current (Version 9.2, as of 04/2024) SCML XML schema. One scan consists of *n* scan modules.
 
 To slightly reduce the already rather complex list of classes, plots, events, and pause conditions have been outsourced into separate modules, with the latter two together in one module. These modules are described separately below.
 
@@ -324,10 +357,6 @@ To slightly reduce the already rather complex list of classes, plots, events, an
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
-
-    * Singular and plural forms for attribute names
-
-      Currently, many attributes have a singular name, but contain lists. For consistency, having plural names for attributes containing lists would be sensible. For even more consistency, it would be great to have these changes in the SCML schema as well, at least in the long(er) run.
 
     * Controller class
 
@@ -367,9 +396,7 @@ scml.setup module
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Singular and plural forms for attribute names
-
-      Currently, many attributes have a singular name, but contain lists. For consistency, having plural names for attributes containing lists would be sensible. For even more consistency, it would be great to have these changes in the SCML schema as well, at least in the long(er) run.
+    * ...
 
 
 Business rules

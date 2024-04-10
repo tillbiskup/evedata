@@ -17,7 +17,7 @@ class Metadata {
 note bottom: See separate diagram\nfor class hierarchy
 
 class MeasureData {
-    {field} position_counter : np.ndarray(dtype=int)
+    {field} positions : np.ndarray(dtype=int)
 }
 
 class MonitorData {

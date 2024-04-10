@@ -30,9 +30,9 @@ class Data {
 note left: Can data be\nragged arrays?
 
 class Axis {
-    quantity : String
-    symbol : String
-    unit : String
+    quantity : string
+    symbol : string
+    unit : string
     values : numpy.ndarray
 
     label()

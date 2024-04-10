@@ -8,33 +8,33 @@ class EveFile {
 }
 
 class EveFileMetadata{
-    filename : String
-    h5_version : String
-    eve_version : String
-    xml_version: String
-    location : String
-    start : DateTime
-    end : DateTime
-    preferred_axis : String
-    preferred_channel : String
-    preferred_normalisation_channel : String
+    filename : string
+    h5_version : string
+    eve_version : string
+    xml_version: string
+    location : string
+    start : datetime
+    end : datetime
+    preferred_axis : string
+    preferred_channel : string
+    preferred_normalisation_channel : string
 }
 
 class Comment {
-    timestamp : DateTime
-    comment : String
+    timestamp : datetime
+    comment : string
 }
 note bottom: Comments are both, file comment\nand log messages. Discriminating\ncould be done in the EveFile class. 
 
 class SCML {
     metadata : SCMLMetadata
-    xml: String
+    xml: string
 }
 note top: xml is currently a string, but will\nbe replaced/amended by classes\nrepresenting the SCML contents
 
 class SCMLMetadata {
-    author: String
-    version: String
+    author: string
+    version: string
 }
 
 EveFile *-- EveFileMetadata

@@ -10,9 +10,9 @@ class Scan {
     saveplugin : Controller
     monitoroptions : MonitorOptions
     startevent : Event
-    redoevent : Event[]
-    breakevent : Event[]
-    stopevent : Event[]
+    redoevents : Event[]
+    breakevents : Event[]
+    stopevents : Event[]
     pauseconditions : PauseCondition[]
     scanmodules : ScanModule[]
 }
@@ -57,6 +57,7 @@ class MonitorOptions {
     id : string[]
     type : string
 }
+note bottom: Why is "id" a\nlist of strings?
 
 class Parameter {
     value : string
@@ -77,15 +78,15 @@ class ClassicScanModule {
     triggerdelay : float
     triggerconfirmaxis : boolean
     triggerconfirmchannel : boolean
-    triggerevent : Event[]
-    redoevent : Event[]
-    breakevent : Event[]
-    prescan : PreScan[]
-    scanmoduleaxis : ScanModuleAxis[]
-    scanmodulechannel : ScanModuleChannel[]
-    postscan : PostScan[]
-    positioning : Positioning[]
-    plot : Plot[]
+    triggerevents : Event[]
+    redoevents : Event[]
+    breakevents : Event[]
+    prescans : PreScan[]
+    scanmoduleaxes : ScanModuleAxis[]
+    scanmodulechannels : ScanModuleChannel[]
+    postscans : PostScan[]
+    positionings : Positioning[]
+    plots : Plot[]
 }
 ClassicScanModule *-- "n" Event
 ClassicScanModule *-- "n" PreScan
@@ -149,7 +150,7 @@ enum PositionMode {
 class ScanModuleChannel {
     channelid : string
     normalize_id : string
-    redoevent : Event[]
+    redoevents : Event[]
     deferredtrigger : boolean
 }
 ScanModuleChannel <|-- StandardChannel
