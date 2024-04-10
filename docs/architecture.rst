@@ -76,7 +76,7 @@ Despite the opposite chain of dependencies, starting with the ``evefile.evefile`
 evefile.data module
 ~~~~~~~~~~~~~~~~~~~
 
-Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module provides the relevant entities to describe these datasets. Although currently (as of 03/2024, eve version 2.0) neither average nor interval detectors save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
+Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 03/2024, eve version 2.0) neither average nor interval detectors save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
 
 
 .. figure:: uml/evedata.evefile.data.*
@@ -120,7 +120,7 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
 evefile.metadata module
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Data without context (*i.e.* metadata) are mostly useless. Hence, to every class (type) of data in the evefile.evedata module, there exists a corresponding metadata class.
+Data without context (*i.e.* metadata) are mostly useless. Hence, to every class (type) of data in the evefile.data module, there exists a corresponding metadata class.
 
 
 .. note::
@@ -157,7 +157,7 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
 
     * Monitor metadata
 
-      Clearly, monitor metadata are not sufficiently modelled yet. In recent eveH5 files, they have only few attributes. Are the other attributes (comparable to the attributes of ``EveMeasureMetadata``) contained in the SCML file and could be read from there?
+      Clearly, monitor metadata are not sufficiently modelled yet. In recent eveH5 files, they have only few attributes. Are the other attributes (comparable to the attributes of ``MeasureMetadata``) contained in the SCML file and could be read from there?
 
       Is there any sensible chance to relate monitor datasets to datasets in the standard section? Currently, it looks like the eveH5 monitor datasets have no sensible/helpful "name" attribute, only an ID that partly resembles IDs in the standard section. (And of course, there are usually monitors that do not appear in any other section, hence cannot be related to other devices/datasets.)
 
@@ -457,7 +457,7 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
 
     * How to deal with "lazy loading" combined with filling?
 
-      For filling any axis, we need to have the position counts of *all* HDF5 datasets (aka :obj:`evefile.evedata.EveData` objects). This seems to contradict the idea of *not* reading all data at once before filling.
+      For filling any axis, we need to have the position counts of *all* HDF5 datasets (aka :obj:`evefile.data.EveData` objects). This seems to contradict the idea of *not* reading all data at once before filling.
 
       Of course, if one uses the preferred channel/detector and axis/motor (and there are "established" ways how to determine those if they are not set in the eveH5 file explicitly, though this most probably involves again accessing *all* data), one could only fill those and refill once a user wants to see something different. However, this would imply changing the fill mode "on the fly". If the original :obj:`evefile.evefile.EveFile` object is gone by then, the relevant information may no longer be available, resulting in reimporting the data from the original eveH5 file.
 

@@ -1,39 +1,39 @@
 @startuml
 'skinparam dpi 150
 
-class EveData {
-    metadata : EveMetadata
+class Data {
+    metadata : Metadata
     values : np.ndarray
 }
-note left of EveData::values
+note left of Data::values
     "values" contains a 1D array.
     For individual values see derived classes
-    EveAverageDetectorData and
-    EveIntervalDetectorData
+    AverageDetectorData and
+    IntervalDetectorData
 end note
 
-class EveMetadata {
+class Metadata {
 }
 note bottom: See separate diagram\nfor class hierarchy
 
-class EveMeasureData {
+class MeasureData {
     {field} position_counter : np.ndarray(dtype=int)
 }
 
-class EveMonitorData {
+class MonitorData {
     {field} milliseconds : np.ndarray(dtype=int)
 }
 
-class EveMotorData {
+class MotorData {
 }
 
-class EveDetectorData {
+class DetectorData {
 }
 
-class EveTimestampData {
+class TimestampData {
 }
 
-class EveScanModuleData {
+class ScanModuleData {
 }
 note bottom
     The corresponding dataset in the
@@ -43,7 +43,7 @@ note bottom
     scan module for each position count.
 end note
 
-class EveAverageDetectorData {
+class AverageDetectorData {
     raw_values : raggedarray
     {field} attempts : np.ndarray(dtype=int)
     mean()
@@ -51,10 +51,10 @@ class EveAverageDetectorData {
     averaged_values()
     has_raw_values()
 }
-note bottom: How does mean() differ\nfrom values in EveData?
-note bottom of EveAverageDetectorData: averaged_values() returns only\nthose values used to average over
+note bottom: How does mean() differ\nfrom values in Data?
+note bottom of AverageDetectorData: averaged_values() returns only\nthose values used to average over
 
-class EveIntervalDetectorData {
+class IntervalDetectorData {
     raw_values : raggedarray
     {field} counts : np.ndarray(dtype=int)
     mean()
@@ -62,14 +62,14 @@ class EveIntervalDetectorData {
     has_raw_values()
 }
 
-EveData *-- EveMetadata
-EveData <|-- EveMeasureData
-EveData <|-- EveMonitorData
-EveMeasureData <|-- EveMotorData
-EveMeasureData <|-- EveDetectorData
-EveMeasureData <|-- EveTimestampData
-EveMeasureData <|-- EveScanModuleData
-EveDetectorData <|-- EveAverageDetectorData
-EveDetectorData <|-- EveIntervalDetectorData
+Data *-- Metadata
+Data <|-- MeasureData
+Data <|-- MonitorData
+MeasureData <|-- MotorData
+MeasureData <|-- DetectorData
+MeasureData <|-- TimestampData
+MeasureData <|-- ScanModuleData
+DetectorData <|-- AverageDetectorData
+DetectorData <|-- IntervalDetectorData
 
 @enduml
