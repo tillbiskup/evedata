@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Plot {
+    name : string
+    xaxis : XAxis
+    init : boolean
+    yaxis : YAxis[]
+    id : integer
+}
+Plot *-- XAxis
+Plot *-- "1..2" YAxis
+ClassicScanModule *- "n" Plot
+
+note bottom of ClassicScanModule: See separate\nscan module
+
+class PlotAxis {
+    id : string
+    mode : PlotMode
+}
+PlotAxis <|-- XAxis
+PlotAxis <|-- YAxis
+PlotAxis *-- PlotMode
+
+class XAxis {
+}
+
+class YAxis {
+    modifier : AxisModifier
+    normalize_id : string
+    linestyle : string
+    color : string
+    markstyle : string
+}
+YAxis *-- AxisModifier
+
+enum AxisModifier {
+    NONE = NONE
+    INVERSE = INVERSE
+}
+
+enum PlotMode {
+    linear = linear
+    log = log
+}
+
+@enduml

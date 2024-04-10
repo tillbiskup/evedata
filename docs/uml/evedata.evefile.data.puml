@@ -30,6 +30,19 @@ class EveMotorData {
 class EveDetectorData {
 }
 
+class EveTimestampData {
+}
+
+class EveScanModuleData {
+}
+note bottom
+    The corresponding dataset in the
+    eveH5 file does not exist yet.
+
+    The idea is to store the id of the
+    scan module for each position count.
+end note
+
 class EveAverageDetectorData {
     raw_values : raggedarray
     {field} attempts : np.ndarray(dtype=int)
@@ -54,6 +67,8 @@ EveData <|-- EveMeasureData
 EveData <|-- EveMonitorData
 EveMeasureData <|-- EveMotorData
 EveMeasureData <|-- EveDetectorData
+EveMeasureData <|-- EveTimestampData
+EveMeasureData <|-- EveScanModuleData
 EveDetectorData <|-- EveAverageDetectorData
 EveDetectorData <|-- EveIntervalDetectorData
 

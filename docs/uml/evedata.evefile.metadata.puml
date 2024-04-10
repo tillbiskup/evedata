@@ -1,10 +1,7 @@
 @startuml
 
 class EveMetadata {
-    id : String
-    name : String
-    pv : String
-    transport_type : String
+    name : string
     section : Section
 }
 
@@ -16,43 +13,73 @@ enum Section {
     STANDARD
     SNAPSHOT
     MONITOR
-    TIMESTAMP
+    META
 }
-note top: These sections may have different\nnames in the final data model\nand need not reflect the eveH5 structure.
+
+enum Transport {
+    CA
+    LOCAL
+}
+note bottom: This is defined in the\nscml.setup module\nas well. Generalise?
+
+interface DeviceMetadata {
+    id : string
+    pv : string
+    transport_type : Transport
+}
 
 class EveMeasureMetadata {
-    unit : String
+    unit : string
 }
 
-class EveMonitorMetadata{
+class EveMonitorMetadata implements DeviceMetadata {
+    section : Section.MONITOR
 }
 
-class EveMotorMetadata {
+class EveMotorMetadata implements DeviceMetadata  {
 }
 
-class EveDetectorMetadata {
-    normalise_id : String
+class EveDetectorMetadata implements DeviceMetadata  {
+    normalise_id : string
+}
+
+class EveTimestampMetadata {
+    section : Section.META
+}
+
+class EveScanModuleMetadata {
+    section : Section.META
 }
 
 class EveAverageDetectorMetadata {
-    n_averages : int
+    n_averages : integer
     low_limit : float
-    max_attempts : int
+    max_attempts : integer
     max_deviation : float
 }
-note left: These attributes may\nchange for individual\nvalues.\n\nIs that true even for\n only one detector\n in one scan module?
+note bottom
+    These attributes may change
+     for individual values.
+
+     Is that true even for only one
+     detector in one scan module?
+     If we go for separate detectors
+     in this case, would it solve
+     the problem?
+end note
 
 class EveIntervalDetectorMetadata {
     trigger_interval : float
 }
 
-EveMetadata *-- EveData
+EveData *- EveMetadata
 EveMetadata <|-- EveMeasureMetadata
 EveMetadata <|-- EveMonitorMetadata
 EveMeasureMetadata <|-- EveDetectorMetadata
 EveMeasureMetadata <|-- EveMotorMetadata
+EveMeasureMetadata <|-- EveTimestampMetadata
+EveMeasureMetadata <|-- EveScanModuleMetadata
 EveDetectorMetadata <|-- EveAverageDetectorMetadata
 EveDetectorMetadata <|-- EveIntervalDetectorMetadata
-
 
 @enduml

@@ -1,0 +1,29 @@
+@startuml
+
+class SCML {
+    location : string
+    version : string
+    scan : Scan
+    plugins : Plugin[]
+    detectors : Detector[]
+    motors : Motor[]
+    monitors : Monitor[]
+}
+SCML *-- Scan
+SCML *-- "n" Plugin
+SCML *-- "n" Detector
+SCML *-- "n" Motor
+SCML *-- "n" Monitor
+
+note bottom of Scan: See separate\nscan module
+
+note as SetupNote
+    See separate
+    setup module
+end note
+
+Detector .. SetupNote
+Motor .. SetupNote
+Monitor .. SetupNote
+
+@enduml

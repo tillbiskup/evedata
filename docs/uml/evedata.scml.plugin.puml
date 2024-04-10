@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+
+class Plugin {
+     name : string
+     location : string
+     parameter : PluginParameter[]
+     type : PluginType
+}
+
+Plugin *-- "n" PluginParameter
+PluginType *- Plugin
+
+enum PluginType {
+    position = position
+    save = HDF
+    display = display
+    postscanpositioning = postscanpositioning
+}
+note left of PluginType::save
+    There is only one
+    save plugin left: HDF5
+end note
+note left of PluginType::display
+    What are these?
+end note
+
+enum PluginData {
+    int = int
+    double = double
+    string = string
+    axis_id = axisid
+    channel_id = channelid
+    device_id = deviceid
+}
+
+class PluginParameter {
+     value : string
+     name : string
+     datatype : PluginData
+     default : string
+     mandatory : boolean
+}
+PluginData *- PluginParameter
+
+@enduml

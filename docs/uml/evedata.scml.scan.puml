@@ -1,0 +1,188 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Scan {
+    repeatcount : integer
+    comment : string
+    savefilename : string
+    confirmsave : boolean
+    autonumber : boolean
+    saveplugin : Controller
+    monitoroptions : MonitorOptions
+    startevent : Event
+    redoevent : Event[]
+    breakevent : Event[]
+    stopevent : Event[]
+    pauseconditions : PauseCondition[]
+    scanmodules : ScanModule[]
+}
+Scan *-- Controller
+Scan *-- "n" ScanModule
+Scan *-- "n" PauseCondition
+Scan *-- "n" Event
+Scan *-- MonitorOptions
+
+note bottom of PauseCondition: See separate\nevent module
+
+SCML *- Scan
+note left of SCML: See separate\nscml module
+
+class ScanModule {
+    name : string
+    xpos : integer
+    ypos : integer
+    parent : integer
+    nested : integer
+    appended : integer
+    id : integer
+}
+ScanModule <|-- ClassicScanModule
+ScanModule <|-- SaveAxisPositionsScanModule
+ScanModule <|-- SaveChannelValuesScanModule
+ScanModule <|-- DynamicAxisPositionsScanModule
+ScanModule <|-- DynamicChannelValuesScanModule
+
+class Controller {
+    parameter : Parameter[]
+    name : string
+}
+Controller *-- "n" Parameter
+
+class IntervalChannel {
+    triggerinterval : float
+    stoppedby : string
+}
+
+class MonitorOptions {
+    id : string[]
+    type : string
+}
+
+class Parameter {
+    value : string
+    name : string
+}
+
+class Positioning {
+    axis_id : string
+    channel_id : string
+    normalize_id : string
+    plugin : Controller
+}
+Positioning *-- Controller
+
+class ClassicScanModule {
+    valuecount : integer
+    settletime : float
+    triggerdelay : float
+    triggerconfirmaxis : boolean
+    triggerconfirmchannel : boolean
+    triggerevent : Event[]
+    redoevent : Event[]
+    breakevent : Event[]
+    prescan : PreScan[]
+    scanmoduleaxis : ScanModuleAxis[]
+    scanmodulechannel : ScanModuleChannel[]
+    postscan : PostScan[]
+    positioning : Positioning[]
+    plot : Plot[]
+}
+ClassicScanModule *-- "n" Event
+ClassicScanModule *-- "n" PreScan
+ClassicScanModule *-- "n" ScanModuleAxis
+ClassicScanModule *-- "n" ScanModuleChannel
+ClassicScanModule *-- "n" PostScan
+ClassicScanModule *-- "n" Positioning
+ClassicScanModule *-- "n" Plot
+
+note bottom of Plot: See separate\nplot module
+note bottom of Event: See separate\nevent module
+
+class PreScan {
+    id : string
+    value : typevalue
+}
+
+class PostScan {
+    id : string
+    value : typevalue
+    reset_originalvalue : boolean
+}
+
+class DynamicAxisPositionsScanModule {
+}
+
+class DynamicChannelValuesScanModule {
+}
+
+class SaveAxisPositionsScanModule {
+    scanmoduleaxis : ScanModuleAxis[]
+}
+SaveAxisPositionsScanModule *-- "n" ScanModuleAxis
+
+class SaveChannelValuesScanModule {
+    scanmodulechannel : ScanModuleChannel[]
+}
+SaveChannelValuesScanModule *-- "n" ScanModuleChannel
+
+class ScanModuleAxis {
+    axis_id : string
+    stepfunction : StepFunction
+    positionmode : PositionMode
+    startstopstep : StartStopStep
+    stepfilename : string
+    plugin : Controller
+    positionlist : string
+    range : StepFunctionRange
+}
+ScanModuleAxis *-- StepFunction
+ScanModuleAxis *-- PositionMode
+ScanModuleAxis *-- StartStopStep
+ScanModuleAxis *-- Controller
+ScanModuleAxis *-- StepFunctionRange
+
+enum PositionMode {
+    relative = relative
+    absolute = absolute
+}
+
+class ScanModuleChannel {
+    channelid : string
+    normalize_id : string
+    redoevent : Event[]
+    deferredtrigger : boolean
+}
+ScanModuleChannel <|-- StandardChannel
+ScanModuleChannel <|-- IntervalChannel
+ScanModuleChannel *-- "n" Event
+
+class StandardChannel {
+    averagecount : integer
+    maxdeviation : float
+    minimum : float
+    maxattempts : integer
+    sendreadyevent : boolean
+}
+
+class StartStopStep {
+    start : typevalue
+    stop : typevalue
+    stepwidth : typevalue
+    ismainaxis : boolean
+}
+
+enum StepFunction {
+    Add = Add
+    Multiply = Multiply
+    File = File
+    Plugin = Plugin
+    Positionlist = Positionlist
+    Range = Range
+}
+
+class StepFunctionRange {
+    expression : string
+    positionlist : string
+}
+
+@enduml

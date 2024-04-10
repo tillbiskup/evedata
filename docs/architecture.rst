@@ -9,10 +9,10 @@ Just to make matters a bit more interesting, the evedata package has basically *
 
 .. _fig-uml_evedata:
 
-.. figure:: uml/evedata.*
+.. figure:: uml/evedata-with-scml.*
     :align: center
 
-    A high-level view of the different subpackages of the evedata package, currently reflecting the two interfaces. For details, see further schemata below. While "evefile" will most probably be the name of the subpackage interfacing the eveH5 files, the name of the "dataset" subpackage is not final yet.
+    A high-level view of the different subpackages of the evedata package, currently reflecting the two interfaces (evefile and dataset). For details, see further schemata below. While "evefile" will most probably be the name of the subpackage interfacing the eveH5 files, the name of the "dataset" subpackage is not final yet.
 
 
 Core domain
@@ -88,10 +88,6 @@ Data are organised in "datasets" within HDF5, and the ``evefile.evedata`` module
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Dealing with the "PosCountTimer" dataset in the timestamp/meta section
-
-      There is one special dataset in an eveH5 file containing the mapping table between Position Counts and milliseconds since start of the scan. Does this need to be represented by a distinct subclass of ``EveData``? Or would it better be a subclass of ``EveMeasureData``? And what would be a sensible name? ``EvePosCountTimerData``?
-
     * Mapping MonitorData to MeasureData
 
       There is an age-long discussion how to map monitor data (with time in milliseconds as primary axis) to measured data (with position counts as primary axis). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place? Here in the evefile subpackage? Or in the "convenience interface" layer, *i.e.* the dataset subpackage?
@@ -134,23 +130,30 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
 
 .. figure:: uml/evedata.evefile.metadata.*
     :align: center
+    :width: 750px
 
     Class hierarchy of the evefile.metadata module. Each class in the evefile.data module has a corresponding metadata class in this module.
+
+
+A note on the ``DeviceMetadata`` interface: The eveH5 datasets corresponding to the EveTimestampMetadata and EveScanModuleMetadata classes are special in sense of having no PV and transport type nor an id. Several options have been considered for addressing this problem:
+
+#. Moving these three attributes down the line and copying them multiple times (feels bad).
+#. Leaving the attributes blank for the two "special" datasets (feels bad, too).
+#. Introduce another class in the hierarchy, breaking the parallel to the EveData class hierarchy (potentially confusing).
+#. Create a mixin class (abstract interface) with the three attributes and use multiple inheritance/implements.
+
+As obvious from the UML diagram, the last option has been chosen. The name "DeviceMetadata" resembles the hierarchy in the ``scml.setup`` module and clearly distinguishes actual devices from datasets not containing data read from some instrument.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
     * Names of the sections
 
-      The names of the sections are currently modelled as Enumeration ("Section"). AFAIK, the names of the sections in the eveH5 file have changed over time. What would be sensible names for the different sections? Are the sections mentioned (standard, snapshot, monitor, timestamp) sufficient? Is anything missing? Will there likely be more in the future? Do we really need "timestamp" as separate section (probably yes)?
+      The names of the sections are currently modelled as Enumeration ("Section"). AFAIK, the names of the sections in the eveH5 file have changed over time. What would be sensible names for the different sections? Are the sections mentioned (standard, snapshot, monitor, meta) sufficient? Is anything missing? Will there likely be more in the future?
 
-    * Metadata from SCML file
+      How about renaming STANDARD to MAIN? This would better reflect that this section contains datasets from the main part of the scan. Otherwise, one could argue in favour of STANDARD and rename the class ``ClassicScanModule`` in the scml.scan module to ``StandardScanModule``.
 
-      There is likely more information contained in the SCML file (and the end station/beam line description). What kind of (relevant) information is available there, and how to map this to the respective metadata classes?
-
-    * PosCountTimer metadata
-
-      There exists one special dataset in the "meta"/"timestamp" section of an eveH5 file: "PosCountTimer". If we model this one with its own ``EveData`` class (see above), it would probably need its own metadata class, too. It seems, though, that this class has much less attributes as compared to the ``EveMetadata`` class. However, we shall *not* break the ``EveMetadata`` class hierarchy, as ``EveData`` has an attribute of type ``EveMetadata``.
+      About the "META" section: Given that there is the idea to have two special datasets in this section in the future, namely the PosCountTimer and a PosCountScanModule dataset, it seems sensible to have them there.
 
     * Monitor metadata
 
@@ -158,17 +161,13 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
 
       Is there any sensible chance to relate monitor datasets to datasets in the standard section? Currently, it looks like the eveH5 monitor datasets have no sensible/helpful "name" attribute, only an ID that partly resembles IDs in the standard section. (And of course, there are usually monitors that do not appear in any other section, hence cannot be related to other devices/datasets.)
 
-    * Attribute "pv"
+    * Attributes "pv" and "transport_type"
 
-      "pv" most probably means EPICS process variable. Is this the best name? Would "access" (as in eveH5) be better? Is there any chance to confuse this in the future (EPICS v7 introduced a new transport layer: pvAccess instead of the still existing CA)?
+      "pv" is the EPICS process variable, transport type refers to the access mode (local vs. ca). Both are currently stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<transport_type>:<pv>``.
 
-    * Attribute "transport_type"
+    * Metadata from SCML file
 
-      What is in here? It seems not present in current eveH5 files...
-
-    * Attributes of the EveMetadata base class
-
-      Given that there will probably be a special EveData subclass for the PosCountTimer dataset from eveH5 files that has only very few metadata, many of the current metadata present in the EveMetadata class would need to be moved down.
+      There is likely more information contained in the SCML file (and the end station/beam line description). What kind of (relevant) information is available there, and how to map this to the respective metadata classes?
 
     * Information on the individual devices
 
@@ -264,6 +263,113 @@ The (original) idea behind this module stems from the ASpecD framework and its r
 In the given context of the evedata package, this would mean to separate data and metadata for the different datasets as represented in the eveH5 file, and store the data (as "device data") in the dataset, the "primary" data as data, and the corresponding metadata as a composition of metadata classes in the Dataset.metadata attribute. Not yet sure whether this makes sense.
 
 The contents of the SCML file could be represented in the ``Metadata`` class as well, probably/perhaps split into separate fields for the different areas of an SCML file (setup, aka devices, and scan). Whether to directly use the classes representing the SCML file contents or to further abstract needs to be decided at some point.
+
+
+scml subpackage
+---------------
+
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the scml subpackage are shown below, reflecting the current state of affairs (and thinking).
+
+The scml subpackage contains all classes necessary to represent the contents of an SCML file. The general idea behind is to have all relevant information contained in the scan description and saved together with the data in the eveH5 file at hand. The SCML file is generally stored within the eveH5 file, and it is the information used by the GUI of the measurement program. One big advantage of having the information of the SCML file as compared to the information stored in the eveH5 file itself: The structure of the scan is available, making it possible to infer much more information relevant for interpreting the data.
+
+One big difference between the SCML schema and the class hierarchy defined in this subpackage: As the evedata package can savely assume only ever to receive validated SCML files, some of the types of attributes are more relaxed as compared to the schema definition. This makes it much easier to map the types to standard Python types.
+
+
+scml.scml module
+~~~~~~~~~~~~~~~~
+
+This module contains the main ``SCML`` class and probably as well the ``Plugin`` class and its dependencies. Generally an SCML file can be split in two (three) parts: a description of the setup/instrumentation used for a scan (module ``scml.setup``) and a description of the actual scan/measurement (module ``scml.scan``). The plugins would be the third part.
+
+
+.. figure:: uml/evedata.scml.scml.*
+    :align: center
+
+    Class hierarchy of the scml.scml module, closely resembling the schema of the SCML file. Currently, the location of the "Plugin" class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped. For a class diagramm see the separate figure below.
+
+
+.. figure:: uml/evedata.scml.plugin.*
+    :align: center
+
+    Class hierarchy of the "Plugin" class, probably located in the scml.scml module and closely resembling the schema of the SCML file. Currently, the location of the "Plugin" class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped.
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Name of the module.
+
+      The name is not ideal, as it results in a quite repetitive namespace hierarchy. Alternatives may be ``file`` or ``schema``.
+
+    * Metadata from the eveH5 file
+
+      There are a few metadata from the eveH5 file that need to be added here. It seems that only the ``author`` field is missing, though. Add the field just as an attribute to the ``SCML`` class?
+
+    * Storing the plain XML
+
+      Is there a need to store the plain XML file somewhere? Or would it be sufficient to extract it (again) when needed from the eveH5 file?
+
+
+scml.scan module
+~~~~~~~~~~~~~~~~
+
+This module contains all classes storing information on the actual scan. An SCML file can contain exactly one scan. Furthermore, as has been decided to remove multiple chains in one scan, and hence the concept of chains altogether, the hierarchy is a bit simpler as compared to the current (as of 04/2024) SCML XML schema. One scan consists of *n* scan modules.
+
+To slightly reduce the already rather complex list of classes, plots, events, and pause conditions have been outsourced into separate modules, with the latter two together in one module. These modules are described separately below.
+
+
+.. figure:: uml/evedata.scml.scan.*
+    :align: center
+    :width: 750px
+
+    Class hierarchy of the scml.scan module, closely resembling the schema of the SCML file. As the scan module is already quite complicated, event and plot-related classes have been separated into their own modules and are described below. Hint: For a larger view, you may open the image in a separate tab. As it is vectorised (SVG), it scales well.
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Singular and plural forms for attribute names
+
+      Currently, many attributes have a singular name, but contain lists. For consistency, having plural names for attributes containing lists would be sensible. For even more consistency, it would be great to have these changes in the SCML schema as well, at least in the long(er) run.
+
+    * Controller class
+
+      The Controller class is part of the Scan, Positioning, and ScanModuleAxis classes, and referred to from attributes named "plugin" (or "saveplugin" in case of Scan). Why the different naming?
+
+
+scml.plot module
+~~~~~~~~~~~~~~~~
+
+
+.. figure:: uml/evedata.scml.plot.*
+    :align: center
+
+    Class hierarchy of the scml.plot module, closely resembling the schema of the SCML file. One ClassicScanModule class can have *n* plots. For the context of the ClassicScanModule, see the "scml.scan" module.
+
+
+scml.event module
+~~~~~~~~~~~~~~~~~
+
+
+.. figure:: uml/evedata.scml.event.*
+    :align: center
+
+    Class hierarchy of the scml.event module, closely resembling the schema of the SCML file. The "Event" and "PauseCondition" classes have both close ties with the "scml.scan" module. Grouping them in one module seems justified, as eventually, a "PauseCondition" could be understood as an event, too.
+
+
+scml.setup module
+~~~~~~~~~~~~~~~~~
+
+
+.. figure:: uml/evedata.scml.setup.*
+    :align: center
+    :width: 750px
+
+    Class hierarchy of the scml.setup module, closely resembling the schema of the SCML file. The subclasses "Detector, "Motor", and "Monitor" of "Device" are directly used in the "SCML" class in the "scml.scml" module. See the schema of the "scml.scml" module for details.
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Singular and plural forms for attribute names
+
+      Currently, many attributes have a singular name, but contain lists. For consistency, having plural names for attributes containing lists would be sensible. For even more consistency, it would be great to have these changes in the SCML schema as well, at least in the long(er) run.
 
 
 Business rules

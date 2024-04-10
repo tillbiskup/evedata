@@ -1,0 +1,124 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Device {
+    class : string
+    name : string
+    id : string
+    unit : Unit
+}
+Device <|-- Detector
+Device <|-- Motor
+Device <|-- Monitor
+Device <|-- Axis
+Device <|-- Channel
+Device <|-- Option
+Device *-- Unit
+
+class Access {
+    value : typevalue
+    method : Method
+    count : integer
+    transport : Transport
+    timeout : float
+    monitor : boolean
+}
+Access <|-- Unit
+Access *-- Method
+Access *-- Transport
+
+enum AutoAcquire {
+    snapshot = snapshot
+    measurement = measurement
+    no = no
+}
+
+class Axis {
+    goto : Access
+    position : Access
+    stop : Access
+    highlimit : Access
+    lowlimit : Access
+    limitviolation : Access
+    status : Access
+    movedone : Access
+    trigger : Access
+    deadband : Access
+    offset : Access
+    tweakvalue : Access
+    tweakforward : Access
+    tweakreverse : Access
+    option : Option[]
+    save_value : boolean
+}
+Axis *-- "n" Access
+Axis *-- "n" Option
+
+class Channel {
+    read : Access
+    trigger : Access
+    stop : Access
+    status : Access
+    option : Option[]
+    deferred : boolean
+    save_value : boolean
+}
+Channel *-- "n" Access
+Channel *-- "n" Option
+
+class Detector {
+    trigger : Access
+    stop : Access
+    status : Access
+    channel : Channel[]
+    option : Option[]
+}
+Detector *-- "n" Access
+Detector *-- "n" Channel
+Detector *-- "n" Option
+
+class Monitor {
+    value : Access
+    displaygroup : string
+    option : Option[]
+}
+Monitor *-- Access
+Monitor *-- "n" Option
+
+enum Method {
+    PUT = PUT
+    PUTCB = PUTCB
+    GET = GET
+    GETCB = GETCB
+    GETPUT = GETPUT
+    GETPUTCB = GETPUTCB
+}
+
+class Motor {
+    trigger : Access
+    axis : Axis[]
+    option : Option[]
+}
+Motor *-- Access
+Motor *-- "n" Axis
+Motor *-- "n" Option
+
+class Option {
+    value : Access
+    displaygroup : string
+    monitor : boolean
+    autoacquire : AutoAcquire
+}
+Option *-- Access
+Option *- AutoAcquire
+
+enum Transport {
+    ca = ca
+    local = local
+}
+
+class Unit {
+    unitstring : string
+}
+
+@enduml

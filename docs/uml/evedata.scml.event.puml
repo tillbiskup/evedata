@@ -1,0 +1,74 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Event {
+}
+Event <|-- DetectorEvent
+Event <|-- MonitorEvent
+Event <|-- ScheduleEvent
+
+class DetectorEvent {
+    id : string
+}
+
+class MonitorEvent {
+    id : string
+    limit : limit
+}
+MonitorEvent *-- Limit
+
+class ScheduleEvent {
+    incident : Incident
+    scanmodule_id : integer
+}
+ScheduleEvent *-- Incident
+
+enum Incident {
+    Start = Start
+    End = End
+}
+
+class Limit {
+    value : typevalue
+    comparison : Comparison
+}
+Limit *-- Comparison
+
+enum Comparison {
+    eq = eq
+    ne = ne
+    gt = gt
+    lt = lt
+}
+
+
+class PauseCondition {
+    deviceid : string
+    id : integer
+    pauselimit : typevalue
+}
+PauseCondition <|-- EqualityCondition
+PauseCondition <|-- InequalityCondition
+
+class EqualityCondition {
+    operator : Equality
+}
+EqualityCondition *-- Equality
+
+enum Equality {
+    eq = eq
+    ne = ne
+}
+
+class InequalityCondition {
+    operator : Inequality
+    continuelimit : typevalue
+}
+InequalityCondition *-- Inequality
+
+enum Inequality {
+    gt = gt
+    lt = lt
+}
+
+@enduml
