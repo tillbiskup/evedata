@@ -2,9 +2,36 @@
 'skinparam dpi 150
 
 package evedata {
+    package evedata.io {
+
+        package evedata.io.eveH5 {
+        }
+        package evedata.io.scml {
+        }
+        package evedata.io.images {
+        }
+
+        evedata.io.eveH5 -[hidden]-> evedata.io.scml
+        evedata.io.scml -[hidden]-> evedata.io.images
+
+    }
+
+    package evedata.operations {
+
+        package evedata.operations.filling {
+        }
+        package evedata.operations.transforming {
+        }
+        package evedata.operations.mapping {
+        }
+
+        evedata.operations.filling -[hidden]-> evedata.operations.transforming
+        evedata.operations.transforming -[hidden]-> evedata.operations.mapping
+
+    }
 
     package evedata.evefile {
-    
+
         package evedata.evefile.file {
         }
         package evedata.evefile.data {
@@ -17,6 +44,28 @@ package evedata {
 
     }
 
+    package evedata.scml {
+
+        package evedata.scml.scml {
+        }
+        package evedata.scml.setup {
+        }
+        package evedata.scml.scan {
+        }
+        package evedata.scml.event {
+        }
+        package evedata.scml.plot {
+        }
+
+        evedata.scml.setup <-- evedata.scml.scml
+        evedata.scml.scan <-- evedata.scml.scml
+        evedata.scml.event <-- evedata.scml.scan
+        evedata.scml.plot <-- evedata.scml.scan
+
+    }
+
+    evedata.evefile --> evedata.scml
+
     package evedata.dataset {
 
         package evedata.dataset.dataset {
@@ -25,7 +74,7 @@ package evedata {
         }
 
         evedata.dataset.metadata <-- evedata.dataset.dataset
-        
+
     }
 
     evedata.evefile <-- evedata.dataset

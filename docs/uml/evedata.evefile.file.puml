@@ -5,7 +5,20 @@ class EveFile {
     comments : Comment[]
     scml : SCML
     data : EveData[]
+    snapshots : EveData[]
 }
+note left of EveFile::snapshots
+    Snapshot datasets can have
+    identical names/IDs to datasets
+    in the standard section.
+    This makes a separate list
+    probably unavoidable.
+
+    How to deal with monitors?
+end note
+
+EveFile *- "n" EveData
+note bottom: See diagram for\ndata module.
 
 class EveFileMetadata{
     filename : string
@@ -27,19 +40,11 @@ class Comment {
 note bottom: Comments are both, file comment\nand log messages. Discriminating\ncould be done in the EveFile class. 
 
 class SCML {
-    metadata : SCMLMetadata
-    xml: string
 }
-note top: xml is currently a string, but will\nbe replaced/amended by classes\nrepresenting the SCML contents
-
-class SCMLMetadata {
-    author: string
-    version: string
-}
+note bottom: See diagram for\nscml subpackage.
 
 EveFile *-- EveFileMetadata
 EveFile "1" *-- "n" Comment
 EveFile *-- SCML
-SCML *-- SCMLMetadata
 
 @enduml

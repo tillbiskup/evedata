@@ -4,15 +4,27 @@ Architecture
 
 Each software has some kind of architecture, and this is the place to describe it in broad terms, to make it easier for developers to get around the code. Following the scheme of a layered architecture as featured by the "Clean Architecture" (Robert Martin) or the "hexagonal architecture", alternatively known as "ports and adapters" (Alistair Cockburn), the different layers are described successively from the inside out.
 
-Just to make matters a bit more interesting, the evedata package has basically **two disjunct interfaces**: one towards the data file format (eveH5), the other towards the users of the actual data, *e.g.* the ``radiometry`` and ``evedataviewer`` packages. Most probably, these two interfaces will be separated into different subpackages.
+Just to make matters a bit more interesting, the evedata package has basically **two disjunct interfaces**: one towards the data file format (eveH5), the other towards the users of the actual data, *e.g.* the ``radiometry`` and ``evedataviewer`` packages. See :numref:`Fig. %s <fig-uml_evedata_in_context>` for a first overview.
+
+
+.. _fig-uml_evedata_in_context:
+
+.. figure:: uml/evedata-in-context.*
+    :align: center
+
+    The two interfaces of the evedata package: eveH5 is the persistence layer of the recorded data and metadata, and evedataviewer and radiometry are Python packages for graphically displaying and processing and analysing these data, respectively. Most people concerned with the actual data will use either use evedataviewer or the radiometry package, but not evedata directly.
+
+
+A more complete picture, showing all subpackages, is given below in :numref:`Fig. %s <fig-uml_evedata>`. Note that here, so far no distinction between the different layers (core domain, business rules, interfaces) has been made.
 
 
 .. _fig-uml_evedata:
 
-.. figure:: uml/evedata-with-scml.*
+.. figure:: uml/evedata.*
     :align: center
+    :width: 750px
 
-    A high-level view of the different subpackages of the evedata package, currently reflecting the two interfaces (evefile and dataset). For details, see further schemata below. While "evefile" will most probably be the name of the subpackage interfacing the eveH5 files, the name of the "dataset" subpackage is not final yet.
+    A high-level view of the different subpackages of the evedata package. For details, see further schemata below. The three subpackages "evefile", "scml", and "dataset" together form the core domain. The "operations" subpackage contains the business rules, and the "io" subpackage all the interfaces to the external world, both persistence layer and users.
 
 
 Core domain
@@ -52,13 +64,18 @@ In the evedata package, due to being split into separate subpackages, each of th
       Attributes that contain dictionaries as container have the container type followed by curly braces ``{}``, although this seems not to be part of the UML standard.
 
 
+.. _fig-uml_evedata_core_domain:
 
+.. figure:: uml/evedata-core-domain.*
+    :align: center
+
+    A high-level view of the different subpackages of the evedata package that together form the core domain. For details, see further schemata below. For a complete picture of all packages of the evedata package see :numref:`Fig. %s <fig-uml_evedata>`.
 
 
 evefile subpackage
 ------------------
 
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Hereafter, a series of (still higher-level) UML schemata for the evefile subpackage are shown, reflecting the current state of affairs (and thinking).
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`, and those forming the core domain in :numref:`Fig. %s <fig-uml_evedata_core_domain>`. Hereafter, a series of (still higher-level) UML schemata for the evefile subpackage are shown, reflecting the current state of affairs (and thinking).
 
 Generally, the evefile subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the persistence layer (eveH5 files). This is a rather low-level interface focussing at a faithful representation of all information available in an eveH5 file as well as the corresponding scan description (SCML), as long as the latter is available.
 
@@ -68,6 +85,11 @@ Furthermore, the evefile subpackage provides a stable abstraction of the content
 .. important::
 
     As the evefile subpackage is *not* meant as a (human-facing) user interface, it is *not* concerned with concepts such as fill modes, but represents the data "as is". This means that the different data can generally not be plotted against each other. This is a deliberate decision, as filling data for a (two-dimensional) data array, although generally desirable for (simple) plotting purposes, masks/removes some highly important information, *e.g.* whether a value has not been measured in the first place, or whether obtaining a value has failed for some reason.
+
+
+.. note::
+
+    Given that in the future (starting with the adoption of the evedata package) the full contents of the SCML file will be made available to the users of eveH5 files, the amount of metadata present in the HDF5 layer of eveH5 files may probably be reduced. How would this impact the data model developed within the ``evefile`` subpackage? Furthermore: Would it be wise to (dramatically) reduce the metadata (attributes in HDF5 language) of the individual datasets on the HDF5 level? After all, one big advantage of the HDF5 format (besides its support for hierarchical organisation) is its capability to amend data with metadata, *i.e.* being potentially "self-describing".
 
 
 As usual, the core domain provides the (abstract) entities representing the different types of content. Hence, it is *not* concerned with the actual layout of an eveH5 file nor any importers nor the mapping of different eveH5 schema versions.
@@ -85,20 +107,13 @@ Despite the opposite chain of dependencies, starting with the ``evefile.evefile`
     Class hierarchy of the evefile.file module. The EveFile class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage.
 
 
-.. note::
-
-    Most probably, once digging deeper into the SCML, this class will be moved to its own module and become a composition of a series of other classes, each reflecting the building blocks of a scan description (in SCML).
-
-
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Split data according to sections (standard, monitor, snapshot)?
+    * Monitors
 
-      At least the HDF5 datasets in the "monitor" section are clearly distinct from the others, as they don't have PosCounts as reference axis. However, due to the different classes, making the separation would be trivial and possible using, *e.g.*, a list comprehension in Python.
+      It turned out that we most probably need to distinguish between datasets from the standard and snapshot sections, as datasets on the HDF5 level can have identical names in both sections (and for good reasons). Hence, the current data model has two attributes/lists: data (for datasets of the standard section) and snapshots (for datasets of the snapshot section).
 
-    * SCML: How to represent the contents sensibly? What are the relevant abstractions/concepts?
-
-      Perhaps (additionally) storing the "plain" XML in a variable is still a sensible idea.
+      How to deal with monitors? It seems more consistent and logical to separate them into their own list as well, at least on the evefile subpackage level.
 
     * Comments
 
@@ -167,7 +182,7 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     Class hierarchy of the evefile.metadata module. Each class in the evefile.data module has a corresponding metadata class in this module.
 
 
-A note on the ``DeviceMetadata`` interface: The eveH5 datasets corresponding to the EveTimestampMetadata and EveScanModuleMetadata classes are special in sense of having no PV and transport type nor an id. Several options have been considered for addressing this problem:
+A note on the ``DeviceMetadata`` interface: The eveH5 datasets corresponding to the EveTimestampMetadata and EveScanModuleMetadata classes are special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
 
 #. Moving these three attributes down the line and copying them multiple times (feels bad).
 #. Leaving the attributes blank for the two "special" datasets (feels bad, too).
@@ -220,7 +235,7 @@ dataset subpackage
     Another option would be to keep the subpackage name ``dataset``, but to import the modules into the global ``evedata`` namespace, as this subpackage is meant to be the main user interface. This would reduce *e.g.* ``evedata.dataset.dataset.Dataset`` to ``evedata.dataset.Dataset``.
 
 
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`, and those forming the core domain in :numref:`Fig. %s <fig-uml_evedata_core_domain>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
 
 Generally, the dataset subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
 
@@ -301,9 +316,25 @@ The contents of the SCML file could be represented in the ``Metadata`` class as 
 scml subpackage
 ---------------
 
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the scml subpackage are shown below, reflecting the current state of affairs (and thinking).
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`, and those forming the core domain in :numref:`Fig. %s <fig-uml_evedata_core_domain>`. Furthermore, a series of (still higher-level) UML schemata for the scml subpackage are shown below, reflecting the current state of affairs (and thinking).
 
 The scml subpackage contains all classes necessary to represent the contents of an SCML file. The general idea behind is to have all relevant information contained in the scan description and saved together with the data in the eveH5 file at hand. The SCML file is generally stored within the eveH5 file, and it is the information used by the GUI of the measurement program. One big advantage of having the information of the SCML file as compared to the information stored in the eveH5 file itself: The structure of the scan is available, making it possible to infer much more information relevant for interpreting the data.
+
+
+.. important::
+
+    The SCML file contained in (most) eveH5 files "only" saves the scan description, not the description of the measurement station. Furthermore, it saves the SCML in a way that it can be reused directly by the measurement program, *i.e.* with variables *not* replaced. Why is this important?
+
+    * Variables are not replaced by their actual values
+
+      Certain fields contain the variables, but not the actual replaced values. Some of this information is currently stored in the HDF5 layer of the eveH5 files and can be read from there. This is important to have in mind when thinking about reducing the metadata stored in the HDF5 layer.
+
+    * Only the scan description is available, with devices defined therein.
+
+      A dynamic snapshot saves the state of *all* currently defined motors and/or detectors. However, there are usually many more motors/detectors defined in the measurement station description not appearing in the SCML file available from the eveH5 file. Hence, there is no way to generally rely on the SCML file contents for metadata corresponding to whatever dataset that exists in the HDF5 layer of the eveH5 file.
+
+    This does *not* mean that we should save the complete description of the measurement station in the future. It is just important to be aware of this situation, particularly when (further) designing the data model(s).
+
 
 One big difference between the SCML schema and the class hierarchy defined in this subpackage: As the evedata package can savely assume only ever to receive validated SCML files, some of the types of attributes are more relaxed as compared to the schema definition. This makes it much easier to map the types to standard Python types.
 
@@ -331,10 +362,6 @@ This module contains the main ``SCML`` class and probably as well the ``Plugin``
     * Name of the module.
 
       The name is not ideal, as it results in a quite repetitive namespace hierarchy. Alternatives may be ``file`` or ``schema``.
-
-    * Metadata from the eveH5 file
-
-      There are a few metadata from the eveH5 file that need to be added here. It seems that only the ``author`` field is missing, though. Add the field just as an attribute to the ``SCML`` class?
 
     * Storing the plain XML
 
@@ -521,10 +548,15 @@ What may be in here:
 
   * Images in particular are usually not stored in the eveH5 files, but only pointers to these files.
   * Import routines for the different files (or at least a sensible modular mechanism involving an importer factory) need to be implemented.
+  * Is the ``evedata`` package the correct place for these importers? One could think of the ``radiometry`` package as the better place, but on the other hand, the ``evedataviewer`` package would need to be able to display those data as well, hence need the import to be done.
 
 * Interface towards users (*i.e.*, mainly the ``radiometry`` and ``evedataviewer`` packages)
 
   * Given a filename of an eveH5 file, returns a ``Dataset`` object.
+
+* Interfaces towards other file formats
+
+  * One potential candidate for an exchange format would be the NeXus format. However, there is not one NeXus file format, but there are several schemas for different types of experiments. For details, see the `NeXus application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. Hence, those exporters may better be located in the ``radiometry`` package.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)

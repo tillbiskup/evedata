@@ -3,6 +3,7 @@
 class SCML {
     location : string
     version : string
+    author: string
     scan : Scan
     plugins : Plugin[]
     detectors : Detector[]
@@ -14,6 +15,13 @@ SCML *-- "n" Plugin
 SCML *-- "n" Detector
 SCML *-- "n" Motor
 SCML *-- "n" Monitor
+
+note right of SCML::author
+    The author attribute is
+    not present in the SCML
+    file, but in the HDF5 layer
+    of an eveH5 file.
+end note
 
 note bottom of Scan: See separate\nscan module
 

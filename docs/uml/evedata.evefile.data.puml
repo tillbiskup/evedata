@@ -14,7 +14,7 @@ end note
 
 class Metadata {
 }
-note bottom: See separate diagram\nfor class hierarchy
+note bottom: See diagram for\nmetadata module.
 
 class MeasureData {
     {field} positions : np.ndarray(dtype=int)

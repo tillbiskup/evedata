@@ -7,7 +7,7 @@ class Metadata {
 
 class Data {
 }
-note bottom: See separate diagram\nfor class hierarchy
+note bottom: See diagram for\ndata module.
 
 enum Section {
     STANDARD

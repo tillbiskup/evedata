@@ -6,9 +6,8 @@ class Scan {
     comment : string
     savefilename : string
     confirmsave : boolean
-    autonumber : boolean
     saveplugin : Controller
-    monitoroptions : MonitorOptions
+    monitoroptions : string[]
     startevent : Event
     redoevents : Event[]
     breakevents : Event[]
@@ -20,12 +19,11 @@ Scan *-- Controller
 Scan *-- "n" ScanModule
 Scan *-- "n" PauseCondition
 Scan *-- "n" Event
-Scan *-- MonitorOptions
 
-note bottom of PauseCondition: See separate\nevent module
+note bottom of PauseCondition: See separate\nevent module.
 
 SCML *- Scan
-note left of SCML: See separate\nscml module
+note left of SCML: See separate\nscml module.
 
 class ScanModule {
     name : string
@@ -37,10 +35,10 @@ class ScanModule {
     id : integer
 }
 ScanModule <|-- ClassicScanModule
-ScanModule <|-- SaveAxisPositionsScanModule
-ScanModule <|-- SaveChannelValuesScanModule
-ScanModule <|-- DynamicAxisPositionsScanModule
-ScanModule <|-- DynamicChannelValuesScanModule
+ScanModule <|-- StaticAxisSnapshot
+ScanModule <|-- StaticChannelSnapshot
+ScanModule <|-- DynamicAxisSnapshot
+ScanModule <|-- DynamicChannelSnapshot
 
 class Controller {
     parameter : Parameter[]
@@ -52,12 +50,6 @@ class IntervalChannel {
     triggerinterval : float
     stoppedby : string
 }
-
-class MonitorOptions {
-    id : string[]
-    type : string
-}
-note bottom: Why is "id" a\nlist of strings?
 
 class Parameter {
     value : string
@@ -82,22 +74,22 @@ class ClassicScanModule {
     redoevents : Event[]
     breakevents : Event[]
     prescans : PreScan[]
-    scanmoduleaxes : ScanModuleAxis[]
-    scanmodulechannels : ScanModuleChannel[]
+    axes : Axis[]
+    channels : Channel[]
     postscans : PostScan[]
     positionings : Positioning[]
     plots : Plot[]
 }
 ClassicScanModule *-- "n" Event
 ClassicScanModule *-- "n" PreScan
-ClassicScanModule *-- "n" ScanModuleAxis
-ClassicScanModule *-- "n" ScanModuleChannel
+ClassicScanModule *-- "n" Axis
+ClassicScanModule *-- "n" Channel
 ClassicScanModule *-- "n" PostScan
 ClassicScanModule *-- "n" Positioning
 ClassicScanModule *-- "n" Plot
 
-note bottom of Plot: See separate\nplot module
-note bottom of Event: See separate\nevent module
+note bottom of Plot: See separate\nplot module.
+note bottom of Event: See separate\nevent module.
 
 class PreScan {
     id : string
@@ -110,23 +102,23 @@ class PostScan {
     reset_originalvalue : boolean
 }
 
-class DynamicAxisPositionsScanModule {
+class DynamicAxisSnapshot {
 }
 
-class DynamicChannelValuesScanModule {
+class DynamicChannelSnapshot {
 }
 
-class SaveAxisPositionsScanModule {
-    scanmoduleaxis : ScanModuleAxis[]
+class StaticAxisSnapshot {
+    axes : Axis[]
 }
-SaveAxisPositionsScanModule *-- "n" ScanModuleAxis
+StaticAxisSnapshot *-- "n" Axis
 
-class SaveChannelValuesScanModule {
-    scanmodulechannel : ScanModuleChannel[]
+class StaticChannelSnapshot {
+    channels : Channel[]
 }
-SaveChannelValuesScanModule *-- "n" ScanModuleChannel
+StaticChannelSnapshot *-- "n" Channel
 
-class ScanModuleAxis {
+class Axis {
     axis_id : string
     stepfunction : StepFunction
     positionmode : PositionMode
@@ -136,26 +128,26 @@ class ScanModuleAxis {
     positionlist : string
     range : StepFunctionRange
 }
-ScanModuleAxis *-- StepFunction
-ScanModuleAxis *-- PositionMode
-ScanModuleAxis *-- StartStopStep
-ScanModuleAxis *-- Controller
-ScanModuleAxis *-- StepFunctionRange
+Axis *-- StepFunction
+Axis *-- PositionMode
+Axis *-- StartStopStep
+Axis *-- Controller
+Axis *-- StepFunctionRange
 
 enum PositionMode {
     relative = relative
     absolute = absolute
 }
 
-class ScanModuleChannel {
+class Channel {
     channelid : string
     normalize_id : string
     redoevents : Event[]
     deferredtrigger : boolean
 }
-ScanModuleChannel <|-- StandardChannel
-ScanModuleChannel <|-- IntervalChannel
-ScanModuleChannel *-- "n" Event
+Channel <|-- StandardChannel
+Channel <|-- IntervalChannel
+Channel *-- "n" Event
 
 class StandardChannel {
     averagecount : integer
