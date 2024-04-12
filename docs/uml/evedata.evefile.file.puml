@@ -41,7 +41,7 @@ note bottom: Comments are both, file comment\nand log messages. Discriminating\n
 
 class SCML {
 }
-note bottom: See diagram for\nscml subpackage.
+note bottom: See diagrams for\nscml subpackage.
 
 EveFile *-- EveFileMetadata
 EveFile "1" *-- "n" Comment

@@ -8,8 +8,7 @@ class Data {
 note left of Data::values
     "values" contains a 1D array.
     For individual values see derived classes
-    AverageDetectorData and
-    IntervalDetectorData
+    AverageDetectorData and IntervalDetectorData
 end note
 
 class Metadata {
@@ -30,6 +29,10 @@ class MotorData {
 class DetectorData {
 }
 
+class ExternalData {
+    data : object[]
+}
+
 class TimestampData {
 }
 
@@ -41,6 +44,10 @@ note bottom
 
     The idea is to store the id of the
     scan module for each position count.
+
+    Note: For the implementation it
+    does not matter whether this is a
+    "true" dataset on the HDF5 level.
 end note
 
 class AverageDetectorData {
@@ -67,6 +74,7 @@ Data <|-- MeasureData
 Data <|-- MonitorData
 MeasureData <|-- MotorData
 MeasureData <|-- DetectorData
+MeasureData <|-- ExternalData
 MeasureData <|-- TimestampData
 MeasureData <|-- ScanModuleData
 DetectorData <|-- AverageDetectorData

@@ -15,7 +15,7 @@ Just to make matters a bit more interesting, the evedata package has basically *
     The two interfaces of the evedata package: eveH5 is the persistence layer of the recorded data and metadata, and evedataviewer and radiometry are Python packages for graphically displaying and processing and analysing these data, respectively. Most people concerned with the actual data will use either use evedataviewer or the radiometry package, but not evedata directly.
 
 
-A more complete picture, showing all subpackages, is given below in :numref:`Fig. %s <fig-uml_evedata>`. Note that here, so far no distinction between the different layers (core domain, business rules, interfaces) has been made.
+A more complete picture, showing all subpackages, is given below in :numref:`Fig. %s <fig-uml_evedata>`. Note that here, so far no (graphical) distinction between the different layers (core domain, business rules, interfaces) has been made.
 
 
 .. _fig-uml_evedata:
@@ -32,12 +32,20 @@ Core domain
 
 The core domain contains the central entities and their abstract interactions, or, in terms of the "Domain Driven Design" (Eric Evans), the implementation of the abstract model of the application.
 
-In the evedata package, due to being split into separate subpackages, each of them has its own core domain that will be described below.
+In the evedata package, due to being split into separate subpackages, there are different parts of the core domain that will be described below. See :numref:`Fig. %s <fig-uml_evedata_core_domain>` for an overview of the subpackages of the evedata package together forming the core domain.
+
+
+.. _fig-uml_evedata_core_domain:
+
+.. figure:: uml/evedata-core-domain.*
+    :align: center
+
+    A high-level view of the different subpackages of the evedata package that together form the core domain. For details, see further schemata below. For a complete picture of all packages of the evedata package see :numref:`Fig. %s <fig-uml_evedata>`.
 
 
 .. admonition:: General remarks on the UML class diagrams
 
-    The UML class diagrams displayed below try to consistently follow a series of conventions listed below.
+    The UML class diagrams in this document try to consistently follow a series of conventions listed below. This list is not meant to be exhaustive and may change over time.
 
     * Capitalising attribute types
 
@@ -64,12 +72,9 @@ In the evedata package, due to being split into separate subpackages, each of th
       Attributes that contain dictionaries as container have the container type followed by curly braces ``{}``, although this seems not to be part of the UML standard.
 
 
-.. _fig-uml_evedata_core_domain:
+.. important::
 
-.. figure:: uml/evedata-core-domain.*
-    :align: center
-
-    A high-level view of the different subpackages of the evedata package that together form the core domain. For details, see further schemata below. For a complete picture of all packages of the evedata package see :numref:`Fig. %s <fig-uml_evedata>`.
+    Partly due to the conventions for the UML class diagrams outlined above and due to the reasons leading to these conventions in the first place, the data model described in the UML class diagrams differs often in subtle details of attribute names from the currently existing data models and, *e.g.*, the SCML schema definition. Eventually, it would be good to agree upon a list of conventions and try to consistently apply them throughout the different interconnected parts (SCML, GUI, engine, evedata, ...).
 
 
 evefile subpackage
@@ -92,9 +97,6 @@ Furthermore, the evefile subpackage provides a stable abstraction of the content
     Given that in the future (starting with the adoption of the evedata package) the full contents of the SCML file will be made available to the users of eveH5 files, the amount of metadata present in the HDF5 layer of eveH5 files may probably be reduced. How would this impact the data model developed within the ``evefile`` subpackage? Furthermore: Would it be wise to (dramatically) reduce the metadata (attributes in HDF5 language) of the individual datasets on the HDF5 level? After all, one big advantage of the HDF5 format (besides its support for hierarchical organisation) is its capability to amend data with metadata, *i.e.* being potentially "self-describing".
 
 
-As usual, the core domain provides the (abstract) entities representing the different types of content. Hence, it is *not* concerned with the actual layout of an eveH5 file nor any importers nor the mapping of different eveH5 schema versions.
-
-
 evefile.file module
 ~~~~~~~~~~~~~~~~~~~
 
@@ -113,7 +115,7 @@ Despite the opposite chain of dependencies, starting with the ``evefile.evefile`
 
       It turned out that we most probably need to distinguish between datasets from the standard and snapshot sections, as datasets on the HDF5 level can have identical names in both sections (and for good reasons). Hence, the current data model has two attributes/lists: data (for datasets of the standard section) and snapshots (for datasets of the snapshot section).
 
-      How to deal with monitors? It seems more consistent and logical to separate them into their own list as well, at least on the evefile subpackage level.
+      How to deal with monitors? It seems more consistent and logical to separate them into their own list as well, at least on the evefile subpackage level. This would relax the discussion as of how to map monitor timestamps to position counts, as monitors would be once more marked as clearly different from motors/detectors.
 
     * Comments
 
@@ -137,9 +139,7 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
     * Mapping MonitorData to MeasureData
 
-      There is an age-long discussion how to map monitor data (with time in milliseconds as primary axis) to measured data (with position counts as primary axis). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place? Here in the evefile subpackage? Or in the "convenience interface" layer, *i.e.* the dataset subpackage?
-
-      Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon.
+      Monitor data (with time in milliseconds as primary axis) need to be mapped to measured data (with position counts as primary axis). Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon. There is an age-long discussion on this topic (`<https://redmine.ahf.ptb.de/issues/5295#note-3>`_). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place?
 
       The individual ``EveMonitorData`` class cannot do the mapping without having access to the mapping table. Probably mapping is something done in the intermediate layer between the ``evefile`` and ``dataset`` subpackages and belonging to the business rules. How are monitor data represented in the :class:`Dataset` class?
 
@@ -153,15 +153,19 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
     * raw_values of EveAverageDetectorData and EveIntervalDetectorData
 
-      Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this.
+      Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this. Given that the overarching idea of the evefile subpackage is to *faithfully* represent the eveH5 file contents, it seems not sensible to map the "fake" average detector saving each individual value using MPSKIP to this detector type, though. This should probably rather be done in the mapping later on and towards the dataset subpackage.
 
     * Detectors that are redefined within an experiment/scan
 
-      Generally, detectors can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector beyond the XML-ID/PV.
+      Generally, detectors can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector beyond the XML-ID/PV. The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector.
+
+      Generally, what seems necessary is to have separate datasets on the HDF5 level for detectors that change their type or attributes within a scan. Can we safely assume that a detector cannot change its attributes within one scan module? If so, we could have one dataset per detector and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
 
     * References to spectra/images
 
       There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. How is this currently represented in eveH5 files, and how to model this situation with the given :class:`EveData` classes?
+
+      The current idea for modelling these data is reflected in the ``ExternalData`` class shown in the UML diagram above. Here, for each position count, a reference (a string with usually a filename) is stored. The corresponding ``ExternalMetadata`` class (see section below) contains information on the file format to inform an importer factory how to import the data. The only "problem": Where to store the actual data, or more precisely: how to deal with the ``values`` attribute of the ``Data`` base class? Probably best to store the references as strings in the ``values`` attribute (that is in this case a numpy string array) and have an additional attribute ``data`` for the actual data in the ``ExternalData`` class.
 
 
 evefile.metadata module
@@ -172,7 +176,7 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
 
 .. note::
 
-    As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. Furthermore, there seems to be some (immutable) information currently stored in a dataset in HDF5 that could easily be stored as attribute, due to not changing.
+    As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. Furthermore, there seems to be some (immutable) information currently stored in a dataset in HDF5 that could be stored as attribute - if it is truly not changing. Note, however, that detectors can be redefined during a scan, but all values are stored in the identical dataset. Latest with average and interval detector, this leads already to problems in current eveH5 files, as information what kind of detector it was when is probably lost. Hence, this situation needs to be solved more fundamentally, probably.
 
 
 .. figure:: uml/evedata.evefile.metadata.*
@@ -214,103 +218,13 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
 
     * Metadata from SCML file
 
-      There is likely more information contained in the SCML file (and the end station/beam line description). What kind of (relevant) information is available there, and how to map this to the respective metadata classes?
+      There is more information available from the SCML file (and the end station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). How to map this to the respective metadata classes? Shall this be done here, or rather in the dataset subpackage? An argument in favour of the latter would be to keep up with the distinction HDF5/SCML.
 
     * Information on the individual devices
 
-      Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup. If so, what kind of information is available and how to map this?
+      Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup.
 
-    * Options for individual devices
-
-      There seem to be many options for devices that can be set from within the measurement program/SCML file. What kind of options are there, and how to map them in a class hierarchy? The information probably comes from the SCML file. Shall this be separated in the ``evefile`` subpackage and go to an ``scml`` module? Latest in the ``dataset`` subpackage, the metadata should be mapped to the devices.
-
-
-dataset subpackage
-------------------
-
-.. note::
-
-    The name of this subpackage is most probably not final yet. Other options for naming the subpackage may be: ``measurement``, ``scan``.
-
-    Another option would be to keep the subpackage name ``dataset``, but to import the modules into the global ``evedata`` namespace, as this subpackage is meant to be the main user interface. This would reduce *e.g.* ``evedata.dataset.dataset.Dataset`` to ``evedata.dataset.Dataset``.
-
-
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`, and those forming the core domain in :numref:`Fig. %s <fig-uml_evedata_core_domain>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
-
-Generally, the dataset subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
-
-What is the main difference between the ``evefile`` and the ``dataset`` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the ``evefile`` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the ``dataset`` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
-
-However, the ``dataset`` subpackage is still general enough to cope with all the different kinds of measurements the eve measurement program can deal with. Hence, it may be a wise idea to create dedicated dataset classes in the ``radiometry`` package for different types of experiments. The NeXus file format may be a good source of inspiration here, particularly their `application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. The ``evedataviewer`` package in contrast aims at displaying whatever kind of measurement has been performed using the eve measurement program. Hence it will deal directly with ``Dataset`` objects of the ``dataset`` subpackage.
-
-
-Arguments against the 2D data array as sensible representation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Currently, one very common and heavily used abstraction of the data contained in an eveH5 file is a two-dimensional data array (basically a table with column headers, implemented as pandas dataframe). As it stands, many problems in the data analysis and preprocessing of data come from the inability of this abstraction to properly represent the data. Two obvious cases, where this 2D approach simply breaks down, are:
-
-* subscans -- essentially a 2D dataset on its own
-* adaptive average detector saving the individual, non-averaged values (implemented using MPSKIP)
-
-Furthermore, as soon as spectra (1D) or images (2D) are recorded for a given position (count), the 2D data array abstraction breaks down as well.
-
-Other problems inherent in the 2D data array abstraction are the necessary filling of values that have not been obtained. Currently, once filled there is no way to figure out for an individual position whether values have been recorded (in case of LastFill) or whether a value has not been recorded or recording failed (in case of NaNFill).
-
-
-dataset.dataset module
-~~~~~~~~~~~~~~~~~~~~~~
-
-Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step. Reproducibility and history are concerns of the ``radiometry`` package, the ``dataset.dataset`` module should nevertheless allow for a rather straight-forward mapping to the ASpecD-inspired dataset structure.
-
-
-.. figure:: uml/evedata.dataset.dataset.*
-    :align: center
-
-    Class hierarchy of the dataset.dataset module, closely resembling the dataset concept of the ASpecD framework (while lacking the history component). For the corresponding metadata class see the dataset.metadata module.
-
-
-Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detectors saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
-
-
-.. admonition:: Points to discuss further (without claiming to be complete)
-
-    * How to handle data filling? (But: see discussion on fill modes in the section below)
-
-      * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data (*i.e.* axes) need to be made compatible.
-      * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
-      * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other?
-
-    * Do we care here about reproducibility, *i.e.* a history?
-
-      * Background: In the ASpecD framework, reproducibility is an essential concept, and this revolves about having a dataset with one clear data array and *n* corresponding axes. The original data array is stored internally, making undo and redo possible, and each processing and analysis step always operates on the (current state of the) data array. In case of the datasets we deal with here, there is usually no such thing as the one obvious data array, and users can at any time decide to focus on another set of "axes", *i.e.* data and corresponding axis values, to operate on.
-      * One option would be to *not* deal with the concept of reproducibility here, but delegate this to the ``radiometry`` package. There, the first step would be to decide which of the available channels accounts as the "primary" data (if not set as preferred in the scan already and read from the eveH5 file accordingly).
-
-    * How to deal with images stored in files separate from the eveH5 file?
-
-      * The evefile subpackage will most probably only provide the links (*i.e.* filenames) to these files, but nothing else.
-      * Should these files be imported into the dataset already and made available? Probably, the same discussion as that regarding importing data from the eveH5 file (reading everything at once or deferred reading on demand, see section on interfaces below) applies here as well.
-
-    * How to deal with monitors?
-
-      * Add an ``events`` attribute to the ``Dataset`` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
-
-
-dataset.metadata module
-~~~~~~~~~~~~~~~~~~~~~~~
-
-The (original) idea behind this module stems from the ASpecD framework and its representation of a dataset. There, a dataset contains data (with corresponding axes), metadata (of different kind, such as measurement metadata and device metadata), and a history.
-
-
-.. figure:: uml/evedata.dataset.metadata.*
-    :align: center
-    :width: 750px
-
-    Class hierarchy of the dataset.metadata module, closely resembling the dataset concept of the ASpecD framework and the current rough implementation in the evedataviewer package. For the corresponding dataset class see the dataset.dataset module.
-
-
-In the given context of the evedata package, this would mean to separate data and metadata for the different datasets as represented in the eveH5 file, and store the data (as "device data") in the dataset, the "primary" data as data, and the corresponding metadata as a composition of metadata classes in the Dataset.metadata attribute. Not yet sure whether this makes sense.
-
-The contents of the SCML file could be represented in the ``Metadata`` class as well, probably/perhaps split into separate fields for the different areas of an SCML file (setup, aka devices, and scan). Whether to directly use the classes representing the SCML file contents or to further abstract needs to be decided at some point.
+      Looks like as of now there is no such information stored anywhere. It might be rather straight-forward to expand the SCML schema for this purpose, not affecting the GUI or engine (both do not care about this information).
 
 
 scml subpackage
@@ -424,6 +338,102 @@ scml.setup module
 .. admonition:: Points to discuss further (without claiming to be complete)
 
     * ...
+
+
+dataset subpackage
+------------------
+
+.. note::
+
+    The name of this subpackage is most probably not final yet. Other options for naming the subpackage may be: ``measurement``, ``scan``.
+
+    Another option would be to keep the subpackage name ``dataset``, but to import the modules into the global ``evedata`` namespace, as this subpackage is meant to be the main user interface. This would reduce *e.g.* ``evedata.dataset.dataset.Dataset`` to ``evedata.dataset.Dataset``.
+
+
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`, and those forming the core domain in :numref:`Fig. %s <fig-uml_evedata_core_domain>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
+
+Generally, the dataset subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
+
+
+.. note::
+
+    The mapping of the information contained in both, the HDF5 and SCML layers of an eveH5 file, to the dataset is far from being properly modelled or understood. This is partly due to the step-wise progress in understanding. On a rather fundamental level, it remains to be decided whether a ``Dataset`` should allow for reconstructing how a measurement has actually been carried out (*i.e.*, provide access to the SCML and hence the anatomy of the scan).
+
+    Part of the problem: The currently widely agreed-upon abstraction from the user perspective of the data is the infamous 2D data table incapable of conveying all or even most of the relevant information for processing and analysing the data. As long as the users do not invest the time to understand the true complexity of their data and measurements, developing whatever interface towards the data will continue to be seriously hampered.
+
+
+What is the main difference between the ``evefile`` and the ``dataset`` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the ``evefile`` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the ``dataset`` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
+
+However, the ``dataset`` subpackage is still general enough to cope with all the different kinds of measurements the eve measurement program can deal with. Hence, it may be a wise idea to create dedicated dataset classes in the ``radiometry`` package for different types of experiments. The NeXus file format may be a good source of inspiration here, particularly their `application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. The ``evedataviewer`` package in contrast aims at displaying whatever kind of measurement has been performed using the eve measurement program. Hence it will deal directly with ``Dataset`` objects of the ``dataset`` subpackage.
+
+
+Arguments against the 2D data array as sensible representation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Currently, one very common and heavily used abstraction of the data contained in an eveH5 file is a two-dimensional data array (basically a table with column headers, implemented as pandas dataframe). As it stands, many problems in the data analysis and preprocessing of data come from the inability of this abstraction to properly represent the data. Two obvious cases, where this 2D approach simply breaks down, are:
+
+* subscans -- essentially a 2D dataset on its own
+* adaptive average detector saving the individual, non-averaged values (implemented using MPSKIP)
+
+Furthermore, as soon as spectra (1D) or images (2D) are recorded for a given position (count), the 2D data array abstraction breaks down as well.
+
+Other problems inherent in the 2D data array abstraction are the necessary filling of values that have not been obtained. Currently, once filled there is no way to figure out for an individual position whether values have been recorded (in case of LastFill) or whether a value has not been recorded or recording failed (in case of NaNFill).
+
+
+dataset.dataset module
+~~~~~~~~~~~~~~~~~~~~~~
+
+Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step. Reproducibility and history are concerns of the ``radiometry`` package, the ``dataset.dataset`` module should nevertheless allow for a rather straight-forward mapping to the ASpecD-inspired dataset structure.
+
+
+.. figure:: uml/evedata.dataset.dataset.*
+    :align: center
+
+    Class hierarchy of the dataset.dataset module, closely resembling the dataset concept of the ASpecD framework (while lacking the history component). For the corresponding metadata class see the dataset.metadata module.
+
+
+Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detectors saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * How to handle data filling? (But: see discussion on fill modes in the section below)
+
+      * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data (*i.e.* axes) need to be made compatible.
+      * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
+      * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other?
+
+    * Do we care here about reproducibility, *i.e.* a history?
+
+      * Background: In the ASpecD framework, reproducibility is an essential concept, and this revolves about having a dataset with one clear data array and *n* corresponding axes. The original data array is stored internally, making undo and redo possible, and each processing and analysis step always operates on the (current state of the) data array. In case of the datasets we deal with here, there is usually no such thing as the one obvious data array, and users can at any time decide to focus on another set of "axes", *i.e.* data and corresponding axis values, to operate on.
+      * One option would be to *not* deal with the concept of reproducibility here, but delegate this to the ``radiometry`` package. There, the first step would be to decide which of the available channels accounts as the "primary" data (if not set as preferred in the scan already and read from the eveH5 file accordingly).
+
+    * How to deal with images stored in files separate from the eveH5 file?
+
+      * The evefile subpackage will most probably only provide the links (*i.e.* filenames) to these files, but nothing else.
+      * Should these files be imported into the dataset already and made available? Probably, the same discussion as that regarding importing data from the eveH5 file (reading everything at once or deferred reading on demand, see section on interfaces below) applies here as well.
+
+    * How to deal with monitors?
+
+      * Add an ``events`` attribute to the ``Dataset`` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
+
+
+dataset.metadata module
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The (original) idea behind this module stems from the ASpecD framework and its representation of a dataset. There, a dataset contains data (with corresponding axes), metadata (of different kind, such as measurement metadata and device metadata), and a history.
+
+
+.. figure:: uml/evedata.dataset.metadata.*
+    :align: center
+    :width: 750px
+
+    Class hierarchy of the dataset.metadata module, closely resembling the dataset concept of the ASpecD framework and the current rough implementation in the evedataviewer package. For the corresponding dataset class see the dataset.dataset module.
+
+
+In the given context of the evedata package, this would mean to separate data and metadata for the different datasets as represented in the eveH5 file, and store the data (as "device data") in the dataset, the "primary" data as data, and the corresponding metadata as a composition of metadata classes in the Dataset.metadata attribute. Not yet sure whether this makes sense.
+
+The contents of the SCML file could be represented in the ``Metadata`` class as well, probably/perhaps split into separate fields for the different areas of an SCML file (setup, aka devices, and scan). Whether to directly use the classes representing the SCML file contents or to further abstract needs to be decided at some point.
 
 
 Business rules

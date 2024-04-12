@@ -43,6 +43,10 @@ class DetectorMetadata implements DeviceMetadata  {
     normalise_id : string
 }
 
+class ExternalMetadata {
+    format : string
+}
+
 class TimestampMetadata {
     section : Section.META
 }
@@ -74,6 +78,7 @@ Metadata <|-- MeasureMetadata
 Metadata <|-- MonitorMetadata
 MeasureMetadata <|-- DetectorMetadata
 MeasureMetadata <|-- MotorMetadata
+MeasureMetadata <|-- ExternalMetadata
 MeasureMetadata <|-- TimestampMetadata
 MeasureMetadata <|-- ScanModuleMetadata
 DetectorMetadata <|-- AverageDetectorMetadata
