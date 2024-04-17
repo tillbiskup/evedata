@@ -96,6 +96,7 @@ The logo depicts a synchrotron emitting radiation, and the data files emerging f
 
    people
    contributing
+   requirements-analysis
    architecture
    changelog
    roadmap
