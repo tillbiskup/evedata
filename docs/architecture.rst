@@ -74,7 +74,7 @@ In the evedata package, due to being split into separate subpackages, there are 
 
 .. important::
 
-    Partly due to the conventions for the UML class diagrams outlined above and due to the reasons leading to these conventions in the first place, the data model described in the UML class diagrams differs often in subtle details of attribute names from the currently existing data models and, *e.g.*, the SCML schema definition. Eventually, it would be good to agree upon a list of conventions and try to consistently apply them throughout the different interconnected parts (SCML, GUI, engine, evedata, ...).
+    Partly due to the conventions for the UML class diagrams outlined above and due to the reasons leading to these conventions in the first place, the data model described in the UML class diagrams differs often in subtle details of attribute names from the currently existing data models and, *e.g.*, the SCML schema definition. Eventually, it would be good to agree upon a list of conventions and try to consistently apply them throughout the different interconnected parts (SCML, GUI, engine, evedata, ...). These conventions are primarily concerned with a shared vocabulary for the concepts, not with CamelCase *vs.* snake_case and alike, as this will differ for different languages (and we can agree on mapping rules).
 
 
 evefile subpackage
