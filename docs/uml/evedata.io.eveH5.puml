@@ -25,6 +25,7 @@ note left of HDF5Item::name {
 
 class HDF5Group extends HDF5Item {
     children[] : HDF5Item
+    get_children()
 }
 
 note right of HDF5Group::children {
