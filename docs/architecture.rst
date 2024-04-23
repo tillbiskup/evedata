@@ -584,3 +584,17 @@ What may be in here:
 
         -- Andrew Collette, 2014 (p. 18)
 
+
+eveH5 subpackage
+----------------
+
+The aim of this subpackage is to provide a Python representation (in form of a hierarchy of objects) of the contents of an eveH5 file that can be mapped to both, the evefile and dataset interfaces. While the Python h5py package already provides the low-level access and gets used, the eveH5 subpackage contains Python objects that are independent of an open HDF5 file, represent the hierarchy of HDF5 items (groups and datasets), and contain the attributes of each HDF5 item in form of a Python dictionary. Furthermore, each object contains a reference to both, the original HDF5 file and the HDF5 item, thus making reading dataset data on demand as simple as possible.
+
+
+.. figure:: uml/evedata.io.eveH5.*
+    :align: center
+
+    Class hierarchy of the io.eveH5 module. The ``HDF5Item`` class and children represent the individual HDF5 items on a Python level, similarly to the classes provided in the h5py package, but *without* requiring an open HDF5 file. Furthermore, reading actual data (dataset values) is deferred by default.
+
+
+As such, the ``HDF5Item`` class hierarchy shown above is pretty generic and should work with all eveH5 versions. However, it is *not* meant as a generic HDF5 interface, as it does make some assumptions based on the eveH5 file structure and format.

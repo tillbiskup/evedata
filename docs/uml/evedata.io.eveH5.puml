@@ -1,0 +1,42 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class HDF5Item {
+    filename : string
+    name : string
+    attributes : dict
+    get_attributes()
+}
+
+note right of HDF5Item::filename {
+    filename is the name (including path)
+    of the HDF5 file originally read.
+    Together with the name attribute,
+    this makes accessing contents
+    on demand (deferred load) trivial.
+}
+
+note left of HDF5Item::name {
+    name is the full path
+    to the HDF5 item,
+    necessary for accessing
+    via h5py.
+}
+
+class HDF5Group extends HDF5Item {
+    children[] : HDF5Item
+}
+
+note right of HDF5Group::children {
+    Make children a dict with
+    the item names as keys?
+    Alternatively, make HDF5Group
+    behave like a Python dict?
+}
+
+class HDF5Dataset extends HDF5Item {
+    data : nd.array
+    get_data()
+}
+
+@enduml
