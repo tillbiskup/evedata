@@ -13,3 +13,14 @@ An alphabetic list of the modules available within the evedata package. The actu
 .. toctree::
     :maxdepth: 1
 
+
+Subpackages
+-----------
+
+An alphabetic list of the subpackages available within the evedata package. The actual documentation is split in pages for each module of each subpackage, respectively.
+
+.. toctree::
+    :maxdepth: 2
+
+    io/index
+
