@@ -37,6 +37,7 @@ Module documentation
 import logging
 
 import h5py
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -147,3 +148,72 @@ class HDF5Item:
                 key: value[0].decode()
                 for key, value in file[self.name].attrs.items()
             }
+
+
+class HDF5Dataset(HDF5Item):
+    """
+    Representation of a HDF5 dataset.
+
+    In HDF5, a dataset is the "leaf" of the tree, *i.e.* it does not have
+    any children, only a parent (group). Datasets have both, data and
+    attributes. Data can be of arbitrary type, not only numeric, and are
+    represented as :class:`numpy.array`.
+
+
+    Attributes
+    ----------
+    data : :class:`numpy.array`
+        Data of the HDF5 dataset
+
+        Can be numeric, but generally of any type numpy supports.
+
+    Raises
+    ------
+    ValueError
+        Raised if either filename or name are not provided and data are
+        obtained from HDF5 file.
+
+
+    Examples
+    --------
+    It is always nice to give some examples how to use the class. Best to do
+    that with code examples:
+
+    .. code-block::
+
+        obj = HDF5Dataset()
+        ...
+
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.data = np.ndarray([0])
+
+    def get_data(self):
+        """
+        Get data from HDF5 dataset.
+
+        The :attr:`data` attribute is set accordingly. Note that getting
+        data means opening the actual HDF5 file. Hence, if the
+        :attr:`data` attribute has nonzero length, no data are read from
+        the HDF5 file, as it is silently assumed that a read process took
+        place beforehand. This may be relevant particularly for larger
+        datasets.
+
+        Raises
+        ------
+        ValueError
+            Raised if either filename or name are not provided and attributes
+            are accessed.
+
+        """
+        if self.data.size > 0:
+            return
+        if not self.filename:
+            raise ValueError("Missing attribute filename")
+        if not self.name:
+            raise ValueError("Missing attribute name")
+        with h5py.File(self.filename, "r") as file:
+            self.data = file[self.name][...]

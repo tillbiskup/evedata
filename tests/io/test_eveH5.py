@@ -18,7 +18,7 @@ class DummyHDF5File:
             c1 = file.create_group("c1")
             main = c1.create_group("main")
             meta = c1.create_group("meta")
-            main.create_dataset("test", (1, 1))
+            main.create_dataset("test", data=np.ones([5, 2]))
             meta.create_dataset("PosCountTimer", (1, 1))
 
 
@@ -74,3 +74,50 @@ class TestHDF5Item(unittest.TestCase):
         for value in self.hdf5_item.attributes.values():
             with self.subTest(value=value):
                 self.assertIsInstance(value, str)
+
+
+class TestHDF5Dataset(unittest.TestCase):
+    def setUp(self):
+        self.hdf5_dataset = eveH5.HDF5Dataset()
+        self.filename = "test.h5"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_implements_hdf5_item(self):
+        self.assertIsInstance(self.hdf5_dataset, eveH5.HDF5Item)
+
+    def test_has_attributes(self):
+        attributes = ["data"]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.hdf5_dataset, attribute))
+
+    def test_data_attribute_is_empty_by_default(self):
+        self.assertEqual(0, self.hdf5_dataset.data.size)
+
+    def test_get_data_without_filename_raises(self):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+            self.hdf5_dataset.get_data()
+
+    def test_get_data_without_name_raises(self):
+        self.hdf5_dataset.filename = "foo"
+        with self.assertRaisesRegex(ValueError, "Missing attribute name"):
+            self.hdf5_dataset.get_data()
+
+    def test_get_data_sets_data(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_dataset.filename = self.filename
+        self.hdf5_dataset.name = "/c1/main/test"
+        self.hdf5_dataset.get_data()
+        self.assertGreater(self.hdf5_dataset.data.size, 0)
+
+    def test_get_data_does_nothing_if_data_are_set(self):
+        array = np.random.random(5)
+        self.hdf5_dataset.data = array
+        self.hdf5_dataset.get_data()
+        np.testing.assert_array_equal(array, self.hdf5_dataset.data)
