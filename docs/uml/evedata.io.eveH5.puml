@@ -39,4 +39,8 @@ class HDF5Dataset extends HDF5Item {
     get_data()
 }
 
+
+class HDF5File extends HDF5Group {
+    read()
+}
 @enduml
