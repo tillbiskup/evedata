@@ -1,5 +1,12 @@
 """
+
 *Low-level Python object representation of eveH5 file contents.*
+
+.. sidebar:: Contents
+
+    .. contents::
+        :local:
+        :depth: 1
 
 The aim of this module is to provide a Python representation (in form of a
 hierarchy of objects) of the HDF5 contents of an eveH5 file that can be
@@ -9,24 +16,144 @@ module contains Python objects that are independent of an open HDF5 file,
 represent the hierarchy of HDF5 items (groups and datasets), and contain
 the attributes of each HDF5 item in form of a Python dictionary.
 Furthermore, each object contains a reference to both, the original HDF5
-file and the HDF5 item, thus making reading dataset data on demand as
-simple as possible.
+file and the HDF5 item, thus making reading dataset data (and attributes) on
+demand as simple as possible.
+
+
+Overview
+========
+
+A first overview of the classes implemented in this module and their
+hierarchy is given in the UML diagram below.
 
 
 .. figure:: /uml/evedata.io.eveH5.*
     :align: center
 
-    Class hierarchy of the io.eveH5 module. The ``HDF5Item`` class and
+    Class hierarchy of the io.eveH5 module. The :class:`HDF5Item` class and
     children represent the individual HDF5 items on a Python level,
     similarly to the classes provided in the h5py package, but *without*
     requiring an open HDF5 file. Furthermore, reading actual data (dataset
     values) is deferred by default.
 
 
-As such, the ``HDF5Item`` class hierarchy shown above is pretty generic
+As such, the :class:`HDF5Item` class hierarchy shown above is pretty generic
 and should work with all eveH5 versions. However, it is *not* meant as a
 generic HDF5 interface, as it does make some assumptions based on the
 eveH5 file structure and format.
+
+
+Usage
+=====
+
+The typical entry point is an HDF5 file (an eveH5 file, to be precise)
+that should be represented as hierarchy of Python objects and the
+information contained potentially mapped to another hierarchy of classes.
+On the Python level, this is implemented by the :class:`HDF5File` class.
+
+Reading an HDF5 (eveH5) file is as simple as:
+
+.. code-block::
+
+    from evedata.io import eveH5
+
+    file = eveH5.HDF5File(filename="test.h5")
+    file.read()
+
+Each HDF5 item present in the root group (``/``) will appear as attribute by
+its name in the :obj:`HDF5File` object. Each such item is of type
+:class:`HDF5Item`, more precisely either a :class:`HDF5Dataset` or a
+:class:`HDF5Group`.
+
+If a given HDF5 item is itself a group, *i.e.* a node
+in the tree and hence an :obj:`HDF5Group`, containing other HDF5 items,
+these will be accessible as chained attributes. Suppose your HDF5 file
+would contain a dataset ``/c1/meta/PosCountTimer``. You could access this
+dataset by:
+
+.. code-block::
+
+    file.c1.meta.PosCountTimer
+
+The dataset itself is an :obj:`HDF5Dataset` object. Datasets are the leafs
+of the tree, *i.e.* they cannot contain other items. But they can (and
+usually do) contain data.
+
+Furthermore, you can iterate over the items as with every Python iterable:
+
+.. code-block::
+
+    for item in file:
+        print(item.name)
+
+This would reveal the name of each item present in the root group, be it a
+group or a dataset. Of course, iterating works with every :obj:`HDF5Group`
+object, not only the :obj:`HDF5File` object. Getting the names of all
+items of the ``c1`` group translates to:
+
+.. code-block::
+
+    for item in file.c1:
+        print(item.name)
+
+Note that upon reading the file, neither attributes nor dataset values are
+loaded from the HDF5 file. Reading attributes, here for the root group of
+the file -- but identical for each HDF5 item --, is as simple as:
+
+.. code-block::
+
+    file.get_attributes()
+
+Afterwards, the attributes are available as :attr:`HDF5Item.attributes`
+attribute, *i.e.* a Python :class:`dict` with the keys corresponding to
+the HDF5 attribute names and the values transformed into scalar strings.
+
+In a similar fashion, if you want to access the data of a dataset,
+you need to once ask for the data to be loaded from the HDF5 file. For the
+``/c1/meta/PosCountTimer`` dataset mentioned above, this would translate to:
+
+.. code-block::
+
+    file.c1.meta.PosCountTimer.get_data()
+
+Afterwards, you can access the data as :class:`numpy.ndarray` via the
+:attr:`HDF5Dataset.data` attribute.
+
+
+Classes
+=======
+
+The following classes are implemented in the module:
+
+* :class:`HDF5Item`
+
+  Base class for HDF5 items.
+
+  Provides the filename, name of the item, and attributes, as well as
+  mechanisms to load the attributes on demand from the original HDF5 file.
+
+* :class:`HDF5Dataset`
+
+  Representation of an HDF5 dataset.
+
+  Datasets are the leafs of the hierarchical tree. They cannot contain
+  other :obj:`HDF5Item` objects, but they contain data. Provides
+  mechanisms to load the data on demand from the original HDF5 file.
+
+* :class:`HDF5Group`
+
+  Representation of an HDF5 group containing other HDF5 items.
+
+  Groups are the nodes of the hierarchical tree. They can (and usually
+  will) contain other :class:`HDF5Item` objects, but the cannot contain data.
+
+* :class:`HDF5File`
+
+  Representation of an HDF5 file containing other HDF5 items.
+
+  A special :class:`HDF5Group` instance containing all items contained in an
+  HDF5 (eveH5) file as hierarchy of :obj:`HDF5Item` objects. Provides
+  mechanisms to load the entire contents of an HDF5 file.
 
 
 Module documentation
@@ -156,7 +283,7 @@ class HDF5Item:
 
 class HDF5Dataset(HDF5Item):
     """
-    Representation of a HDF5 dataset.
+    Representation of an HDF5 dataset.
 
     In HDF5, a dataset is the "leaf" of the tree, *i.e.* it does not have
     any children, only a parent (group). Datasets have both, data and
@@ -166,7 +293,7 @@ class HDF5Dataset(HDF5Item):
 
     Attributes
     ----------
-    data : :class:`numpy.array`
+    data : :class:`numpy.ndarray`
         Data of the HDF5 dataset
 
         Can be numeric, but generally of any type numpy supports.
@@ -258,7 +385,7 @@ class HDF5Dataset(HDF5Item):
 class HDF5Group(HDF5Item):
     # noinspection PyUnresolvedReferences
     """
-    Representation of a HDF5 group containing other HDF5 items.
+    Representation of an HDF5 group containing other HDF5 items.
 
     HDF5 is a hierarchical data format (hence the name), *i.e.* a tree
     consisting of groups as nodes and datasets as leafs. Datasets are
@@ -402,9 +529,9 @@ class HDF5Group(HDF5Item):
 
 class HDF5File(HDF5Group):
     """
-    Representation of a HDF5 file containing other HDF5 items.
+    Representation of an HDF5 file containing other HDF5 items.
 
-    Technically speaking, a HDF5 file is nothing else than a
+    Technically speaking, an HDF5 file is nothing else than a
     :obj:`HDF5Group` object of the root group (``/``). However, the class
     provides convenience methods for reading an HDF5 file and converting it
     into a hierarchical structure of :obj:`HDF5Item` objects.
