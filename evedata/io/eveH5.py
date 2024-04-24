@@ -34,6 +34,7 @@ Module documentation
 
 """
 
+import functools
 import logging
 
 import h5py
@@ -222,8 +223,8 @@ class HDF5Dataset(HDF5Item):
 
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, filename="", name=""):
+        super().__init__(filename=filename, name=name)
         self.data = np.ndarray([0])
 
     def get_data(self):
@@ -363,8 +364,8 @@ class HDF5Group(HDF5Item):
 
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, filename="", name=""):
+        super().__init__(filename=filename, name=name)
         self._items = {}
 
     def __iter__(self):
@@ -382,7 +383,7 @@ class HDF5Group(HDF5Item):
 
     def add_item(self, item):
         """
-        Add an item to the collection.
+        Add an item to the group.
 
         Parameters
         ----------
@@ -397,3 +398,141 @@ class HDF5Group(HDF5Item):
         name = item.name.split("/")[-1]
         setattr(self, name, item)
         self._items[name] = item
+
+
+class HDF5File(HDF5Group):
+    """
+    Representation of a HDF5 file containing other HDF5 items.
+
+    Technically speaking, a HDF5 file is nothing else than a
+    :obj:`HDF5Group` object of the root group (``/``). However, the class
+    provides convenience methods for reading an HDF5 file and converting it
+    into a hierarchical structure of :obj:`HDF5Item` objects.
+
+    Raises
+    ------
+    ValueError
+        Raised if filename is not provided and data are obtained from HDF5
+        file.
+
+
+    Examples
+    --------
+    HDF5 files are basically HDF5 groups serving as root group and
+    containing typically a hierarchy of other HDF5 items (both, groups and
+    datasets). The same holds true for the :class:`HDF5File` class serving
+    as root group and containing each and every HDF5 item contained in the
+    file read.
+
+    To read an HDF5 file and create a hierarchy of :obj:`HDF5Item` objects
+    corresponding to the HDF5 items in the file, instantiate the object and
+    call its :meth:`read` method:
+
+    .. code-block::
+
+        file = HDF5File()
+        file.read("test.h5")
+
+    This will read the file ``test.h5`` and create the corresponding
+    hierarchy of :obj:`HDF5Group` and :obj:`HDF5Dataset` items. Note that
+    neither attributes nor data (in case of datasets) are read. This can
+    (and needs to) be done manually afterwards for each :obj:`HDF5Item`
+    object.
+
+    Instead of providing the HDF5 file name as a parameter to the
+    :meth:`read` method, you can set it beforehand in the :obj:`HDF5File`
+    object, as usual even during instantiation of the object:
+
+    .. code-block::
+
+        file = HDF5File(filename="test.h5")
+        file.read()
+
+    Note that the :attr:`name` attribute of the :obj:`HDF5File` object will
+    automatically be set to ``/`` to reflect the root node.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.name = "/"
+        self._hdf5_items = {}
+
+    def read(self, filename=""):
+        """
+        Read contents of an HDF5 (eveH5) file and create hierarchy of items.
+
+        The hierarchical structure of the HDF5 file is represented as
+        hierarchy of :obj:`HDF5Item` objects, namely :obj:`HDF5Group` for
+        groups (nodes) and :obj:`HDF5Dataset` for datasets (leafs).
+
+        .. note::
+
+            Only the corresponding items will be created, but neither their
+            attributes nor data read.
+
+        Parameters
+        ----------
+        filename : :class:`str`
+            Name of the HDF5 (eveH5) file to read.
+
+            If not provided, but set as attribute :attr:`filename`,
+            the latter will be used. Takes precedence of the attribute
+            :attr:`filename`.
+
+        Raises
+        ------
+        ValueError
+            Raised if filename is not provided and data are obtained from
+            HDF5 file.
+
+        """
+        if filename:
+            self.filename = filename
+        if not self.filename:
+            raise ValueError("Missing attribute filename")
+
+        self._get_hdf5_items()
+        self._set_hdf5_items()
+
+    def _get_hdf5_items(self):
+        """
+        Get a list of all items of the HDF5 file including their type.
+
+        The item type is set to the corresponding class of this module,
+        for easier instantiating of the objects later on.
+
+        For getting the names and types of each item, the visitor pattern
+        provided by the h5py package is used. This should be much faster
+        than any iteration on the Python side, as this mainly works on the
+        HDF5 (*i.e.*, C++) side.
+        """
+
+        def inspect(name, item):
+            if isinstance(item, h5py.Group):
+                item_type = HDF5Group
+            else:
+                item_type = HDF5Dataset
+            self._hdf5_items[name] = item_type
+
+        with h5py.File(self.filename, "r") as file:
+            file.visititems(inspect)
+
+    def _set_hdf5_items(self):
+        """
+        Create the hierarchy of HDF5 items.
+
+        This method assumes the list of items to be sorted in a way that it
+        is safe to sequentially iterate through and create the appropriate
+        items. This assumption should be justified given the way how the
+        visitor pattern is implemented in h5py.
+
+        """
+        for name, node_type in self._hdf5_items.items():
+            item = node_type(filename=self.filename, name=f"/{name}")
+            if "/" not in name:
+                self.add_item(item)
+            else:
+                parent = "/".join(name.split("/")[:-1])
+                node = functools.reduce(getattr, parent.split("/"), self)
+                node.add_item(item)

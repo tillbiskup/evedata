@@ -1,3 +1,4 @@
+import functools
 import os
 import unittest
 
@@ -20,6 +21,7 @@ class DummyHDF5File:
             meta = c1.create_group("meta")
             main.create_dataset("test", data=np.ones([5, 2]))
             meta.create_dataset("PosCountTimer", (1, 1))
+            file.create_dataset("SCML", (1, 1))
 
 
 class TestHDF5Item(unittest.TestCase):
@@ -91,11 +93,29 @@ class TestHDF5Dataset(unittest.TestCase):
     def test_implements_hdf5_item(self):
         self.assertIsInstance(self.hdf5_dataset, eveH5.HDF5Item)
 
+    def test_has_attributes_from_parent_class(self):
+        attributes = [
+            x for x in dir(eveH5.HDF5Item()) if not x.startswith("_")
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.hdf5_dataset, attribute))
+
     def test_has_attributes(self):
         attributes = ["data"]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.hdf5_dataset, attribute))
+
+    def test_set_filename_on_init(self):
+        filename = "foo"
+        hdf5_dataset = eveH5.HDF5Dataset(filename=filename)
+        self.assertEqual(filename, hdf5_dataset.filename)
+
+    def test_set_name_on_init(self):
+        name = "bar"
+        hdf5_dataset = eveH5.HDF5Dataset(name=name)
+        self.assertEqual(name, hdf5_dataset.name)
 
     def test_data_attribute_is_empty_by_default(self):
         self.assertEqual(0, self.hdf5_dataset.data.size)
@@ -134,6 +154,24 @@ class TestHDF5Group(unittest.TestCase):
     def test_implements_hdf5_item(self):
         self.assertIsInstance(self.hdf5_group, eveH5.HDF5Item)
 
+    def test_has_attributes_from_parent_class(self):
+        attributes = [
+            x for x in dir(eveH5.HDF5Item()) if not x.startswith("_")
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.hdf5_group, attribute))
+
+    def test_set_filename_on_init(self):
+        filename = "foo"
+        hdf5_group = eveH5.HDF5Group(filename=filename)
+        self.assertEqual(filename, hdf5_group.filename)
+
+    def test_set_name_on_init(self):
+        name = "bar"
+        hdf5_group = eveH5.HDF5Group(name=name)
+        self.assertEqual(name, hdf5_group.name)
+
     def test_add_item_sets_property_identical_to_item_name(self):
         self.hdf5_group.add_item(self.item)
         self.assertTrue(hasattr(self.hdf5_group, self.item.name))
@@ -152,3 +190,111 @@ class TestHDF5Group(unittest.TestCase):
         self.hdf5_group.add_item(self.item)
         for element in self.hdf5_group:
             self.assertIsInstance(element, eveH5.HDF5Item)
+
+
+class TestHDF5File(unittest.TestCase):
+    def setUp(self):
+        self.hdf5_file = eveH5.HDF5File()
+        self.filename = "test.h5"
+        self.items = []
+        self.items_with_type = {}
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+
+    def get_items_from_hdf5_file(self):
+        with h5py.File(self.filename, "r") as file:
+            file.visit(self.items.append)
+
+    def get_items_with_type_from_hdf5_file(self):
+        def inspect(name, item):
+            if isinstance(item, h5py.Group):
+                node_type = eveH5.HDF5Group
+            else:
+                node_type = eveH5.HDF5Dataset
+            self.items_with_type[name] = node_type
+
+        with h5py.File(self.filename, "r") as file:
+            file.visititems(inspect)
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_implements_hdf5_group(self):
+        self.assertIsInstance(self.hdf5_file, eveH5.HDF5Group)
+
+    def test_has_attributes_from_parent_class(self):
+        attributes = [
+            x for x in dir(eveH5.HDF5Group()) if not x.startswith("_")
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.hdf5_file, attribute))
+
+    def test_name_is_root(self):
+        self.assertEqual("/", self.hdf5_file.name)
+
+    def test_read_sets_filename(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_file.read(self.filename)
+        self.assertEqual(self.filename, self.hdf5_file.filename)
+
+    def test_read_without_filename_parameter_but_filename_set(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_file.filename = self.filename
+        self.hdf5_file.read()
+
+    def test_read_without_filename_raises(self):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+            self.hdf5_file.read()
+
+    def test_read_adds_items_to_root(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.get_items_from_hdf5_file()
+        self.hdf5_file.read(self.filename)
+        root_items = [x for x in self.items if "/" not in x]
+        for item in root_items:
+            with self.subTest(item=item):
+                self.assertTrue(hasattr(self.hdf5_file, item))
+
+    def test_read_instantiates_correct_item_type(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.get_items_with_type_from_hdf5_file()
+        self.hdf5_file.read(self.filename)
+        for item, node_type in self.items_with_type.items():
+            if "/" not in item:
+                with self.subTest(item=item):
+                    self.assertIsInstance(
+                        getattr(self.hdf5_file, item), node_type
+                    )
+
+    def test_read_sets_item_filename(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.get_items_from_hdf5_file()
+        self.hdf5_file.read(self.filename)
+        root_items = [x for x in self.items if "/" not in x]
+        for item in root_items:
+            with self.subTest(item=item):
+                self.assertEqual(
+                    self.filename, getattr(self.hdf5_file, item).filename
+                )
+
+    def test_read_sets_item_name(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.get_items_from_hdf5_file()
+        self.hdf5_file.read(self.filename)
+        root_items = [x for x in self.items if "/" not in x]
+        for item in root_items:
+            with self.subTest(item=item):
+                self.assertEqual(
+                    f"/{item}", getattr(self.hdf5_file, item).name
+                )
+
+    def test_read_adds_item_hierarchy(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.get_items_from_hdf5_file()
+        self.hdf5_file.read(self.filename)
+        for item in self.items:
+            with self.subTest(item=item):
+                functools.reduce(getattr, item.split("/"), self.hdf5_file)
