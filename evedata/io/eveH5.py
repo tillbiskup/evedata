@@ -62,6 +62,9 @@ class HDF5Item:
     name : :class:`str`
         Name of the node/item within the HDF5 file
 
+        Note that this is the full name, including its "path" through the
+        hierarchy of the HDF5 file.
+
     attributes : :class:`dict`
         Attributes of the HDF5 item
 
@@ -176,14 +179,46 @@ class HDF5Dataset(HDF5Item):
 
     Examples
     --------
-    It is always nice to give some examples how to use the class. Best to do
-    that with code examples:
+    HDF5 datasets are HDF5 items with data. Hence, instantiating the class
+    is identical to instantiating an :obj:`HDFItem` object:
 
     .. code-block::
 
-        obj = HDF5Dataset()
-        ...
+        dataset = HDF5Dataset()
 
+    Both, filename and name can be set upon instantiation:
+
+    .. code-block::
+
+        dataset = HDF5Dataset(filename="test.h5", name="/test")
+
+    Here ``/test`` refers to a hypothetical HDF5 dataset ``test`` present
+    in the root group ``/`` of the HDF5 file.
+
+    To set the attributes, *i.e.* read them from the HDF5 file, use the
+    :meth:`get_attributes` method:
+
+    .. code-block::
+
+        dataset = HDF5Dataset(filename="test.h5", name="/test")
+        dataset.get_attributes()
+
+    Note that this will raise if either filename or name are not provided.
+
+    To set the data, *i.e.* read the data of the dataset from the HDF5
+    file, use the :meth:`get_data` method:
+
+    .. code-block::
+
+        dataset = HDF5Dataset(filename="test.h5", name="/test")
+        dataset.get_data()
+
+    Several subsequent calls to the :meth:`get_data` method will *not* read
+    the data from the HDF5 file more than once for efficiency purposes.
+
+    The idea behind obtaining the attributes and data this way: being
+    independent of the HDF5 file. By directly using the h5py package,
+    the file would always need to be open to access the attributes.
 
     """
 
@@ -217,3 +252,148 @@ class HDF5Dataset(HDF5Item):
             raise ValueError("Missing attribute name")
         with h5py.File(self.filename, "r") as file:
             self.data = file[self.name][...]
+
+
+class HDF5Group(HDF5Item):
+    # noinspection PyUnresolvedReferences
+    """
+    Representation of a HDF5 group containing other HDF5 items.
+
+    HDF5 is a hierarchical data format (hence the name), *i.e.* a tree
+    consisting of groups as nodes and datasets as leafs. Datasets are
+    represented by the :class:`HDF5Dataset` class, groups by this class.
+    Groups can contain other groups as well as datasets, and groups can
+    have attributes, as any other HDF5 item. A HDF5 file is basically a
+    group, and at the same time the root node. For representing entire HDF5
+    files, there is a special class :class:`HDF5File` providing
+    convenience methods to read files and convert them into a hierarchy of
+    :obj:`HDF5Item` objects.
+
+    The class is implemented as iterable, *i.e.* you can iterate over all
+    items (:obj:`HDF5Item` objects) as you would with every other Python
+    iterable. See the examples section for further details.
+
+
+    Attributes
+    ----------
+    item : :class:`HDF5Item`
+        Item of a group
+
+        All items added to a collection using the method :meth:`add_item`
+        will appear as attribute of the object. As this is dynamic,
+        however, no concrete attributes can be described here.
+
+
+    Examples
+    --------
+    HDF5 groups are HDF5 items acting as nodes, *i.e.* items that can
+    contain other items. Hence, instantiating the class is identical to
+    instantiating an :obj:`HDFItem` object:
+
+    .. code-block::
+
+        group = HDF5Group()
+
+    Both, filename and name can be set upon instantiation:
+
+    .. code-block::
+
+        group = HDF5Group(filename="test.h5", name="/test")
+
+    Here ``/test`` refers to a hypothetical HDF5 group ``test`` present
+    in the root group ``/`` of the HDF5 file.
+
+    To set the attributes, *i.e.* read them from the HDF5 file, use the
+    :meth:`get_attributes` method:
+
+    .. code-block::
+
+        group = HDF5Group(filename="test.h5", name="/test")
+        group.get_attributes()
+
+    Note that this will raise if either filename or name are not provided.
+
+    To add an item to the group, you first need to have an item, and only
+    afterwards you can add it to the group:
+
+    .. code-block::
+
+        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
+
+        group = HDF5Group(filename="test.h5", name="/test")
+        group.add_item(dataset)
+
+    Items of a group are set as attributes in the object, with their name
+    corresponding to the last part of the item name (after the last slash).
+    Hence, you can access these attributes as any other attribute:
+
+    .. code-block::
+
+        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
+        group = HDF5Group(filename="test.h5", name="/test")
+        group.add_item(dataset)
+
+        item = group.test
+
+    Here, ``item`` would contain the dataset added before to the group.
+
+    Furthermore, groups are iterable, allowing for a very pythonic way of
+    accessing the items of a group:
+
+    .. code-block::
+
+        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
+        subgroup = HDF5Group(filename="test.h5", name="/test/bar")
+        group = HDF5Group(filename="test.h5", name="/test")
+        group.add_item(dataset)
+        group.add_item(subgroup)
+
+        for item in group:
+            print(item.name)
+
+    This would return the names (here: ``/test/foo`` and ``/test/bar``) of
+    the items of the group.
+
+    Similarly, you can use list comprehensions to act upon all items of a
+    group. Getting a list of the names, rather than printing them, would be:
+
+    .. code-block::
+
+        [item for item in group]
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._items = {}
+
+    def __iter__(self):
+        """
+        Iterate over the items of the group.
+
+        Returns
+        -------
+        item : :class:`HDF5Item`
+            Item of the group
+
+        """
+        for item in self._items.values():
+            yield item
+
+    def add_item(self, item):
+        """
+        Add an item to the collection.
+
+        Parameters
+        ----------
+        item : :class:`HDF5Item`
+            The item to be added to the group.
+
+            The item will be accessible as attribute of the group, using
+            the last part of the name of the item in :attr:`HDF5Item.name`
+            as name for the attribute.
+
+        """
+        name = item.name.split("/")[-1]
+        setattr(self, name, item)
+        self._items[name] = item

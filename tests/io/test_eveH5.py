@@ -121,3 +121,34 @@ class TestHDF5Dataset(unittest.TestCase):
         self.hdf5_dataset.data = array
         self.hdf5_dataset.get_data()
         np.testing.assert_array_equal(array, self.hdf5_dataset.data)
+
+
+class TestHDF5Group(unittest.TestCase):
+    def setUp(self):
+        self.hdf5_group = eveH5.HDF5Group()
+        self.item = eveH5.HDF5Item(filename="foo", name="bar")
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_implements_hdf5_item(self):
+        self.assertIsInstance(self.hdf5_group, eveH5.HDF5Item)
+
+    def test_add_item_sets_property_identical_to_item_name(self):
+        self.hdf5_group.add_item(self.item)
+        self.assertTrue(hasattr(self.hdf5_group, self.item.name))
+
+    def test_item_name_is_only_part_after_last_slash(self):
+        self.item.name = "foo/bar/bla/blub"
+        self.hdf5_group.add_item(self.item)
+        self.assertTrue(hasattr(self.hdf5_group, "blub"))
+
+    def test_iterate_over_group_yields_item(self):
+        self.hdf5_group.add_item(self.item)
+        elements = [element for element in self.hdf5_group]
+        self.assertTrue(elements)
+
+    def test_iterate_over_group_yields_hdf5item(self):
+        self.hdf5_group.add_item(self.item)
+        for element in self.hdf5_group:
+            self.assertIsInstance(element, eveH5.HDF5Item)

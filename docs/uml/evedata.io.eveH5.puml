@@ -24,15 +24,14 @@ note left of HDF5Item::name {
 }
 
 class HDF5Group extends HDF5Item {
-    children[] : HDF5Item
-    get_children()
+    <item> : HDF5Item
+    add_item()
 }
 
-note right of HDF5Group::children {
-    Make children a dict with
-    the item names as keys?
-    Alternatively, make HDF5Group
-    behave like a Python dict?
+note right of HDF5Group::<item> {
+    Each item is added as attribute
+    to the class and accessible via
+    an iterator: "for item in group".
 }
 
 class HDF5Dataset extends HDF5Item {
