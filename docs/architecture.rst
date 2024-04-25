@@ -27,6 +27,16 @@ A more complete picture, showing all subpackages, is given below in :numref:`Fig
     A high-level view of the different subpackages of the evedata package. For details, see further schemata below. The three subpackages "evefile", "scml", and "dataset" together form the core domain. The "operations" subpackage contains the business rules, and the "io" subpackage all the interfaces to the external world, both persistence layer and users.
 
 
+An alternative view that may be more helpful in the long run, leading to a better overall architecture, rests on the distinction between two dimensions of layers: functional and technical. While for long time, the first line of organisation in code was technical layers, grouping software into functional blocks (packages or whatever the name) that are each independently technically layered preserves the concepts of the application much better. A first idea for the evedata package is presented in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`.
+
+.. _fig-architecture_layers_technical_functional:
+
+.. figure:: images/architecture-layers-technical-functional.*
+    :align: center
+
+    A two-dimensional view of the architecture, with technical and functional layers. The primary line of organisation in the code, according to different authors, should be the functional layers or packages, and each of the functional blocks should be organised into three technical layers: boundaries, controllers, entities. The name of these three technical layers goes back to Ivar Jacobson (1992).
+
+
 Core domain
 ===========
 
