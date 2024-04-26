@@ -34,7 +34,15 @@ An alternative view that may be more helpful in the long run, leading to a bette
 .. figure:: images/architecture-layers-technical-functional.*
     :align: center
 
-    A two-dimensional view of the architecture, with technical and functional layers. The primary line of organisation in the code, according to different authors, should be the functional layers or packages, and each of the functional blocks should be organised into three technical layers: boundaries, controllers, entities. The name of these three technical layers goes back to Ivar Jacobson (1992).
+    A two-dimensional view of the architecture, with technical and functional layers. The primary line of organisation in the code, according to different authors, should be the functional layers or packages, and each of the functional blocks should be organised into three technical layers: boundaries, controllers, entities. The idea and name of these three technical layers goes back to Ivar Jacobson (1992).
+
+
+A corresponding UML package diagram is shown in the figure below:
+
+.. figure:: uml/evedata-functional-layers.*
+    :align: center
+
+    An UML package diagram of the evedata package following the organisation in functional layers that each contain three technical layers, as shown in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`. To hide the names of the technical layers from the user, one could think of importing the relevant classes (basically the facades) in the ``__init__.py`` files of the respective top-level functional packages.
 
 
 Core domain

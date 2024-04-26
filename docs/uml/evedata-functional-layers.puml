@@ -1,0 +1,76 @@
+@startuml
+'skinparam dpi 150
+
+package evedata {
+    package evedata.measurement {
+        package evedata.measurement.boundaries {
+            package scan {}
+            package setup {}
+            package scml {}
+        }
+        package evedata.measurement.controllers {
+            package version_mapping {}
+        }
+        package evedata.measurement.entities {
+            package scml {
+            }
+            package setup {
+            }
+            package scan {
+            }
+            package event {
+            }
+            package plot {
+            }
+
+            setup <-- scml
+            scan <-- scml
+            event <-- scan
+            plot <-- scan
+        }
+        evedata.measurement.boundaries --> evedata.measurement.controllers
+        evedata.measurement.controllers --> evedata.measurement.entities
+    }
+
+    package evedata.data {
+        package evedata.data.boundaries {
+            package evefile {}
+            package eveH5 {}
+        }
+        package evedata.data.controllers {
+            package version_mapping {}
+            package transforming {}
+        }
+        package evedata.data.entities {
+            package evedata.data.entities.file {
+            }
+            package evedata.data.entities.data {
+            }
+            package evedata.data.entities.metadata {
+            }
+
+            evedata.data.entities.metadata <-- evedata.data.entities.data
+            evedata.data.entities.data <-- evedata.data.entities.file
+        }
+        evedata.data.boundaries --> evedata.data.controllers
+        evedata.data.controllers --> evedata.data.entities
+    }
+
+    package evedata.dataset {
+        package evedata.dataset.boundaries {
+            package dataset {}
+        }
+        package evedata.dataset.controllers {
+            package filling {}
+        }
+        package evedata.dataset.entities {
+            package data {}
+            package metadata {}
+        }
+
+        evedata.dataset.boundaries --> evedata.dataset.controllers
+        evedata.dataset.controllers --> evedata.dataset.entities
+    }
+}
+
+@enduml
