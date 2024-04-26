@@ -5,6 +5,11 @@ Terminology
 The evedata package resides within a complex environment, and there are terms from both, the problem domain (radiometry with synchrotron radiation) and the solution domain (measurement program, software development) that either users or developers may not necessarily be familiar with. Hence the idea of a growing list of terms and attempts to define them. A big thanks to all colleagues helping to shed light on all the different aspects, in particular (and alphabetic order) Jens Eden, Marcus Michalsky, Hartmut Scherr.
 
 
+.. important::
+
+    Currently (2024/04/26) some terms are not correctly defined (*e.g.* difference between detector and channel, motor and axis) and need to be corrected/updated.
+
+
 CA
     (EPICS) Channel Access
 
@@ -117,7 +122,9 @@ PV
     Process variable (EPICS)
 
 RBV
-    ?
+    read-back value
+
+    Value read back from a device (motor). Motors provide feedback once they finished moving to a given position, *i.e.* provide the actual position (and whether they reached the position or approached a limit or else). This is different from (ordinary) devices that can be set, but do not provide any feedback.
 
 section
     alternative terms: region, area

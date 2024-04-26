@@ -48,6 +48,10 @@ A first overview of potential use cases, to be discussed with the users:
 
   Some measurements involve devices whose data are (currently) *not* stored in the eveH5 (HDF5) measurement files. These data should be transparently made available when reading the eveH5 file, potentially via a deferred loading mechanism (on demand) for better performance.
 
+* Access data on a local computer independent of network access/PTB intranet and independent of the operating system.
+
+  Data need to be available locally of course, but besides that, no external services should be required to load (and afterwards view, process, analyse) the data. Furthermore, data handling should work on at least the three major desktop operating systems (Linux, Windows, macOS).
+
 
 Todo
 ====
