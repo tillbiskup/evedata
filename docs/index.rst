@@ -52,7 +52,7 @@ To install the evedata package on your computer (sensibly within a Python virtua
 Related projects
 ================
 
-There is a number of related packages users of the evedata package may well be interested in, as they have a similar scope, focussing on working with synchrotron radiometry data.
+While the evedata package is explicitly *not* concerned with viewing or analysing data, there is a number of related packages users of the evedata package may well be interested in, as they have a similar scope, focussing on working with synchrotron radiometry data.
 
 * radiometry
 
