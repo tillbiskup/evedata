@@ -9,16 +9,20 @@ package evedata {
     package evedata.dataset {
     }
 
+    evedata.evefile <-- evedata.dataset
+
 }
 
-evedata.evefile <-- evedata.dataset
-
 package eveH5 #fff9c4
-eveH5 <-- evedata.evefile
+eveH5 -0)-- evedata.evefile
+
+package SCML #fff9c4
+SCML -0)-- evedata.evefile
 
 package evedataviewer #fff9c4
-package radiometry #fff9c4
+evedata.dataset --(0- evedataviewer
 
-evedata.dataset <-- evedataviewer
-evedata.dataset <-- radiometry
+package radiometry #fff9c4
+evedata.dataset --(0- radiometry
+
 @enduml

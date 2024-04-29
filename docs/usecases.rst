@@ -26,7 +26,7 @@ A first overview of potential use cases, to be discussed with the users:
 
 * Access data from a given measurement in a way they can be further processed and analysed.
 
-  Data in the persistence layer (HDF5 file) are usually neither homogeneous nor continuous and hence not easily plotted, processed, or analysed. Hence, the data read from the persistence layer need to be "interpreted" first. The data structures provided need to be friendly to both, data display (evedataviewer package) as well as advanced data processing and analysis (radiometry package) including full reproducibility by means of an automatically generated protocol.
+  Data in the persistence layer (HDF5 file) are usually neither homogeneous nor continuous and therefore not easily plotted, processed, or analysed. Hence, the data read from the persistence layer need to be "interpreted" first. The data structures provided need to be friendly to both, data display (evedataviewer package) as well as advanced data processing and analysis (radiometry package) including full reproducibility by means of an automatically generated protocol.
 
 * Access information necessary to change settings of the physical setup.
 

@@ -41,19 +41,14 @@ In short: The interface towards the eveH5 files is what the IT group is primaril
 .. figure:: uml/evedata-in-context.*
     :align: center
 
-    The two interfaces of the evedata package: eveH5 is the persistence layer of the recorded data and metadata, and evedataviewer and radiometry are Python packages for graphically displaying and processing and analysing these data, respectively. Most people concerned with the actual data will use either use evedataviewer or the radiometry package, but not evedata directly.
-
-
-.. note::
-
-    When both interfaces reside in separate subpackages, there will be at least one additional subpackage providing the "glue" between the two interfaces, at least a mapping from one data model to the other.
+    The two interfaces of the evedata package: the recorded data (top) and the viewer and analysis (bottom). eveH5 is the persistence layer of the recorded data and metadata, SCML the schema and description of the measurement and setup, evedataviewer and radiometry are Python packages for graphically displaying and processing and analysing these data, respectively. Most people concerned with the actual data will use either the evedataviewer or the radiometry package, but not evedata directly.
 
 
 The main characteristics of these two interfaces are described in a bit more detail below.
 
 
-Interface towards eveH5 files
------------------------------
+Interface towards eveH5/SCML files
+----------------------------------
 
 * represent contents of an eveH5 file
 * close to the schemata drawn originally by MM
