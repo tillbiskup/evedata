@@ -1,19 +1,31 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Device {
+class Setup {
+    detectors : Detector[]
+    motors : Motor[]
+    devices : Device[]
+}
+Setup *-- "n" Detector
+Setup *-- "n" Motor
+Setup *-- "n" Device
+
+Setup -* SCML
+note right of SCML: See separate\nscml module.
+
+class AbstractDevice {
     class : string
     name : string
     id : string
     unit : Unit
 }
-Device <|-- Detector
-Device <|-- Motor
-Device <|-- Monitor
-Device <|-- Axis
-Device <|-- Channel
-Device <|-- Option
-Device *-- Unit
+AbstractDevice <|-- Detector
+AbstractDevice <|-- Motor
+AbstractDevice <|-- Device
+AbstractDevice <|-- Axis
+AbstractDevice <|-- Channel
+AbstractDevice <|-- Option
+AbstractDevice *-- Unit
 
 class Access {
     value : typevalue
@@ -77,13 +89,13 @@ Detector *-- "n" Access
 Detector *-- "n" Channel
 Detector *-- "n" Option
 
-class Monitor {
+class Device {
     value : Access
     displaygroup : string
     options : Option[]
 }
-Monitor *-- Access
-Monitor *-- "n" Option
+Device *-- Access
+Device *-- "n" Option
 
 enum Method {
     PUT = PUT

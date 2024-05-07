@@ -299,6 +299,10 @@ This module contains the main ``SCML`` class and probably as well the ``Plugin``
 
       Is there a need to store the plain XML file somewhere? Or would it be sufficient to extract it (again) when needed from the eveH5 file?
 
+    * Moving "Plugin" to its own module for consistency?
+
+      "Scan" and "Setup" are contained in their own modules, as is "Plot" and "Event" that are both used in "Scan".
+
 
 scml.scan module
 ~~~~~~~~~~~~~~~~
@@ -350,12 +354,14 @@ scml.setup module
     :align: center
     :width: 750px
 
-    Class hierarchy of the scml.setup module, closely resembling the schema of the SCML file. The subclasses "Detector, "Motor", and "Monitor" of "Device" are directly used in the "SCML" class in the "scml.scml" module. See the schema of the "scml.scml" module for details.
+    Class hierarchy of the scml.setup module, closely resembling the schema of the SCML file. Differing from the SCML schema definition, an additional class ``Setup`` is introduced here containing objects of the subclasses "Detector, "Motor", and "Device" of "AbstractDevice". The SCML schema contains these three at the same level as "Scan" and "Plugins".
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * ...
+    * Better name for "Device"?
+
+      All three, Detector, Motor and Device (as well as Axis and Channel, and Option), are abstract devices.
 
 
 dataset subpackage

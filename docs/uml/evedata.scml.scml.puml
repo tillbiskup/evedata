@@ -5,16 +5,12 @@ class SCML {
     version : string
     author: string
     scan : Scan
+    setup : Setup
     plugins : Plugin[]
-    detectors : Detector[]
-    motors : Motor[]
-    monitors : Monitor[]
 }
 SCML *-- Scan
+SCML *-- Setup
 SCML *-- "n" Plugin
-SCML *-- "n" Detector
-SCML *-- "n" Motor
-SCML *-- "n" Monitor
 
 note right of SCML::author
     The author attribute is
@@ -25,13 +21,8 @@ end note
 
 note bottom of Scan: See separate\nscan module
 
-note as SetupNote
-    See separate
-    setup module
-end note
+note bottom of Setup: See separate\nsetup module
 
-Detector .. SetupNote
-Motor .. SetupNote
-Monitor .. SetupNote
+note bottom of Plugin: See separate\ndiagram
 
 @enduml
