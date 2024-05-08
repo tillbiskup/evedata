@@ -6,15 +6,6 @@ class Metadata {
     devices : Device{}
 }
 
-enum Section {
-    STANDARD
-    SNAPSHOT
-    MONITOR
-    META
-}
-note right: This is defined in the\nevefile.metadata module\nas well. Generalise?
-Metadata -[hidden]>Section
-
 class Dataset
 note bottom: See separate diagram\nfor class hierarchy
 
@@ -37,9 +28,6 @@ class File {
 class Device {
     id : string
     name : string
-    pv : string
-    transport_type : string
-    section : Section
 }
 
 class Motor extends Device {
@@ -69,7 +57,7 @@ class AreaDetector extends Detector {
 class Monitor extends Device {
 }
 
-Dataset -* Metadata
+Metadata -* Dataset
 Metadata *-- Measurement
 Metadata "1" *-- "n" Device
 Metadata *-- File

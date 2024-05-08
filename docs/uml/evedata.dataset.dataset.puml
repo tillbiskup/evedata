@@ -8,7 +8,6 @@ class Dataset {
     fill_mode : FillMode
 
     preferred_data()
-    load()
 }
 note left: raw_data contain the\nunfilled values of all\ndevice_data and share\nthe same key.\n\nData and device_data\ncontain the filled values.
 

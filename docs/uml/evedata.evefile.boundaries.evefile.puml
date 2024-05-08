@@ -1,0 +1,8 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class EveFile extends evefile.entities.File {
+    load()
+}
+
+@enduml

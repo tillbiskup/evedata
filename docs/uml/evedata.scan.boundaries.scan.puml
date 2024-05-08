@@ -1,0 +1,8 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Scan extends scan.entities.File {
+    load()
+}
+
+@enduml

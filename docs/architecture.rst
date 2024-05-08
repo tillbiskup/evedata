@@ -280,7 +280,11 @@ resources:
 evefile module (facade)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-...
+
+.. figure:: uml/evedata.evefile.boundaries.evefile.*
+    :align: center
+
+    Class hierarchy of the evefile.boundaries.evefile module, providing the facade for an eveH5 file. Currently, the basic idea is to inherit from the ``File`` entity and extend it accordingly, adding behaviour.
 
 
 eveH5 module (resource)
@@ -522,6 +526,12 @@ dataset module (facade)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 
+.. figure:: uml/evedata.dataset.boundaries.dataset.*
+    :align: center
+
+    Class hierarchy of the dataset.boundaries.dataset module, providing the facade for a dataset. Currently, the basic idea is to inherit from the ``Dataset`` entity and extend it accordingly, adding behaviour.
+
+
 Scan
 ====
 
@@ -672,6 +682,12 @@ What may be in here:
 
 scan module (facade)
 ~~~~~~~~~~~~~~~~~~~~
+
+
+.. figure:: uml/evedata.scan.boundaries.scan.*
+    :align: center
+
+    Class hierarchy of the scan.boundaries.scan module, providing the facade for the scan description (including the setup). Currently, the basic idea is to inherit from the ``File`` entity and extend it accordingly, adding behaviour.
 
 
 scml module (resource)
