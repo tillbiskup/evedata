@@ -10,8 +10,8 @@ Setup *-- "n" Detector
 Setup *-- "n" Motor
 Setup *-- "n" Device
 
-Setup -* SCML
-note right of SCML: See separate\nscml module.
+Setup -* File
+note right of File: See separate\nfile module.
 
 class AbstractDevice {
     class : string

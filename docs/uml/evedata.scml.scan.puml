@@ -22,8 +22,8 @@ Scan *-- "n" Event
 
 note bottom of PauseCondition: See separate\nevent module.
 
-SCML *- Scan
-note left of SCML: See separate\nscml module.
+File *- Scan
+note left of File: See separate\nfile module.
 
 class ScanModule {
     name : string
