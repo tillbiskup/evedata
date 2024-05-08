@@ -6,6 +6,7 @@ class EveFile {
     scml : SCML
     data : EveData[]
     snapshots : EveData[]
+    monitors : EveData[]
 }
 note left of EveFile::snapshots
     Snapshot datasets can have

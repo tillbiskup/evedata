@@ -150,7 +150,7 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, EveMotorData and EveDetectorData seem to have no difference, at least they have a different type of metadata (see the evefile.metadata module below), besides the type attribute set accordingly.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, MotorData and DetectorData seem to have no difference, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -201,7 +201,7 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.metadata module. Each class in the evefile.data module has a corresponding metadata class in this module.
+    Class hierarchy of the evefile.metadata module. Each concrete class in the evefile.data module has a corresponding metadata class in this module.
 
 
 A note on the ``DeviceMetadata`` interface: The eveH5 datasets corresponding to the EveTimestampMetadata and EveScanModuleMetadata classes are special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:

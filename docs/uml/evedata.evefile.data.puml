@@ -3,12 +3,17 @@
 
 class Data {
     metadata : Metadata
-    values : np.ndarray
+    data : np.ndarray
 }
-note left of Data::values
-    "values" contains a 1D array.
-    For individual values see derived classes
-    AverageDetectorData and IntervalDetectorData
+note left of Data::data
+    "data" usually contains a 1D array.
+
+    For individual detector values see derived classes
+    AverageDetectorData and IntervalDetectorData.
+
+    ArrayDetectorData and ExternalData are somewhat
+    special as they contain either 2D data or a list of
+    data objects (in case of images and alike).
 end note
 
 class Metadata {
@@ -36,23 +41,10 @@ class ExternalData {
 class TimestampData {
 }
 
-class ScanModuleData {
-}
-note bottom
-    The corresponding dataset in the
-    eveH5 file does not exist yet.
-
-    The idea is to store the id of the
-    scan module for each position count.
-
-    Note: For the implementation it
-    does not matter whether this is a
-    "true" dataset on the HDF5 level.
-end note
-
 class AverageDetectorData {
     raw_values : raggedarray
     {field} attempts : np.ndarray(dtype=int)
+    {field} n_averages : np.ndarray(dtype=int)
     mean()
     std()
     averaged_values()
@@ -69,6 +61,9 @@ class IntervalDetectorData {
     has_raw_values()
 }
 
+class ArrayDetectorData {
+}
+
 Data *-- Metadata
 Data <|-- MeasureData
 Data <|-- MonitorData
@@ -76,8 +71,8 @@ MeasureData <|-- MotorData
 MeasureData <|-- DetectorData
 MeasureData <|-- ExternalData
 MeasureData <|-- TimestampData
-MeasureData <|-- ScanModuleData
 DetectorData <|-- AverageDetectorData
 DetectorData <|-- IntervalDetectorData
+DetectorData <|-- ArrayDetectorData
 
 @enduml

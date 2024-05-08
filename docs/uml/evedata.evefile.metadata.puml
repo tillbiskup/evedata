@@ -51,26 +51,25 @@ class TimestampMetadata {
     section : Section.META
 }
 
-class ScanModuleMetadata {
-    section : Section.META
-}
-
 class AverageDetectorMetadata {
-    n_averages : integer
     low_limit : float
     max_attempts : integer
     max_deviation : float
 }
 note bottom
-    These attributes may change      for individual values.
+    These attributes may change for individual values
+    and are currently saved in eveH5 for each position.
 
-     Is that true even for only one detector in one scan module?
-     If we go for separate detectors in this case, would it solve
-     the problem?
+    If we go for separate detectors if they are
+    redefined in different scan modules,
+    would this solve the problem?
 end note
 
 class IntervalDetectorMetadata {
     trigger_interval : float
+}
+
+class ArrayDetectorMetadata {
 }
 
 Data *- Metadata
@@ -80,8 +79,8 @@ MeasureMetadata <|-- DetectorMetadata
 MeasureMetadata <|-- MotorMetadata
 MeasureMetadata <|-- ExternalMetadata
 MeasureMetadata <|-- TimestampMetadata
-MeasureMetadata <|-- ScanModuleMetadata
 DetectorMetadata <|-- AverageDetectorMetadata
 DetectorMetadata <|-- IntervalDetectorMetadata
+DetectorMetadata <|-- ArrayDetectorMetadata
 
 @enduml
