@@ -42,37 +42,36 @@ class Device {
     section : Section
 }
 
-class Motor {
+class Motor extends Device {
 }
 
-class Detector {
+class Detector extends Device {
     normalise_id : string
 }
 
-class AverageDetector {
+class AverageDetector extends Detector {
     n_averages : int
     low_limit : float
     max_attempts : int
     max_deviation : float
 }
 
-class IntervalDetector {
+class IntervalDetector extends Detector {
     trigger_interval : float
 }
 
-class Monitor {
+class ArrayDetector extends Detector {
+}
+
+class AreaDetector extends Detector {
+}
+
+class Monitor extends Device {
 }
 
 Dataset -* Metadata
 Metadata *-- Measurement
 Metadata "1" *-- "n" Device
 Metadata *-- File
-
-Device <|-- Motor
-Device <|-- Detector
-Device <|-- Monitor
-
-Detector <|-- AverageDetector
-Detector <|-- IntervalDetector
 
 @enduml

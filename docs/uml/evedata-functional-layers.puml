@@ -2,17 +2,16 @@
 'skinparam dpi 150
 
 package evedata {
-    package evedata.measurement {
-        package evedata.measurement.boundaries {
+    package evedata.scan {
+        package evedata.scan.boundaries {
             package scan {}
-            package setup {}
             package scml {}
         }
-        package evedata.measurement.controllers {
+        package evedata.scan.controllers {
             package version_mapping {}
         }
-        package evedata.measurement.entities {
-            package scml {
+        package evedata.scan.entities {
+            package file {
             }
             package setup {
             }
@@ -23,37 +22,37 @@ package evedata {
             package plot {
             }
 
-            setup <-- scml
-            scan <-- scml
+            setup <-- file
+            scan <-- file
             event <-- scan
             plot <-- scan
         }
-        evedata.measurement.boundaries --> evedata.measurement.controllers
-        evedata.measurement.controllers --> evedata.measurement.entities
+        evedata.scan.boundaries --> evedata.scan.controllers
+        evedata.scan.controllers --> evedata.scan.entities
     }
 
-    package evedata.data {
-        package evedata.data.boundaries {
+    package evedata.evefile {
+        package evedata.evefile.boundaries {
             package evefile {}
             package eveH5 {}
         }
-        package evedata.data.controllers {
+        package evedata.evefile.controllers {
             package version_mapping {}
             package transforming {}
         }
-        package evedata.data.entities {
-            package evedata.data.entities.file {
+        package evedata.evefile.entities {
+            package evedata.evefile.entities.file {
             }
-            package evedata.data.entities.data {
+            package evedata.evefile.entities.data {
             }
-            package evedata.data.entities.metadata {
+            package evedata.evefile.entities.metadata {
             }
 
-            evedata.data.entities.metadata <-- evedata.data.entities.data
-            evedata.data.entities.data <-- evedata.data.entities.file
+            evedata.evefile.entities.metadata <-- evedata.evefile.entities.data
+            evedata.evefile.entities.data <-- evedata.evefile.entities.file
         }
-        evedata.data.boundaries --> evedata.data.controllers
-        evedata.data.controllers --> evedata.data.entities
+        evedata.evefile.boundaries --> evedata.evefile.controllers
+        evedata.evefile.controllers --> evedata.evefile.entities
     }
 
     package evedata.dataset {
@@ -61,6 +60,7 @@ package evedata {
             package dataset {}
         }
         package evedata.dataset.controllers {
+            package transforming {}
             package filling {}
         }
         package evedata.dataset.entities {

@@ -35,7 +35,7 @@ A corresponding UML package diagram is shown in the figure below:
     An UML package diagram of the evedata package following the organisation in functional layers that each contain three technical layers, as shown in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`. To hide the names of the technical layers from the user, one could think of importing the relevant classes (basically the facades) in the ``__init__.py`` files of the respective top-level functional packages.
 
 
-For each of the functional layers, the corresponding technical layers are described below. Deviating from the direction of dependencies as shown in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`, we start with the data functional layer, and for each of the layers we start with the entities and proceed via the controllers to the boundaries. From a user perspective interested in measured data, the journey starts with the data file (eveH5), represented on a low level by the data functional layer and on a high level as user interface by the dataset functional layer. The measurement functional layer representing the information originally contained in the SCML file, while technically at the bottom of the dependencies chain, is the least interesting from a user's perspective primarily interested in the data, and is probably the layer fully implemented last.
+For each of the functional layers, the corresponding technical layers are described below. Deviating from the direction of dependencies as shown in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`, we start with the evefile functional layer, and for each of the layers we start with the entities and proceed via the controllers to the boundaries. From a user perspective interested in measured data, the journey starts with the data file (eveH5), represented on a low level by the evefile functional layer and on a high level as user interface by the dataset functional layer. The measurement functional layer representing the information originally contained in the SCML file, while technically at the bottom of the dependencies chain, is the least interesting from a user's perspective primarily interested in the data, and is probably the layer fully implemented last.
 
 
 .. admonition:: General remarks on the UML class diagrams
@@ -72,17 +72,17 @@ For each of the functional layers, the corresponding technical layers are descri
     Partly due to the conventions for the UML class diagrams outlined above and due to the reasons leading to these conventions in the first place, the data model described in the UML class diagrams differs often in subtle details of attribute names from the currently existing data models and, *e.g.*, the SCML schema definition. Eventually, it would be good to agree upon a list of conventions and try to consistently apply them throughout the different interconnected parts (SCML, GUI, engine, evedata, ...). These conventions are primarily concerned with a shared vocabulary for the concepts, not with CamelCase *vs.* snake_case and alike, as this will differ for different languages (and we can agree on mapping rules).
 
 
-Data
-====
+Evefile
+=======
 
-Generally, the data functional layer, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the persistence layer (eveH5 files). This is a rather low-level interface focussing at a faithful representation of all information available in an eveH5 file as well as the corresponding scan description (SCML), as long as the latter is available.
+Generally, the evefile functional layer, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the persistence layer (eveH5 files). This is a rather low-level interface focussing at a faithful representation of all information available in an eveH5 file as well as the corresponding scan description (SCML), as long as the latter is available.
 
-Furthermore, the data functional layer provides a stable abstraction of the contents of an eveH5 file and is hence *not* concerned with different versions of both, the eveH5 file structure and the SCML schema. The data model provided via its entities needs to be powerful (and modular) enough to allow for representing all currently existing data files (regardless of their eveH5 and SCML schema versions) and future-proof to not change incompatibly (open-closed principle, the "O" in "SOLID) when new requirements arise.
+Furthermore, the evefile functional layer provides a stable abstraction of the contents of an eveH5 file and is hence *not* concerned with different versions of both, the eveH5 file structure and the SCML schema. The data model provided via its entities needs to be powerful (and modular) enough to allow for representing all currently existing data files (regardless of their eveH5 and SCML schema versions) and future-proof to not change incompatibly (open-closed principle, the "O" in "SOLID) when new requirements arise.
 
 
 .. important::
 
-    As the data functional layer is *not* meant as a (human-facing) user interface, it is *not* concerned with concepts such as fill modes, but represents the data "as is". This means that the different data can generally not be plotted against each other. This is a deliberate decision, as filling data for a (two-dimensional) data array, although generally desirable for (simple) plotting purposes, masks/removes some highly important information, *e.g.* whether a value has not been measured in the first place, or whether obtaining a value has failed for some reason.
+    As the evefile functional layer is *not* meant as a (human-facing) user interface, it is *not* concerned with concepts such as fill modes, but represents the data "as is". This means that the different data can generally not be plotted against each other. This is a deliberate decision, as filling data for a (two-dimensional) data array, although generally desirable for (simple) plotting purposes, masks/removes some highly important information, *e.g.* whether a value has not been measured in the first place, or whether obtaining a value has failed for some reason.
 
 
 .. note::
@@ -98,7 +98,7 @@ Entities
 file module
 ~~~~~~~~~~~
 
-Despite the opposite chain of dependencies, starting with the ``evefile.evefile`` module seems sensible, as its ``EveFile`` class represents a single eveH5 file and provides kind of an entry point.
+Despite the opposite chain of dependencies, starting with the ``file`` module seems sensible, as its ``File`` class represents a single eveH5 file and provides kind of an entry point.
 
 
 .. figure:: uml/evedata.evefile.file.*
@@ -230,7 +230,12 @@ Controllers
 
 What may be in here:
 
+* mapping different versions of eveH5 files to the entities
 * Converting MPSKIP scans into average detector with adaptive number of recorded points
+
+
+version_mapping module
+~~~~~~~~~~~~~~~~~~~~~~
 
 
 Boundaries
@@ -238,21 +243,18 @@ Boundaries
 
 What may be in here:
 
-* Interfaces towards eveH5 and SCML
+* facade:
 
-  * including reading separate SCML files if present (https://redmine.ahf.ptb.de/issues/2740)
-  * handling different versions of both eveH5 scheme and SCML scheme
-  * mapping the eveH5 and SCML contents to the data structures of the evefile subpackage
+  * evefile
 
+resources:
+
+* eveH5
 * Interfaces towards additional files, *e.g.* images
 
   * Images in particular are usually not stored in the eveH5 files, but only pointers to these files.
   * Import routines for the different files (or at least a sensible modular mechanism involving an importer factory) need to be implemented.
   * Is the ``evedata`` package the correct place for these importers? One could think of the ``radiometry`` package as the better place, but on the other hand, the ``evedataviewer`` package would need to be able to display those data as well, hence need the import to be done.
-
-* Interface towards users (*i.e.*, mainly the ``radiometry`` and ``evedataviewer`` packages)
-
-  * Given a filename of an eveH5 file, returns a ``Dataset`` object.
 
 * Interfaces towards other file formats
 
@@ -275,8 +277,14 @@ What may be in here:
         -- Andrew Collette, 2014 (p. 18)
 
 
-eveH5 module
-~~~~~~~~~~~~
+evefile module (facade)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+...
+
+
+eveH5 module (resource)
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The aim of this module is to provide a Python representation (in form of a hierarchy of objects) of the contents of an eveH5 file that can be mapped to both, the evefile and dataset interfaces. While the Python h5py package already provides the low-level access and gets used, the eveH5 module contains Python objects that are independent of an open HDF5 file, represent the hierarchy of HDF5 items (groups and datasets), and contain the attributes of each HDF5 item in form of a Python dictionary. Furthermore, each object contains a reference to both, the original HDF5 file and the HDF5 item, thus making reading dataset data on demand as simple as possible.
 
@@ -403,6 +411,8 @@ What may be in here:
 
   * Assumes a 1:1 mapping between files and datasets (for the time being)
 
+* mapping the eveH5 and SCML contents to the data structures of the evefile subpackage
+
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
@@ -500,13 +510,24 @@ If filling is an operation on an :obj:`evefile.evefile.EveFile` object returning
 Boundaries
 ----------
 
+What may be in here:
 
-Measurement
-===========
+* facade: dataset
+
+  * Interface towards users (*i.e.*, mainly the ``radiometry`` and ``evedataviewer`` packages)
+  * Given a filename of an eveH5 file, returns a ``Dataset`` object.
+
+
+dataset module (facade)
+~~~~~~~~~~~~~~~~~~~~~~~
+
+
+Scan
+====
 
 The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the measurement functional layer are shown below, reflecting the current state of affairs (and thinking).
 
-The measurement functional layer contains all classes necessary to represent the contents of an SCML file. The general idea behind is to have all relevant information contained in the scan description and saved together with the data in the eveH5 file at hand. The SCML file is generally stored within the eveH5 file, and it is the information used by the GUI of the measurement program. One big advantage of having the information of the SCML file as compared to the information stored in the eveH5 file itself: The structure of the scan is available, making it possible to infer much more information relevant for interpreting the data.
+The scan functional layer contains all classes necessary to represent the contents of an SCML file. The general idea behind is to have all relevant information contained in the scan description and saved together with the data in the eveH5 file at hand. The SCML file is generally stored within the eveH5 file, and it is the information used by the GUI of the measurement program. One big advantage of having the information of the SCML file as compared to the information stored in the eveH5 file itself: The structure of the scan is available, making it possible to infer much more information relevant for interpreting the data.
 
 
 .. important::
@@ -531,16 +552,16 @@ Entities
 --------
 
 
-scml module
+file module
 ~~~~~~~~~~~
 
 This module contains the main ``SCML`` class and probably as well the ``Plugin`` class and its dependencies. Generally an SCML file can be split in two (three) parts: a description of the setup/instrumentation used for a scan (module ``scml.setup``) and a description of the actual scan/measurement (module ``scml.scan``). The plugins would be the third part.
 
 
-.. figure:: uml/evedata.scml.scml.*
+.. figure:: uml/evedata.scml.file.*
     :align: center
 
-    Class hierarchy of the scml.scml module, closely resembling the schema of the SCML file. Currently, the location of the "Plugin" class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped. For a class diagramm see the separate figure below.
+    Class hierarchy of the scml.file module, closely resembling the schema of the SCML file. Currently, the location of the "Plugin" class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped. For a class diagram see the separate figure below.
 
 
 .. figure:: uml/evedata.scml.plugin.*
@@ -550,10 +571,6 @@ This module contains the main ``SCML`` class and probably as well the ``Plugin``
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
-
-    * Name of the module.
-
-      The name is not ideal, as it results in a quite repetitive namespace hierarchy. Alternatives may be ``file`` or ``schema``.
 
     * Storing the plain XML
 
@@ -627,8 +644,35 @@ setup module
 Controllers
 -----------
 
+What may be in here:
+
+* mapping different versions of SCML files to the entities
+
+
+version_mapping module
+~~~~~~~~~~~~~~~~~~~~~~
+
 
 Boundaries
 ----------
 
+What may be in here:
 
+* facades:
+
+  * scan
+  * (setup)
+
+* resources:
+
+  * scml
+
+    * reading separate SCML files if present (https://redmine.ahf.ptb.de/issues/2740)
+
+
+scan module (facade)
+~~~~~~~~~~~~~~~~~~~~
+
+
+scml module (resource)
+~~~~~~~~~~~~~~~~~~~~~~

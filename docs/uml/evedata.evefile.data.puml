@@ -41,7 +41,7 @@ class ExternalData {
 class TimestampData {
 }
 
-class AverageDetectorData {
+class AverageDetectorData extends DetectorData {
     raw_values : raggedarray
     {field} attempts : np.ndarray(dtype=int)
     {field} n_averages : np.ndarray(dtype=int)
@@ -53,7 +53,7 @@ class AverageDetectorData {
 note bottom: How does mean() differ\nfrom values in Data?
 note bottom of AverageDetectorData: averaged_values() returns only\nthose values used to average over
 
-class IntervalDetectorData {
+class IntervalDetectorData extends DetectorData {
     raw_values : raggedarray
     {field} counts : np.ndarray(dtype=int)
     mean()
@@ -61,7 +61,10 @@ class IntervalDetectorData {
     has_raw_values()
 }
 
-class ArrayDetectorData {
+class ArrayDetectorData extends DetectorData {
+}
+
+class AreaDetectorData extends DetectorData {
 }
 
 Data *-- Metadata
@@ -71,8 +74,5 @@ MeasureData <|-- MotorData
 MeasureData <|-- DetectorData
 MeasureData <|-- ExternalData
 MeasureData <|-- TimestampData
-DetectorData <|-- AverageDetectorData
-DetectorData <|-- IntervalDetectorData
-DetectorData <|-- ArrayDetectorData
 
 @enduml

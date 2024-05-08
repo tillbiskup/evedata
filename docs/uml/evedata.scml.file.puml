@@ -1,0 +1,20 @@
+@startuml
+
+class File {
+    location : string
+    version : string
+    scan : Scan
+    setup : Setup
+    plugins : Plugin[]
+}
+File *-- Scan
+File *-- Setup
+File *-- "n" Plugin
+
+note bottom of Scan: See separate\nscan module
+
+note bottom of Setup: See separate\nsetup module
+
+note bottom of Plugin: See separate\ndiagram
+
+@enduml
