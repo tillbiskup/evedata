@@ -143,12 +143,6 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Mapping MonitorData to MeasureData
-
-      Monitor data (with time in milliseconds as primary axis) need to be mapped to measured data (with position counts as primary axis). Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon. There is an age-long discussion on this topic (`#5295 note 3 <https://redmine.ahf.ptb.de/issues/5295#note-3>`_). For a current discussion see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_.
-
-      Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): This mapping should most probably take place in the controllers technical layer of the dataset functional layer. The individual ``MonitorData`` class cannot do the mapping without having access to the mapping table.
-
     * Can MonitorData have more than one value per time?
 
       This would be similar to AverageDetector and IntervalDetector, thus requiring an additional attribute (and probably a ragged array).
@@ -236,6 +230,8 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
 Controllers
 -----------
 
+Code in the controllers technical layer operate on the entities and provide the required behaviour (the "business logic").
+
 What may be in here:
 
 * mapping different versions of eveH5 files to the entities
@@ -244,6 +240,17 @@ What may be in here:
 
 version_mapping module
 ~~~~~~~~~~~~~~~~~~~~~~
+
+A central aspect of the evedata package is its being version agnostic with respect to eveH5 and SCML schema versions. Hence, there needs to be facilities mapping the actual eveH5 files to the data model provided by the entities technical layer of the evefile subpackage. The ``EveFile`` facade obtains the correct ``VersionMapper`` object via the ``VersionMapperFactory``, providing an ``HDF5File`` resource object to the factory. It is the duty of the factory to obtain the "version" attribute from the ``HDF5File`` object (possibly requiring to explicitly get the attributes of the root group of the ``HDF5File`` object).
+
+
+.. figure:: uml/evedata.evefile.controllers.version_mapping.*
+    :align: center
+
+    Class hierarchy of the evefile.controllers.version_mapping module, providing the functionality to map different eveH5 file schemas to the data structure provided by the ``EveFile`` class. The factory will be used to get the correct mapper for a given eveH5 file. For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that need not be hard-coded and can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
+
+
+For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. That part of the mapping common to all versions of the eveH5 schema takes place in the ``VersionMapper`` parent class, *e.g.* removing the chain. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
 
 
 Boundaries
@@ -428,9 +435,11 @@ What may be in here:
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Monitors
+    * Mapping MonitorData to MeasureData
 
-      * How to map monitors (with time as primary axis) to other devices (motors or detectors, with position counts as primary axis)?
+      Monitor data (with time in milliseconds as primary axis) need to be mapped to measured data (with position counts as primary axis). Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon. There is an age-long discussion on this topic (`#5295 note 3 <https://redmine.ahf.ptb.de/issues/5295#note-3>`_). For a current discussion see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_.
+
+      Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): This mapping should most probably take place in the controllers technical layer of the dataset functional layer. The individual ``MonitorData`` class cannot do the mapping without having access to the mapping table.
 
 
 Fill modes
