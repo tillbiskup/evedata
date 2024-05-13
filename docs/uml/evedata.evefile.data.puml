@@ -20,25 +20,23 @@ class Metadata {
 }
 note bottom: See diagram for\nmetadata module.
 
-class MeasureData {
+class MeasureData extends Data {
     {field} positions : np.ndarray(dtype=int)
 }
 
-class MonitorData {
+class MonitorData extends Data {
     {field} milliseconds : np.ndarray(dtype=int)
 }
 
-class MotorData {
+class MotorData extends MeasureData {
 }
 
-class DetectorData {
+class DetectorData extends MeasureData {
 }
 
-class ExternalData {
-    data : object[]
-}
+class ExternalData extends MeasureData {}
 
-class TimestampData {
+class TimestampData extends MeasureData {
 }
 
 class AverageDetectorData extends DetectorData {
@@ -68,11 +66,5 @@ class AreaDetectorData extends DetectorData {
 }
 
 Data *-- Metadata
-Data <|-- MeasureData
-Data <|-- MonitorData
-MeasureData <|-- MotorData
-MeasureData <|-- DetectorData
-MeasureData <|-- ExternalData
-MeasureData <|-- TimestampData
 
 @enduml

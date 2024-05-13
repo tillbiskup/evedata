@@ -12,7 +12,7 @@ Just to make matters a bit more interesting, the evedata package has basically *
 .. figure:: uml/evedata-in-context.*
     :align: center
 
-    The two interfaces of the evedata package: eveH5 is the persistence layer of the recorded data and metadata, and evedataviewer and radiometry are Python packages for graphically displaying and processing and analysing these data, respectively. Most people concerned with the actual data will use either use evedataviewer or the radiometry package, but not evedata directly.
+    The two interfaces of the evedata package: eveH5 is the persistence layer of the recorded data and metadata, and evedataviewer and radiometry are Python packages for graphically displaying and processing and analysing these data, respectively. Most people concerned with the actual data will either use evedataviewer or the radiometry package, but not evedata directly.
 
 
 An alternative view that may be more helpful in the long run, leading to a better overall architecture, rests on the distinction between two dimensions of layers: functional and technical. While for long time, the first line of organisation in code was technical layers, grouping software into functional blocks (packages or whatever the name) that are each independently technically layered preserves the concepts of the application much better. A first idea for the evedata package is presented in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`.
@@ -25,7 +25,10 @@ An alternative view that may be more helpful in the long run, leading to a bette
     A two-dimensional view of the architecture, with technical and functional layers. The primary line of organisation in the code, according to different authors, should be the functional layers or packages, and each of the functional blocks should be organised into three technical layers: boundaries, controllers, entities. The idea and name of these three technical layers goes back to Ivar Jacobson (1992). The boundaries (sometimes called interfaces) contain two different kinds of elements: facades and resources. While resources are typically concerned with the persistence layer and similar things, facades are the user-facing elements providing access to the underlying entities and controllers.
 
 
-A corresponding UML package diagram is shown in the figure below:
+There are three functional layers with dependencies in one direction: dataset, evefile, and scan. Each of the functional layers is divided into three technical layers, *i.e.* boundaries ("interfaces"), controllers, and entities (BCE). The boundaries layer contains both, the "interfaces" ("adapters") pointing to the user (facades) and those pointing to the underlying infrastructure (resources). Here, "user" can be either actual human users or other functional layers. This means that high-level functional layers shall not directly depend on elements of the lower technical layers of lower-level functional layers, but use the respective facades of the lower-level functional layers. As an example for the ``evedata`` package: the dataset functional layer uses the evefile and scan facades of the evefile and scan functional layers.
+
+
+A corresponding UML package diagram for :numref:`Fig. %s <fig-architecture_layers_technical_functional>` is shown in the figure below. Here, only the dependencies *within* the individual functional layers are shown, not the dependencies *between* the functional layers. The latter proceed from left to right: dataset > evefile > scan.
 
 .. _fig-uml_evedata:
 
@@ -75,7 +78,7 @@ For each of the functional layers, the corresponding technical layers are descri
 Evefile
 =======
 
-Generally, the evefile functional layer, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the persistence layer (eveH5 files). This is a rather low-level interface focussing at a faithful representation of all information available in an eveH5 file as well as the corresponding scan description (SCML), as long as the latter is available.
+Generally, the evefile functional layer, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the persistence layer (eveH5 files). This is a rather low-level interface focussing on a faithful representation of all information available in an eveH5 file as well as the corresponding scan description (SCML), as long as the latter is available.
 
 Furthermore, the evefile functional layer provides a stable abstraction of the contents of an eveH5 file and is hence *not* concerned with different versions of both, the eveH5 file structure and the SCML schema. The data model provided via its entities needs to be powerful (and modular) enough to allow for representing all currently existing data files (regardless of their eveH5 and SCML schema versions) and future-proof to not change incompatibly (open-closed principle, the "O" in "SOLID) when new requirements arise.
 
@@ -93,6 +96,7 @@ Furthermore, the evefile functional layer provides a stable abstraction of the c
 Entities
 --------
 
+Entities are the innermost technical layer: everything depends on the entities, but the entities depend on nothing but themselves. Furthermore, entities may have little to no behaviour (*i.e.*, data classes). For the evefile functional layer, the entities consist of three modules: file, data, and metadata, in the order of their dependencies.
 
 
 file module
@@ -104,7 +108,7 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 .. figure:: uml/evedata.evefile.file.*
     :align: center
 
-    Class hierarchy of the evefile.file module. The EveFile class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage.
+    Class hierarchy of the evefile.file module. The File class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage. Furthermore, "Scan" inherits from the identically named facade of the scan functional layer and contains the full information of the SCML file.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -119,6 +123,10 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 
       Is there a need to distinguish between file-level comments and life comments (aka log messages)? If so, shall this be done in the ``EveFile`` class or in the ``Comment`` class (possibly by means of two subtypes of the ``Comment`` class)?
 
+    * location attribute
+
+      In the UML schema, the "location" attribute of the HDF5 root group has already been renamed into "measurement_station", as this seems to fit better. How about renaming the attribute in the eveH5 schema as well?
+
 
 data module
 ~~~~~~~~~~~
@@ -130,16 +138,16 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, MotorData and DetectorData seem to have no difference, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, the child classes of MeasureData seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. Currently, AreaDetectorData and ExternalData serve a similar purpose: representing 2D data per individual position count. While ExternalData represents the current way of storing these data in eveH5 (*i.e.*, a reference to an external file), AreaDetectorData may be used to contain the actual image data.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
     * Mapping MonitorData to MeasureData
 
-      Monitor data (with time in milliseconds as primary axis) need to be mapped to measured data (with position counts as primary axis). Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon. There is an age-long discussion on this topic (`<https://redmine.ahf.ptb.de/issues/5295#note-3>`_). Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): Where would this mapping take place?
+      Monitor data (with time in milliseconds as primary axis) need to be mapped to measured data (with position counts as primary axis). Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon. There is an age-long discussion on this topic (`#5295 note 3 <https://redmine.ahf.ptb.de/issues/5295#note-3>`_). For a current discussion see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_.
 
-      The individual ``EveMonitorData`` class cannot do the mapping without having access to the mapping table. Probably mapping is something done in the intermediate layer between the ``evefile`` and ``dataset`` subpackages and belonging to the business rules. How are monitor data represented in the :class:`Dataset` class?
+      Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): This mapping should most probably take place in the controllers technical layer of the dataset functional layer. The individual ``MonitorData`` class cannot do the mapping without having access to the mapping table.
 
     * Can MonitorData have more than one value per time?
 
@@ -149,21 +157,23 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
       MonitorData can have textual (non-numeric) values. This should not be too much of a problem given that numpy can handle string arrays (though <v2.0 only fixed-size string values, AFAIK, with v2.0 not yet released, as of 2024-04-04).
 
-    * raw_values of EveAverageDetectorData and EveIntervalDetectorData
+    * raw (*i.e.* individual) values of AverageDetectorData and IntervalDetectorData
 
       Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this. Given that the overarching idea of the evefile subpackage is to *faithfully* represent the eveH5 file contents, it seems not sensible to map the "fake" average detector saving each individual value using MPSKIP to this detector type, though. This should probably rather be done in the mapping later on and towards the dataset subpackage.
 
     * Detectors that are redefined within an experiment/scan
 
-      Generally, detectors can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector beyond the XML-ID/PV. The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector.
+      Generally, detectors can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector beyond the XML-ID/PV. The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector. For a discussion, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_.
 
-      Generally, what seems necessary is to have separate datasets on the HDF5 level for detectors that change their type or attributes within a scan. Can we safely assume that a detector cannot change its attributes within one scan module? If so, we could have one dataset per detector and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
+      Generally, what seems necessary is to have separate datasets on the HDF5 level for detectors that change their type or attributes within a scan. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
 
     * References to spectra/images
 
-      There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. How is this currently represented in eveH5 files, and how to model this situation with the given :class:`EveData` classes?
+      There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. Currently, the file name (including the full path, starting with which version of the eveH5 schema?) is stored as value in the dataset in these cases. For a discussion, see `#7732 <https://redmine.ahf.ptb.de/issues/7732>`_.
 
-      The current idea for modelling these data is reflected in the ``ExternalData`` class shown in the UML diagram above. Here, for each position count, a reference (a string with usually a filename) is stored. The corresponding ``ExternalMetadata`` class (see section below) contains information on the file format to inform an importer factory how to import the data. The only "problem": Where to store the actual data, or more precisely: how to deal with the ``values`` attribute of the ``Data`` base class? Probably best to store the references as strings in the ``values`` attribute (that is in this case a numpy string array) and have an additional attribute ``data`` for the actual data in the ``ExternalData`` class.
+      The current idea for modelling these data is reflected in the ``ExternalData`` class shown in the UML diagram above. Here, for each position count, a reference (a string with usually a filename) is stored. The corresponding ``ExternalMetadata`` class (see section below) contains information on the file format to inform an importer factory how to import the data. The only "problem": Where to store the actual data, or more precisely: how to deal with the ``data`` attribute of the ``Data`` base class? Probably best to store the references as strings in the ``data`` attribute (that is in this case a numpy string array) and have an additional attribute ``external_data`` for the actual data in the ``ExternalData`` class.
+
+      More generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayDetectorData``. In case of storing images (2D data per position count) within an eveH5 file (in the future), these data will be modelled as ``AreaDetectorData``.
 
 
 metadata module
@@ -184,11 +194,11 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     Class hierarchy of the evefile.metadata module. Each concrete class in the evefile.data module has a corresponding metadata class in this module.
 
 
-A note on the ``DeviceMetadata`` interface: The eveH5 datasets corresponding to the EveTimestampMetadata and EveScanModuleMetadata classes are special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
+A note on the ``DeviceMetadata`` interface class: The eveH5 dataset corresponding to the TimestampMetadata class is special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
 
 #. Moving these three attributes down the line and copying them multiple times (feels bad).
-#. Leaving the attributes blank for the two "special" datasets (feels bad, too).
-#. Introduce another class in the hierarchy, breaking the parallel to the EveData class hierarchy (potentially confusing).
+#. Leaving the attributes blank for the "special" dataset (feels bad, too).
+#. Introduce another class in the hierarchy, breaking the parallel to the Data class hierarchy (potentially confusing).
 #. Create a mixin class (abstract interface) with the three attributes and use multiple inheritance/implements.
 
 As obvious from the UML diagram, the last option has been chosen. The name "DeviceMetadata" resembles the hierarchy in the ``scml.setup`` module and clearly distinguishes actual devices from datasets not containing data read from some instrument.
@@ -202,8 +212,6 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
 
       How about renaming STANDARD to MAIN? This would better reflect that this section contains datasets from the main part of the scan. Otherwise, one could argue in favour of STANDARD and rename the class ``ClassicScanModule`` in the scml.scan module to ``StandardScanModule``.
 
-      About the "META" section: Given that there is the idea to have two special datasets in this section in the future, namely the PosCountTimer and a PosCountScanModule dataset, it seems sensible to have them there.
-
     * Monitor metadata
 
       Clearly, monitor metadata are not sufficiently modelled yet. In recent eveH5 files, they have only few attributes. Are the other attributes (comparable to the attributes of ``MeasureMetadata``) contained in the SCML file and could be read from there?
@@ -212,11 +220,11 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
 
     * Attributes "pv" and "transport_type"
 
-      "pv" is the EPICS process variable, transport type refers to the access mode (local vs. ca). Both are currently stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<transport_type>:<pv>``.
+      "pv" is the EPICS process variable, transport type refers to the access mode (local vs. ca). Both are currently stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<transport_type>:<pv>``. Is there any good reason why these two values should be stored together in one attribute? If not, it may be sensible to change the eveH5 schema in the future for consistency. Reasons for separating both values come from the SCML schema.
 
     * Metadata from SCML file
 
-      There is more information available from the SCML file (and the end station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). How to map this to the respective metadata classes? Shall this be done here, or rather in the dataset subpackage? An argument in favour of the latter would be to keep up with the distinction HDF5/SCML.
+      There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). How to map this to the respective metadata classes? Shall this be done here, or rather in the dataset subpackage? An argument in favour of the latter would be to keep up with the distinction HDF5/SCML.
 
     * Information on the individual devices
 

@@ -20,7 +20,7 @@ enum Transport {
     CA
     LOCAL
 }
-note bottom: This is defined in the\nscml.setup module\nas well. Generalise?
+note bottom: This is defined in the\nscml.setup module\nas well. Generalise?\nUse instance from there?
 
 interface DeviceMetadata {
     id : string
@@ -28,30 +28,30 @@ interface DeviceMetadata {
     transport_type : Transport
 }
 
-class MeasureMetadata {
+class MeasureMetadata extends Metadata {
     unit : string
 }
 
-class MonitorMetadata implements DeviceMetadata {
+class MonitorMetadata extends Metadata implements DeviceMetadata {
     section : Section.MONITOR
 }
 
-class MotorMetadata implements DeviceMetadata  {
+class MotorMetadata extends MeasureMetadata implements DeviceMetadata  {
 }
 
-class DetectorMetadata implements DeviceMetadata  {
+class DetectorMetadata extends MeasureMetadata implements DeviceMetadata  {
     normalise_id : string
 }
 
-class ExternalMetadata {
-    format : string
-}
-
-class TimestampMetadata {
+class TimestampMetadata extends MeasureMetadata {
     section : Section.META
 }
 
-class AverageDetectorMetadata {
+class ExternalMetadata extends MeasureMetadata implements DeviceMetadata {
+    format : string
+}
+
+class AverageDetectorMetadata extends DetectorMetadata {
     low_limit : float
     max_attempts : integer
     max_deviation : float
@@ -65,22 +65,16 @@ note bottom
     would this solve the problem?
 end note
 
-class IntervalDetectorMetadata {
+class IntervalDetectorMetadata extends DetectorMetadata {
     trigger_interval : float
 }
 
-class ArrayDetectorMetadata {
+class ArrayDetectorMetadata extends DetectorMetadata {
+}
+
+class AreaDetectorMetadata extends DetectorMetadata {
 }
 
 Data *- Metadata
-Metadata <|-- MeasureMetadata
-Metadata <|-- MonitorMetadata
-MeasureMetadata <|-- DetectorMetadata
-MeasureMetadata <|-- MotorMetadata
-MeasureMetadata <|-- ExternalMetadata
-MeasureMetadata <|-- TimestampMetadata
-DetectorMetadata <|-- AverageDetectorMetadata
-DetectorMetadata <|-- IntervalDetectorMetadata
-DetectorMetadata <|-- ArrayDetectorMetadata
 
 @enduml

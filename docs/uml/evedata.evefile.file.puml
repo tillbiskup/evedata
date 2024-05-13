@@ -26,7 +26,7 @@ class Metadata{
     h5_version : string
     eve_version : string
     xml_version: string
-    location : string
+    measurement_station : string
     start : datetime
     end : datetime
     preferred_axis : string
