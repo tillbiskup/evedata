@@ -141,6 +141,9 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
     Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, the child classes of MeasureData seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. Currently, AreaDetectorData and ExternalData serve a similar purpose: representing 2D data per individual position count. While ExternalData represents the current way of storing these data in eveH5 (*i.e.*, a reference to an external file), AreaDetectorData may be used to contain the actual image data.
 
 
+What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basically, the difference is whether the corresponding data are stored *within* the eveH5 file or externally. While with the advent of the generic ``DataImporter`` class (necessary to allow for deferred loading of actual data) the difference seems negligible, the HDF dataset corresponding to an ``ExternalData`` object usually contains the filenames (or similar identifiers) to the actual externally stored data files. One could in this case make the ``DatasetImporter`` contain a list of sources and handle the ``Data`` as usual. In this case, there would be no need for an ``ExternalData`` class. The question to answer here: Do we need to distinguish on this level whether the data are external to the HDF5 file?
+
+
 .. admonition:: Points to discuss further (without claiming to be complete)
 
     * Can MonitorData have more than one value per time?
@@ -241,7 +244,7 @@ What may be in here:
 version_mapping module
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A central aspect of the evedata package is its being version agnostic with respect to eveH5 and SCML schema versions. Hence, there needs to be facilities mapping the actual eveH5 files to the data model provided by the entities technical layer of the evefile subpackage. The ``EveFile`` facade obtains the correct ``VersionMapper`` object via the ``VersionMapperFactory``, providing an ``HDF5File`` resource object to the factory. It is the duty of the factory to obtain the "version" attribute from the ``HDF5File`` object (possibly requiring to explicitly get the attributes of the root group of the ``HDF5File`` object).
+Being version agnostic with respect to eveH5 and SCML schema versions is a central aspect of the evedata package. This requires facilities mapping the actual eveH5 files to the data model provided by the entities technical layer of the evefile subpackage. The ``EveFile`` facade obtains the correct ``VersionMapper`` object via the ``VersionMapperFactory``, providing an ``HDF5File`` resource object to the factory. It is the duty of the factory to obtain the "version" attribute from the ``HDF5File`` object (possibly requiring to explicitly get the attributes of the root group of the ``HDF5File`` object).
 
 
 .. figure:: uml/evedata.evefile.controllers.version_mapping.*

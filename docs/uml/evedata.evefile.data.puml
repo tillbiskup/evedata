@@ -3,10 +3,14 @@
 
 class Data {
     metadata : Metadata
-    data : np.ndarray
+    _data : np.ndarray
+    _importer : DataImporter
+    data()
 }
-note left of Data::data
-    "data" usually contains a 1D array.
+note left of Data::_data
+    "_data" usually contains a 1D array and is accessed
+    via the data() getter method (Python property) that
+    calls the DataImporter.
 
     For individual detector values see derived classes
     AverageDetectorData and IntervalDetectorData.
@@ -16,9 +20,17 @@ note left of Data::data
     data objects (in case of images and alike).
 end note
 
+class DataImporter {
+    source
+    import()
+}
+
 class Metadata {
 }
 note bottom: See diagram for\nmetadata module.
+
+Data *- DataImporter
+Data *-- Metadata
 
 class MeasureData extends Data {
     {field} positions : np.ndarray(dtype=int)
@@ -40,23 +52,27 @@ class TimestampData extends MeasureData {
 }
 
 class AverageDetectorData extends DetectorData {
-    raw_values : raggedarray
+    raw_data : raggedarray
     {field} attempts : np.ndarray(dtype=int)
     {field} n_averages : np.ndarray(dtype=int)
+    _mean : np.ndarray
+    _std : np.ndarray
     mean()
     std()
-    averaged_values()
-    has_raw_values()
+    averaged_data()
+    has_raw_data()
 }
 note bottom: How does mean() differ\nfrom values in Data?
 note bottom of AverageDetectorData: averaged_values() returns only\nthose values used to average over
 
 class IntervalDetectorData extends DetectorData {
-    raw_values : raggedarray
+    raw_data : raggedarray
     {field} counts : np.ndarray(dtype=int)
+    _mean : np.ndarray
+    _std : np.ndarray
     mean()
     std()
-    has_raw_values()
+    has_raw_data()
 }
 
 class ArrayDetectorData extends DetectorData {
@@ -64,7 +80,5 @@ class ArrayDetectorData extends DetectorData {
 
 class AreaDetectorData extends DetectorData {
 }
-
-Data *-- Metadata
 
 @enduml
