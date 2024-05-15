@@ -51,6 +51,8 @@ class ExternalMetadata extends MeasureMetadata implements DeviceMetadata {
     format : string
 }
 
+class StandardDetectorMetadata extends DetectorMetadata {}
+
 class AverageDetectorMetadata extends DetectorMetadata {
     low_limit : float
     max_attempts : integer

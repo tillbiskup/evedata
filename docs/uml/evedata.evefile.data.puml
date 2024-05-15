@@ -51,6 +51,8 @@ class ExternalData extends MeasureData {}
 class TimestampData extends MeasureData {
 }
 
+class StandardDetectorData extends DetectorData {}
+
 class AverageDetectorData extends DetectorData {
     raw_data : raggedarray
     {field} attempts : np.ndarray(dtype=int)
