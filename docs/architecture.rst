@@ -146,6 +146,14 @@ What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basica
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
+    * Rename classes \*DetectorData to \*ChannelData?
+
+      From an HDF5 point of view, the datasets represent channel data, not detector data. If so, consistently rename in metadata module as well.
+
+    * Remove ExternalData?
+
+      What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basically, the difference is whether the corresponding data are stored *within* the eveH5 file or externally. While with the advent of the generic ``DataImporter`` class (necessary to allow for deferred loading of actual data) the difference seems negligible, the HDF dataset corresponding to an ``ExternalData`` object usually contains the filenames (or similar identifiers) to the actual externally stored data files. One could in this case make the ``DatasetImporter`` contain a list of sources and handle the ``Data`` as usual. But do we need *two* DataImporter instances in this case -- one for the HDF5 dataset, one for the actual (external) data? If not, there would be no need for an ``ExternalData`` class. The question to answer here: Do we need to distinguish on this level whether the data are external to the HDF5 file?
+
     * Can MonitorData have more than one value per time?
 
       This would be similar to AverageDetector and IntervalDetector, thus requiring an additional attribute (and probably a ragged array).
@@ -363,6 +371,22 @@ However, the ``dataset`` subpackage is still general enough to cope with all the
 
 Entities
 --------
+
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Introducing the concepts of detector, motor, option, device?
+
+      There are distinct concepts, particularly between detector and channel, and motor and axis: A detector can have *n* channels, a motor can have *n* axes. On the EPICS level, this does not matter, and so far, on the eveH5 level, the datasets correspond to channels and axes. However, would it make sense to introduce the concept of a detector (at least)?
+
+      This seems to be particularly powerful in case of cameras having different EPICS PVs that are of relevance. However, in case of the Pilatus detector, we even have a composition of channels and at least one axis (settable parameter). This would demand for another layer of abstraction, *i.e.* a more general Camera class and a series of derived classes for particular camera detectors.
+
+      What other abstractions are sensible on the level of the setup/measurement? Would it be sensible to rethink the current layout and design of the measurement program to better reflect these concepts there as well? This would fit into having "devices" that do monitor much more parameters, and particularly the state of crucial PVs (by means of status PVs) -- in order to have a more transparent measurement allowing for detailed *post mortem* analysis if something seems fishy.
+
+    * Two "layers" of a future evedataviewer?
+
+      Given more abstract concepts such as detector, motor, or even camera to be introduced, there still may be the need/wish to plot arbitrary channels/axes/options against each other. Would that demand for two different layers of an evedataviewer, one more in line of the current Cruncher and BessyHDFViewer that are rather close to the eveH5 files, and one dealing with the far more abstract and powerful concepts?
 
 
 dataset module

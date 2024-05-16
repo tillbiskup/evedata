@@ -53,6 +53,13 @@ class TimestampData extends MeasureData {
 
 class StandardDetectorData extends DetectorData {}
 
+note bottom of StandardDetectorData
+    This type does not exist
+    in eve-gui and SCML, but is
+    a logical functional distinction
+    from the AverageDetector.
+endnote
+
 class AverageDetectorData extends DetectorData {
     raw_data : raggedarray
     {field} attempts : np.ndarray(dtype=int)
