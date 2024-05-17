@@ -150,6 +150,12 @@ What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basica
 
       From an HDF5 point of view, the datasets represent channel data, not detector data. If so, consistently rename in metadata module as well.
 
+    * Do we need additional classes for ``DeviceData`` and ``OptionData``?
+
+      Prerequisite: Options and/or devices are read and get their own dataset with position counts.
+
+      Snapshots do contain a lot of options usually that are strictly speaking no channels or axes, though.
+
     * Remove ExternalData?
 
       What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basically, the difference is whether the corresponding data are stored *within* the eveH5 file or externally. While with the advent of the generic ``DataImporter`` class (necessary to allow for deferred loading of actual data) the difference seems negligible, the HDF dataset corresponding to an ``ExternalData`` object usually contains the filenames (or similar identifiers) to the actual externally stored data files. One could in this case make the ``DatasetImporter`` contain a list of sources and handle the ``Data`` as usual. But do we need *two* DataImporter instances in this case -- one for the HDF5 dataset, one for the actual (external) data? If not, there would be no need for an ``ExternalData`` class. The question to answer here: Do we need to distinguish on this level whether the data are external to the HDF5 file?
