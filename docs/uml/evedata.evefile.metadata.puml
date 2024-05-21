@@ -47,10 +47,6 @@ class TimestampMetadata extends MeasureMetadata {
     section : Section.META
 }
 
-class ExternalMetadata extends MeasureMetadata implements DeviceMetadata {
-    format : string
-}
-
 class StandardChannelMetadata extends ChannelMetadata {}
 
 class AverageChannelMetadata extends ChannelMetadata {

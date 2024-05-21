@@ -10,14 +10,14 @@ class Data {
 note left of Data::_data
     "_data" usually contains a 1D array and is accessed
     via the data() getter method (Python property) that
-    calls the DataImporter.
+    calls the DataImporter on first access if necessary.
 
     For individual channel values see derived classes
     AverageChannelData and IntervalChannelData.
 
-    ArrayChannelData and ExternalData are somewhat
-    special as they contain either 2D data or a list of
-    data objects (in case of images and alike).
+    AreaChannelData are somewhat special as they
+    contain either 2D data or a list of data objects
+    (in case of images and alike).
 end note
 
 class DataImporter {
@@ -45,8 +45,6 @@ class AxisData extends MeasureData {
 
 class ChannelData extends MeasureData {
 }
-
-class ExternalData extends MeasureData {}
 
 class TimestampData extends MeasureData {
 }
