@@ -12,10 +12,10 @@ note left of Data::_data
     via the data() getter method (Python property) that
     calls the DataImporter.
 
-    For individual detector values see derived classes
-    AverageDetectorData and IntervalDetectorData.
+    For individual channel values see derived classes
+    AverageChannelData and IntervalChannelData.
 
-    ArrayDetectorData and ExternalData are somewhat
+    ArrayChannelData and ExternalData are somewhat
     special as they contain either 2D data or a list of
     data objects (in case of images and alike).
 end note
@@ -40,10 +40,10 @@ class MonitorData extends Data {
     {field} milliseconds : np.ndarray(dtype=int)
 }
 
-class MotorData extends MeasureData {
+class AxisData extends MeasureData {
 }
 
-class DetectorData extends MeasureData {
+class ChannelData extends MeasureData {
 }
 
 class ExternalData extends MeasureData {}
@@ -51,16 +51,16 @@ class ExternalData extends MeasureData {}
 class TimestampData extends MeasureData {
 }
 
-class StandardDetectorData extends DetectorData {}
+class StandardChannelData extends ChannelData {}
 
-note bottom of StandardDetectorData
+note bottom of StandardChannelData
     This type does not exist
     in eve-gui and SCML, but is
     a logical functional distinction
     from the AverageDetector.
 endnote
 
-class AverageDetectorData extends DetectorData {
+class AverageChannelData extends ChannelData {
     raw_data : raggedarray
     {field} attempts : np.ndarray(dtype=int)
     {field} n_averages : np.ndarray(dtype=int)
@@ -72,9 +72,9 @@ class AverageDetectorData extends DetectorData {
     has_raw_data()
 }
 note bottom: How does mean() differ\nfrom values in Data?
-note bottom of AverageDetectorData: averaged_values() returns only\nthose values used to average over
+note bottom of AverageChannelData: averaged_values() returns only\nthose values used to average over
 
-class IntervalDetectorData extends DetectorData {
+class IntervalChannelData extends ChannelData {
     raw_data : raggedarray
     {field} counts : np.ndarray(dtype=int)
     _mean : np.ndarray
@@ -84,10 +84,10 @@ class IntervalDetectorData extends DetectorData {
     has_raw_data()
 }
 
-class ArrayDetectorData extends DetectorData {
+class ArrayChannelData extends ChannelData {
 }
 
-class AreaDetectorData extends DetectorData {
+class AreaChannelData extends ChannelData {
 }
 
 @enduml

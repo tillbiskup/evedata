@@ -36,10 +36,10 @@ class MonitorMetadata extends Metadata implements DeviceMetadata {
     section : Section.MONITOR
 }
 
-class MotorMetadata extends MeasureMetadata implements DeviceMetadata  {
+class AxisMetadata extends MeasureMetadata implements DeviceMetadata  {
 }
 
-class DetectorMetadata extends MeasureMetadata implements DeviceMetadata  {
+class ChannelMetadata extends MeasureMetadata implements DeviceMetadata  {
     normalise_id : string
 }
 
@@ -51,9 +51,9 @@ class ExternalMetadata extends MeasureMetadata implements DeviceMetadata {
     format : string
 }
 
-class StandardDetectorMetadata extends DetectorMetadata {}
+class StandardChannelMetadata extends ChannelMetadata {}
 
-class AverageDetectorMetadata extends DetectorMetadata {
+class AverageChannelMetadata extends ChannelMetadata {
     low_limit : float
     max_attempts : integer
     max_deviation : float
@@ -67,14 +67,14 @@ note bottom
     would this solve the problem?
 end note
 
-class IntervalDetectorMetadata extends DetectorMetadata {
+class IntervalChannelMetadata extends ChannelMetadata {
     trigger_interval : float
 }
 
-class ArrayDetectorMetadata extends DetectorMetadata {
+class ArrayChannelMetadata extends ChannelMetadata {
 }
 
-class AreaDetectorMetadata extends DetectorMetadata {
+class AreaChannelMetadata extends ChannelMetadata {
 }
 
 Data *- Metadata

@@ -117,7 +117,7 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 
       It turned out that we most probably need to distinguish between datasets from the standard and snapshot sections, as datasets on the HDF5 level can have identical names in both sections (and for good reasons). Hence, the current data model has two attributes/lists: data (for datasets of the standard section) and snapshots (for datasets of the snapshot section).
 
-      How to deal with monitors? It seems more consistent and logical to separate them into their own list as well, at least on the evefile subpackage level. This would relax the discussion as of how to map monitor timestamps to position counts, as monitors would be once more marked as clearly different from motors/detectors.
+      How to deal with monitors? It seems more consistent and logical to separate them into their own list as well, at least on the evefile subpackage level. This would relax the discussion as of how to map monitor timestamps to position counts, as monitors would be once more marked as clearly different from motor axes/detector channels.
 
     * Comments
 
@@ -131,24 +131,20 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 data module
 ~~~~~~~~~~~
 
-Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 03/2024, eve version 2.0) neither average nor interval detectors save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
+Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 03/2024, eve version 2.0) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector channel saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
 
 
 .. figure:: uml/evedata.evefile.data.*
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, the child classes of MeasureData seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. Currently, AreaDetectorData and ExternalData serve a similar purpose: representing 2D data per individual position count. While ExternalData represents the current way of storing these data in eveH5 (*i.e.*, a reference to an external file), AreaDetectorData may be used to contain the actual image data.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, the child classes of MeasureData seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. Currently, AreaChannelData and ExternalData serve a similar purpose: representing 2D data per individual position count. While ExternalData represents the current way of storing these data in eveH5 (*i.e.*, a reference to an external file), AreaChannelData may be used to contain the actual image data.
 
 
-What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basically, the difference is whether the corresponding data are stored *within* the eveH5 file or externally. While with the advent of the generic ``DataImporter`` class (necessary to allow for deferred loading of actual data) the difference seems negligible, the HDF dataset corresponding to an ``ExternalData`` object usually contains the filenames (or similar identifiers) to the actual externally stored data files. One could in this case make the ``DatasetImporter`` contain a list of sources and handle the ``Data`` as usual. But do we need *two* DataImporter instances in this case -- one for the HDF5 dataset, one for the actual (external) data? If not, there would be no need for an ``ExternalData`` class. The question to answer here: Do we need to distinguish on this level whether the data are external to the HDF5 file?
+What is the difference between ``AreaChannelData`` and ``ExternalData``? Basically, the difference is whether the corresponding data are stored *within* the eveH5 file or externally. While with the advent of the generic ``DataImporter`` class (necessary to allow for deferred loading of actual data) the difference seems negligible, the HDF dataset corresponding to an ``ExternalData`` object usually contains the filenames (or similar identifiers) to the actual externally stored data files. One could in this case make the ``DatasetImporter`` contain a list of sources and handle the ``Data`` as usual. But do we need *two* DataImporter instances in this case -- one for the HDF5 dataset, one for the actual (external) data? If not, there would be no need for an ``ExternalData`` class. The question to answer here: Do we need to distinguish on this level whether the data are external to the HDF5 file?
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
-
-    * Rename classes \*DetectorData to \*ChannelData?
-
-      From an HDF5 point of view, the datasets represent channel data, not detector data. If so, consistently rename in metadata module as well.
 
     * Do we need additional classes for ``DeviceData`` and ``OptionData``?
 
@@ -158,25 +154,25 @@ What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basica
 
     * Remove ExternalData?
 
-      What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basically, the difference is whether the corresponding data are stored *within* the eveH5 file or externally. While with the advent of the generic ``DataImporter`` class (necessary to allow for deferred loading of actual data) the difference seems negligible, the HDF dataset corresponding to an ``ExternalData`` object usually contains the filenames (or similar identifiers) to the actual externally stored data files. One could in this case make the ``DatasetImporter`` contain a list of sources and handle the ``Data`` as usual. But do we need *two* DataImporter instances in this case -- one for the HDF5 dataset, one for the actual (external) data? If not, there would be no need for an ``ExternalData`` class. The question to answer here: Do we need to distinguish on this level whether the data are external to the HDF5 file?
+      What is the difference between ``AreaChannelData`` and ``ExternalData``? Basically, the difference is whether the corresponding data are stored *within* the eveH5 file or externally. While with the advent of the generic ``DataImporter`` class (necessary to allow for deferred loading of actual data) the difference seems negligible, the HDF dataset corresponding to an ``ExternalData`` object usually contains the filenames (or similar identifiers) to the actual externally stored data files. One could in this case make the ``DatasetImporter`` contain a list of sources and handle the ``Data`` as usual. But do we need *two* DataImporter instances in this case -- one for the HDF5 dataset, one for the actual (external) data? If not, there would be no need for an ``ExternalData`` class. The question to answer here: Do we need to distinguish on this level whether the data are external to the HDF5 file?
 
     * Can MonitorData have more than one value per time?
 
-      This would be similar to AverageDetector and IntervalDetector, thus requiring an additional attribute (and probably a ragged array).
+      This would be similar to AverageChannel and IntervalChannel, thus requiring an additional attribute (and probably a ragged array).
 
     * Values of MonitorData
 
       MonitorData can have textual (non-numeric) values. This should not be too much of a problem given that numpy can handle string arrays (though <v2.0 only fixed-size string values, AFAIK, with v2.0 not yet released, as of 2024-04-04).
 
-    * raw (*i.e.* individual) values of AverageDetectorData and IntervalDetectorData
+    * raw (*i.e.* individual) values of AverageChannelData and IntervalChannelData
 
-      Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this. Given that the overarching idea of the evefile subpackage is to *faithfully* represent the eveH5 file contents, it seems not sensible to map the "fake" average detector saving each individual value using MPSKIP to this detector type, though. This should probably rather be done in the mapping later on and towards the dataset subpackage.
+      Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this. Given that the overarching idea of the evefile subpackage is to *faithfully* represent the eveH5 file contents, it seems not sensible to map the "fake" average detector channel saving each individual value using MPSKIP to this detector channel type, though. This should probably rather be done in the mapping later on and towards the dataset subpackage.
 
-    * Detectors that are redefined within an experiment/scan
+    * Detector channels that are redefined within an experiment/scan
 
-      Generally, detectors can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector beyond the XML-ID/PV. The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector. For a discussion, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_.
+      Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector channel beyond the XML-ID/PV. The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector channel. For a discussion, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_.
 
-      Generally, what seems necessary is to have separate datasets on the HDF5 level for detectors that change their type or attributes within a scan. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
+      Generally, what seems necessary is to have separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector channel and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector channel change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
 
     * References to spectra/images
 
@@ -184,7 +180,7 @@ What is the difference between ``AreaDetectorData`` and ``ExternalData``? Basica
 
       The current idea for modelling these data is reflected in the ``ExternalData`` class shown in the UML diagram above. Here, for each position count, a reference (a string with usually a filename) is stored. The corresponding ``ExternalMetadata`` class (see section below) contains information on the file format to inform an importer factory how to import the data. The only "problem": Where to store the actual data, or more precisely: how to deal with the ``data`` attribute of the ``Data`` base class? Probably best to store the references as strings in the ``data`` attribute (that is in this case a numpy string array) and have an additional attribute ``external_data`` for the actual data in the ``ExternalData`` class.
 
-      More generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayDetectorData``. In case of storing images (2D data per position count) within an eveH5 file (in the future), these data will be modelled as ``AreaDetectorData``.
+      More generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayChannelData``. In case of storing images (2D data per position count) within an eveH5 file (in the future), these data will be modelled as ``AreaChannelData``.
 
 
 metadata module
@@ -195,7 +191,7 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
 
 .. note::
 
-    As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. Furthermore, there seems to be some (immutable) information currently stored in a dataset in HDF5 that could be stored as attribute - if it is truly not changing. Note, however, that detectors can be redefined during a scan, but all values are stored in the identical dataset. Latest with average and interval detector, this leads already to problems in current eveH5 files, as information what kind of detector it was when is probably lost. Hence, this situation needs to be solved more fundamentally, probably.
+    As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. Furthermore, there seems to be some (immutable) information currently stored in a dataset in HDF5 that could be stored as attribute - if it is truly not changing. Note, however, that detector channels can be redefined during a scan, but all values are stored in the identical dataset. Latest with average and interval detector channel, this leads already to problems in current eveH5 files, as information what kind of detector channel it was when is probably lost. Hence, this situation needs to be solved more fundamentally, probably.
 
 
 .. figure:: uml/evedata.evefile.metadata.*
@@ -252,7 +248,7 @@ Code in the controllers technical layer operate on the entities and provide the 
 What may be in here:
 
 * mapping different versions of eveH5 files to the entities
-* Converting MPSKIP scans into average detector with adaptive number of recorded points
+* Converting MPSKIP scans into average detector channel with adaptive number of recorded points
 
 
 version_mapping module
@@ -367,7 +363,7 @@ However, the ``dataset`` subpackage is still general enough to cope with all the
     Currently, one very common and heavily used abstraction of the data contained in an eveH5 file is a two-dimensional data array (basically a table with column headers, implemented as pandas dataframe). As it stands, many problems in the data analysis and preprocessing of data come from the inability of this abstraction to properly represent the data. Two obvious cases, where this 2D approach simply breaks down, are:
 
     * subscans -- essentially a 2D dataset on its own
-    * adaptive average detector saving the individual, non-averaged values (implemented using MPSKIP)
+    * adaptive average detector channel saving the individual, non-averaged values (implemented using MPSKIP)
 
     Furthermore, as soon as spectra (1D) or images (2D) are recorded for a given position (count), the 2D data array abstraction breaks down as well.
 
@@ -407,7 +403,7 @@ Currently, the idea is to model the dataset close to the dataset in the ASpecD f
     Class hierarchy of the dataset.dataset module, closely resembling the dataset concept of the ASpecD framework (while lacking the history component). For the corresponding metadata class see the dataset.metadata module.
 
 
-Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detectors saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
+Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detector channels saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
