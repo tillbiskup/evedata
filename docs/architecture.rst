@@ -220,33 +220,19 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Names of the sections
-
-      The names of the sections are currently modelled as Enumeration ("Section"). AFAIK, the names of the sections in the eveH5 file have changed over time. What would be sensible names for the different sections? Are the sections mentioned (standard, snapshot, monitor, meta) sufficient? Is anything missing? Will there likely be more in the future?
-
-      How about renaming STANDARD to MAIN? This would better reflect that this section contains datasets from the main part of the scan. Otherwise, one could argue in favour of STANDARD and rename the class ``ClassicScanModule`` in the scml.scan module to ``StandardScanModule``.
-
-    * Monitor metadata
-
-      Clearly, monitor metadata are not sufficiently modelled yet. In recent eveH5 files, they have only few attributes. Are the other attributes (comparable to the attributes of ``MeasureMetadata``) contained in the SCML file and could be read from there?
-
-      Is there any sensible chance to relate monitor datasets to datasets in the standard section? Currently, it looks like the eveH5 monitor datasets have no sensible/helpful "name" attribute, only an ID that partly resembles IDs in the standard section. (And of course, there are usually monitors that do not appear in any other section, hence cannot be related to other devices/datasets.)
-
     * Attributes "pv" and "transport_type"
 
       "pv" is the EPICS process variable, transport type refers to the access mode (local vs. ca). Both are currently stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<transport_type>:<pv>``. Is there any good reason why these two values should be stored together in one attribute? If not, it may be sensible to change the eveH5 schema in the future for consistency. Reasons for separating both values come from the SCML schema.
 
       Is there any real chance of having the identical PV with different transport types? If not, we could skip the "transport_type" attribute here, as this information is obtained from the SCML file anyway. The PV serves as unique identifier to map the information contained in the SCML to the datasets read from the eveH5 file.
 
-    * Metadata from SCML file
+    * Monitor metadata
 
-      There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). How to map this to the respective metadata classes? Shall this be done here, or rather in the dataset subpackage? An argument in favour of the latter would be to keep up with the distinction HDF5/SCML.
+      Clearly, monitor metadata are not sufficiently modelled yet. In recent eveH5 files, they have only few attributes. Are there other attributes (comparable to the attributes of ``MeasureMetadata``) contained in the SCML file and could be read from there?
 
-    * Information on the individual devices
+      On a more fundamental level: What kind of data are the monitor data contained in the "device" group of an eveH5 file? Only options of detectors/channels and motors/axes? Or devices as well? Or even axes positions or channel values?
 
-      Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup.
-
-      Looks like as of now there is no such information stored anywhere. It might be rather straight-forward to expand the SCML schema for this purpose, not affecting the GUI or engine (both do not care about this information).
+      Is there any sensible chance to relate monitor datasets to datasets in the standard section? Currently, it looks like the eveH5 monitor datasets have no sensible/helpful "name" attribute, only an ID that partly resembles IDs in the standard section. (And of course, there are usually monitors that do not appear in any other section, hence cannot be related to other devices/datasets.)
 
 
 Controllers
@@ -322,6 +308,21 @@ evefile module (facade)
     :align: center
 
     Class hierarchy of the evefile.boundaries.evefile module, providing the facade for an eveH5 file. Currently, the basic idea is to inherit from the ``File`` entity and extend it accordingly, adding behaviour.
+
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Metadata from SCML file
+
+      There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). How to map this to the respective metadata classes? Shall this be done here, or rather in the dataset subpackage? An argument in favour of the latter would be to keep up with the distinction HDF5/SCML.
+
+    * Information on the individual devices
+
+      Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup.
+
+      Looks like as of now there is no such information stored anywhere. It might be rather straight-forward to expand the SCML schema for this purpose, not affecting the GUI or engine (both do not care about this information).
+
 
 
 eveH5 module (resource)
