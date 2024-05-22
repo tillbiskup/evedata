@@ -138,10 +138,14 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, the child classes of MeasureData seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. Currently, AreaChannelData and ExternalData serve a similar purpose: representing 2D data per individual position count. While ExternalData represents the current way of storing these data in eveH5 (*i.e.*, a reference to an external file), AreaChannelData may be used to contain the actual image data.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, the child classes of MeasureData seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
+
+    * How to cope with normalised data?
+
+      Normalised data are currently stored as separate datasets in the eveH5 file. However, there are both, not-normalised and normalised data available. Shall these two still be separated on this level, or shall the ``ChannelData`` class be extended/subclassed to contain normalised data?
 
     * Do we need additional classes for ``DeviceData`` and ``OptionData``?
 
@@ -167,13 +171,23 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
       Generally, what seems necessary is to have separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector channel and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector channel change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
 
-    * References to spectra/images
+      While the future way of storing those detector channels in eveH5 files is discussed in `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_, we need a solution for legacy data solving two problems:
+
+      #. separating the values for the different channels into separate datasets
+
+         This is rather complicated, but probably possible by looking at the different HDF5 datasets where present -- although this would require reading the *data* of the HDF5 datasets if corresponding datasets are available in the "averagemeta" or/and "standarddev" group to check for changes in these data.
+
+      #. sensibly naming the resulting multiple datasets.
+
+      For the latter, the easiest solution would be to suffix an incrementing integer number for each individual detector channel. However: suffix *all* channel datasets if the channel got redefined, or only starting with the second?
+
+    * References to external data/files
 
       There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. Currently, the file name (including the full path, starting with which version of the eveH5 schema?) is stored as value in the dataset in these cases. For a discussion, see `#7732 <https://redmine.ahf.ptb.de/issues/7732>`_.
 
-      The current idea for modelling these data is reflected in the ``ExternalData`` class shown in the UML diagram above. Here, for each position count, a reference (a string with usually a filename) is stored. The corresponding ``ExternalMetadata`` class (see section below) contains information on the file format to inform an importer factory how to import the data. The only "problem": Where to store the actual data, or more precisely: how to deal with the ``data`` attribute of the ``Data`` base class? Probably best to store the references as strings in the ``data`` attribute (that is in this case a numpy string array) and have an additional attribute ``external_data`` for the actual data in the ``ExternalData`` class.
+      Generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayChannelData``, with the ``_data`` attribute being a 2D numpy array. In case of storing images (2D data per position count), these data are modelled as ``AreaChannelData``, with the ``_data`` attribute being either a list of 2D/3D numpy arrays (containing the image data for one or different channels), a numpy array of arrays, or a 3D/4D array.
 
-      More generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayChannelData``. In case of storing images (2D data per position count) within an eveH5 file (in the future), these data will be modelled as ``AreaChannelData``.
+      While for a usual HDF5 dataset, the ``DataImporter`` object contains the eveH5 filename and dataset path for accessing the data, in case of external data, it contains a list of external filenames/references.
 
 
 metadata module
@@ -221,6 +235,8 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
     * Attributes "pv" and "transport_type"
 
       "pv" is the EPICS process variable, transport type refers to the access mode (local vs. ca). Both are currently stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<transport_type>:<pv>``. Is there any good reason why these two values should be stored together in one attribute? If not, it may be sensible to change the eveH5 schema in the future for consistency. Reasons for separating both values come from the SCML schema.
+
+      Is there any real chance of having the identical PV with different transport types? If not, we could skip the "transport_type" attribute here, as this information is obtained from the SCML file anyway. The PV serves as unique identifier to map the information contained in the SCML to the datasets read from the eveH5 file.
 
     * Metadata from SCML file
 

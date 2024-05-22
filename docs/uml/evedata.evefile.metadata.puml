@@ -2,30 +2,16 @@
 
 class Metadata {
     name : string
-    section : Section
 }
 
 class Data {
 }
 note bottom: See diagram for\ndata module.
 
-enum Section {
-    STANDARD
-    SNAPSHOT
-    MONITOR
-    META
-}
-
-enum Transport {
-    CA
-    LOCAL
-}
-note bottom: This is defined in the\nscml.setup module\nas well. Generalise?\nUse instance from there?
-
 interface DeviceMetadata {
     id : string
     pv : string
-    transport_type : Transport
+    transport_type : string
 }
 
 class MeasureMetadata extends Metadata {
@@ -33,7 +19,6 @@ class MeasureMetadata extends Metadata {
 }
 
 class MonitorMetadata extends Metadata implements DeviceMetadata {
-    section : Section.MONITOR
 }
 
 class AxisMetadata extends MeasureMetadata implements DeviceMetadata  {
@@ -44,23 +29,25 @@ class ChannelMetadata extends MeasureMetadata implements DeviceMetadata  {
 }
 
 class TimestampMetadata extends MeasureMetadata {
-    section : Section.META
 }
 
 class StandardChannelMetadata extends ChannelMetadata {}
 
 class AverageChannelMetadata extends ChannelMetadata {
+    n_averages : integer
     low_limit : float
     max_attempts : integer
     max_deviation : float
 }
 note bottom
     These attributes may change for individual values
+    if the channel is redefined in different scan modules
     and are currently saved in eveH5 for each position.
 
-    If we go for separate detectors if they are
-    redefined in different scan modules,
-    would this solve the problem?
+    As channels can be redefined from average to
+    interval in different scan modules, they should
+    be separated into individual datasets in any case
+    and in the future saved as separate datasets in eveH5.
 end note
 
 class IntervalChannelMetadata extends ChannelMetadata {

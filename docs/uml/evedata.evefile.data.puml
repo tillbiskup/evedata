@@ -15,8 +15,8 @@ note left of Data::_data
     For individual channel values see derived classes
     AverageChannelData and IntervalChannelData.
 
-    AreaChannelData are somewhat special as they
-    contain either 2D data or a list of data objects
+    ArrayChannelData and AreaChannelData are somewhat
+    special as they contain either 2D data or a list of data objects
     (in case of images and alike).
 end note
 
@@ -47,6 +47,9 @@ class ChannelData extends MeasureData {
 }
 
 class TimestampData extends MeasureData {
+    {field} _first_positions : np.ndarray(dtype=int)
+    {field} _last_positions : np.ndarray(dtype=int)
+    get_position(timestamp, mode=last)
 }
 
 class StandardChannelData extends ChannelData {}
@@ -55,13 +58,12 @@ note bottom of StandardChannelData
     This type does not exist
     in eve-gui and SCML, but is
     a logical functional distinction
-    from the AverageDetector.
+    from the AverageChannel.
 endnote
 
 class AverageChannelData extends ChannelData {
     raw_data : raggedarray
     {field} attempts : np.ndarray(dtype=int)
-    {field} n_averages : np.ndarray(dtype=int)
     _mean : np.ndarray
     _std : np.ndarray
     mean()
