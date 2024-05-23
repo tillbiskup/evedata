@@ -149,13 +149,15 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
     * Do we need additional classes for ``DeviceData`` and ``OptionData``?
 
-      Snapshots usually do contain a lot of options that are strictly speaking no channels or axes, although their "DeviceType" attribute is usually set to either "Channel" or "Axis". Using the SCML these options could most probably identified as options rather than actual channels/axes.
+      Snapshots usually do contain a lot of options that are strictly speaking no channels nor axes, although their "DeviceType" attribute is usually set to either "Channel" or "Axis". Using the SCML these options could most probably identified as options rather than actual channels/axes.
 
-      Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``.
+      Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
 
     * Can MonitorData have more than one value per time?
 
       This would be similar to AverageChannel and IntervalChannel, thus requiring an additional attribute (and probably a ragged array).
+
+      Most probably, MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_.
 
     * Values of MonitorData
 
@@ -169,9 +171,9 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
       Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector channel beyond the XML-ID/PV. The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector channel. For a discussion, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_.
 
-      Generally, what seems necessary is to have separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector channel and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector channel change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
+      Generally, what seems necessary is to have separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector channel and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector channel change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
 
-      While the future way of storing those detector channels in eveH5 files is discussed in `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_, we need a solution for legacy data solving two problems:
+      While the future way of storing those detector channels in eveH5 files is discussed in `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_, we need a solution for **legacy data** solving two problems:
 
       #. separating the values for the different channels into separate datasets
 
@@ -234,6 +236,10 @@ As obvious from the UML diagram, the last option has been chosen. The name "Devi
 
       Is there any sensible chance to relate monitor datasets to datasets in the standard section? Currently, it looks like the eveH5 monitor datasets have no sensible/helpful "name" attribute, only an ID that partly resembles IDs in the standard section. (And of course, there are usually monitors that do not appear in any other section, hence cannot be related to other devices/datasets.)
 
+    * Attributes for ``AverageChannelMetadata`` and ``IntervalChannelMetadata``
+
+      The current model in the UML schemas of data and metadata assumes different data(sets) in case a detector channel gets redefined within a scan, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_ and the discussion above. This should be verified and specified.
+
 
 Controllers
 -----------
@@ -243,7 +249,8 @@ Code in the controllers technical layer operate on the entities and provide the 
 What may be in here:
 
 * mapping different versions of eveH5 files to the entities
-* Converting MPSKIP scans into average detector channel with adaptive number of recorded points
+* mapping timestamps to position counts
+* Converting MPSKIP scans into average detector channel with adaptive number of recorded points (?)
 
 
 version_mapping module
@@ -259,6 +266,26 @@ Being version agnostic with respect to eveH5 and SCML schema versions is a centr
 
 
 For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. That part of the mapping common to all versions of the eveH5 schema takes place in the ``VersionMapper`` parent class, *e.g.* removing the chain. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
+
+
+Mapping timestamps to position counts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a detailed discussion/summary of the current state of affairs regarding the algorithm and its specification, see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_.
+
+The ``TimestampData`` class got a method :meth:`get_position` to return position counts for given timestamps. Currently, the idea is to have one method handling both, scalars and lists/arrays of values, returning the same data type, respectively.
+
+This means that for a given ``EveFile`` object, the controller carrying out the mapping knows to ask the ``TimestampData`` object via its :meth:`get_position` method for the position counts corresponding to a given timestamp.
+
+Special cases that need to be addressed either here or during import of the data of a monitor:
+
+* Multiple values with timestamp ``-1``, *i.e.* *before* the scan has been started.
+
+  Probably the best solution here would be to skip all values except of the last (newest) with the special timestamp ``-1``. See `#7688, note 10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_ for details.
+
+* Multiple (identical) values with identical timestamp
+
+  Not clear whether this situation can actually occur, but most probably, in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
 
 
 Boundaries
@@ -338,6 +365,13 @@ The aim of this module is to provide a Python representation (in form of a hiera
 
 
 As such, the ``HDF5Item`` class hierarchy shown above is pretty generic and should work with all eveH5 versions. However, it is *not* meant as a generic HDF5 interface, as it does make some assumptions based on the eveH5 file structure and format.
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Non-monotonic position counts in eveH5 datasets
+
+      Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore: Where to implement the sorting logic? Here in the IO boundary, or rather at the facade level?
 
 
 Dataset
