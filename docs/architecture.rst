@@ -153,11 +153,13 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
       Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
 
+      When timestamps of monitor data should be mapped to position counts, while retaining the original monitor data, this most probably means to create new instances of (subclasses of) ``MeasureData``. As monitors usually are either options or devices, this would be the case for the two additional classes.
+
     * Can MonitorData have more than one value per time?
 
       This would be similar to AverageChannel and IntervalChannel, thus requiring an additional attribute (and probably a ragged array).
 
-      Most probably, MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_.
+      Most probably, MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_. A special case are monitor data occurring before starting the actual scan, as these all get the special timestamp ``-1``, see `#7688, note-10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_
 
     * Values of MonitorData
 
@@ -285,7 +287,9 @@ Special cases that need to be addressed either here or during import of the data
 
 * Multiple (identical) values with identical timestamp
 
-  Not clear whether this situation can actually occur, but most probably, in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
+  Not clear whether this situation can actually occur, but if so, most probably in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
+
+Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new ``MeasureData`` object. Most probably, this is the case for additional ``OptionData`` and ``DeviceData`` classes as subclasses of ``MeasureData``. The next question: Where to place these new objects in the ``File`` class of the evefile.entities.file module? Alternatively: Would this be something outside the evefile subpackage, probably within the dataset subpackage?
 
 
 Boundaries
