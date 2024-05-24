@@ -135,8 +135,8 @@ Axis *-- Controller
 Axis *-- StepFunctionRange
 
 enum PositionMode {
-    relative = relative
-    absolute = absolute
+    relative
+    absolute
 }
 
 class Channel {
@@ -165,12 +165,12 @@ class StartStopStep {
 }
 
 enum StepFunction {
-    Add = Add
-    Multiply = Multiply
-    File = File
-    Plugin = Plugin
-    Positionlist = Positionlist
-    Range = Range
+    Add
+    Multiply
+    File
+    Plugin
+    Positionlist
+    Range
 }
 
 class StepFunctionRange {

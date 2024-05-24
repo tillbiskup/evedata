@@ -40,9 +40,9 @@ Access *-- Method
 Access *-- Transport
 
 enum AutoAcquire {
-    snapshot = snapshot
-    measurement = measurement
-    no = no
+    snapshot
+    measurement
+    no
 }
 
 class Axis {
@@ -98,12 +98,12 @@ Device *-- Access
 Device *-- "n" Option
 
 enum Method {
-    PUT = PUT
-    PUTCB = PUTCB
-    GET = GET
-    GETCB = GETCB
-    GETPUT = GETPUT
-    GETPUTCB = GETPUTCB
+    PUT
+    PUTCB
+    GET
+    GETCB
+    GETPUT
+    GETPUTCB
 }
 
 class Motor {
@@ -125,8 +125,8 @@ Option *-- Access
 Option *- AutoAcquire
 
 enum Transport {
-    ca = ca
-    local = local
+    ca
+    local
 }
 
 class Unit {

@@ -114,9 +114,9 @@ accessProperty *-- data
 accessProperty *- transport
 
 enum autoacquire {
-    snapshot = snapshot
-    measurement = measurement
-    no = no
+    snapshot
+    measurement
+    no
 }
 
 class axis {
@@ -146,8 +146,8 @@ axis *-- option
 axis *-- unit
 
 enum axismodifier {
-    NONE = NONE
-    INVERSE = INVERSE
+    NONE
+    INVERSE
 }
 
 class channel {
@@ -168,10 +168,10 @@ channel *-- unit
 channel *--option
 
 enum comparison {
-    eq = eq
-    ne = ne
-    gt = gt
-    lt = lt
+    eq
+    ne
+    gt
+    lt
 }
 
 class conditionlimit {
@@ -187,10 +187,10 @@ class controller {
 controller *-- parameter
 
 enum data {
-    int = int
-    double = double
-    string = string
-    datetime = datetime
+    int
+    double
+    string
+    datetime
 }
 
 class detector {
@@ -235,13 +235,13 @@ eqcondition *- equality
 eqcondition *-- conditionlimit
 
 enum equality {
-    eq = eq
-    ne = ne
+    eq
+    ne
 }
 
 enum incident {
-    Start = Start
-    End = End
+    Start
+    End
 }
 
 class ineqcondition {
@@ -275,12 +275,12 @@ limit *- comparison
 limit *-- data
 
 enum method {
-    PUT = PUT
-    PUTCB = PUTCB
-    GET = GET
-    GETCB = GETCB
-    GETPUT = GETPUT
-    GETPUTCB = GETPUTCB
+    PUT
+    PUTCB
+    GET
+    GETCB
+    GETPUT
+    GETPUTCB
 }
 
 class monitorevent {
@@ -361,8 +361,8 @@ plotaxis *- plotmode
 plotaxis *- axismodifier
 
 enum plotmode {
-    linear = linear
-    log = log
+    linear
+    log
 }
 
 class plugin {
@@ -375,12 +375,12 @@ plugin *-- pluginParameter
 plugin *- pluginType
 
 enum pluginData {
-    int = int
-    double = double
-    string = string
-    axisid = axisid
-    channelid = channelid
-    deviceid = deviceid
+    int
+    double
+    string
+    axisid
+    channelid
+    deviceid
 }
 
 class pluginParameter {
@@ -393,10 +393,10 @@ class pluginParameter {
 pluginParameter *- pluginData
 
 enum pluginType {
-    position = position
-    save = save
-    display = display
-    postscanpositioning = postscanpositioning
+    position
+    save
+    display
+    postscanpositioning
 }
 
 class positioning {
@@ -484,8 +484,8 @@ smaxis *-- controller
 smaxis *-- stepfunctionrange
 
 enum smaxis_positionmode {
-    relative = relative
-    absolute = absolute
+    relative
+    absolute
 }
 
 class smchannel {
@@ -526,12 +526,12 @@ class startstopstep {
 startstopstep *-- typevalue
 
 enum stepfunction {
-    Add = Add
-    Multiply = Multiply
-    File = File
-    Plugin = Plugin
-    Positionlist = Positionlist
-    Range = Range
+    Add
+    Multiply
+    File
+    Plugin
+    Positionlist
+    Range
 }
 
 class stepfunctionrange {
@@ -540,8 +540,8 @@ class stepfunctionrange {
 }
 
 enum transport {
-    ca = ca
-    local = local
+    ca
+    local
 }
 
 class typevalue {

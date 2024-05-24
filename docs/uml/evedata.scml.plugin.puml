@@ -13,10 +13,10 @@ Plugin *-- "n" PluginParameter
 PluginType *- Plugin
 
 enum PluginType {
-    position = position
+    position
     save = "HDF5"
-    display = display
-    postscanpositioning = postscanpositioning
+    display
+    postscanpositioning
 }
 note left of PluginType::save
     There is only one
@@ -27,12 +27,12 @@ note left of PluginType::display
 end note
 
 enum PluginData {
-    int = int
-    double = double
-    string = string
-    axis_id = axisid
-    channel_id = channelid
-    device_id = deviceid
+    int
+    double
+    string
+    axis_id
+    channel_id
+    device_id
 }
 
 class PluginParameter {

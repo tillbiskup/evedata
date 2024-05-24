@@ -24,8 +24,8 @@ class ScheduleEvent {
 ScheduleEvent *-- Incident
 
 enum Incident {
-    Start = Start
-    End = End
+    Start
+    End
 }
 
 class Limit {
@@ -35,10 +35,10 @@ class Limit {
 Limit *-- Comparison
 
 enum Comparison {
-    eq = eq
-    ne = ne
-    gt = gt
-    lt = lt
+    eq
+    ne
+    gt
+    lt
 }
 
 
@@ -56,8 +56,8 @@ class EqualityCondition {
 EqualityCondition *-- Equality
 
 enum Equality {
-    eq = eq
-    ne = ne
+    eq
+    ne
 }
 
 class InequalityCondition {
@@ -67,8 +67,8 @@ class InequalityCondition {
 InequalityCondition *-- Inequality
 
 enum Inequality {
-    gt = gt
-    lt = lt
+    gt
+    lt
 }
 
 @enduml

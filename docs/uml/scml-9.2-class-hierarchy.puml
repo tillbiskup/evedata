@@ -79,9 +79,9 @@ Access *-- Method
 Access *-- Transport
 
 enum AutoAcquire {
-    snapshot = snapshot
-    measurement = measurement
-    no = no
+    snapshot
+    measurement
+    no
 }
 
 class Axis {
@@ -106,8 +106,8 @@ Axis *-- "n" Access
 Axis *-- "n" Option
 
 enum AxisModifier {
-    NONE = NONE
-    INVERSE = INVERSE
+    NONE
+    INVERSE
 }
 
 class Channel {
@@ -123,10 +123,10 @@ Channel *-- "n" Access
 Channel *-- "n" Option
 
 enum Comparison {
-    eq = eq
-    ne = ne
-    gt = gt
-    lt = lt
+    eq
+    ne
+    gt
+    lt
 }
 
 class Controller {
@@ -168,13 +168,13 @@ class EqualityCondition {
 EqualityCondition *-- Equality
 
 enum Equality {
-    eq = eq
-    ne = ne
+    eq
+    ne
 }
 
 enum Incident {
-    Start = Start
-    End = End
+    Start
+    End
 }
 
 class InequalityCondition {
@@ -184,8 +184,8 @@ class InequalityCondition {
 InequalityCondition *-- Inequality
 
 enum Inequality {
-    gt = gt
-    lt = lt
+    gt
+    lt
 }
 
 class IntervalChannel {
@@ -200,12 +200,12 @@ class Limit {
 Limit *-- Comparison
 
 enum Method {
-    PUT = PUT
-    PUTCB = PUTCB
-    GET = GET
-    GETCB = GETCB
-    GETPUT = GETPUT
-    GETPUTCB = GETPUTCB
+    PUT
+    PUTCB
+    GET
+    GETCB
+    GETPUT
+    GETPUTCB
 }
 
 class MonitorOptions {
@@ -267,8 +267,8 @@ class YAxis {
 YAxis *-- AxisModifier
 
 enum PlotMode {
-    linear = linear
-    log = log
+    linear
+    log
 }
 
 together {
@@ -288,19 +288,19 @@ Plugin *-- "n" PluginParameter
 Plugin *-- PluginType
 
 enum PluginType {
-    position = position
-    save = save
-    display = display
-    postscanpositioning = postscanpositioning
+    position
+    save
+    display
+    postscanpositioning
 }
 
 enum PluginData {
-    int = int
-    double = double
-    string = string
-    axis_id = axisid
-    channel_id = channelid
-    device_id = deviceid
+    int
+    double
+    string
+    axis_id
+    channel_id
+    device_id
 }
 
 class PluginParameter {
@@ -388,8 +388,8 @@ ScanModuleAxis *-- Controller
 ScanModuleAxis *-- StepFunctionRange
 
 enum PositionMode {
-    relative = relative
-    absolute = absolute
+    relative
+    absolute
 }
 
 class ScanModuleChannel {
@@ -440,12 +440,12 @@ class StartStopStep {
 }
 
 enum StepFunction {
-    Add = Add
-    Multiply = Multiply
-    File = File
-    Plugin = Plugin
-    Positionlist = Positionlist
-    Range = Range
+    Add
+    Multiply
+    File
+    Plugin
+    Positionlist
+    Range
 }
 
 class StepFunctionRange {
@@ -454,8 +454,8 @@ class StepFunctionRange {
 }
 
 enum Transport {
-    ca = ca
-    local = local
+    ca
+    local
 }
 
 class Unit {
