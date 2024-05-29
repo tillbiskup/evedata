@@ -1,0 +1,215 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+legend top left
+    **eveH5 schema v6** <U+2014> released with evEngine 1.30 (2018-11-22)
+
+    cf. [[https://www.ahf.ptb.de/messpl/eve/doc/eveH5Structure/eveH5Structure-6.html]]
+
+    G: HDF5 groups; D: HDF5 datasets; <color:#firebrick><U+2610></color>: optional attributes
+    Dataset columns appear below the attributes.
+    Dataset names in angle brackets <> are replaced with actual names in an eveH5 file.
+    Name parts in square brackets [] are optional.
+endlegend
+
+class Root << (G,orchid) >> {
+    EVEH5Version : string
+    Location : string
+    SCML-Author : string
+    SCML-Name : string
+    StartDate : string
+    StartTime : string
+    StartTimeISO : string
+    EndTimeISO : string
+    Version : string
+    XMLversion : string
+    Comment : string
+}
+
+Root *-- LiveComment
+Root *-- c1
+Root *-- device
+
+class LiveComment << (D,orange) >> <<optional>> {
+    --
+    : VLstring
+}
+note left of LiveComment
+    Entries are prefixed by an ISO timestamp:
+    ""2024-05-29T09:08:16: foo""
+endnote
+
+class c1 << (G,orchid) >> {
+    StartDate : string
+    StartTime : string
+    StartTimeISO : string
+    EndTimeISO : string
+    - preferredAxis : string
+    - preferredChannel : string
+}
+
+c1 *-- main
+c1 *-- snapshot
+c1 *-- meta
+
+class device << (G,orchid) >> <<optional>> {
+}
+
+device *-- "<monitordata>"
+
+class main << (G,orchid) >> {}
+
+main *-- "<data>"
+main *-- normalized
+main *-- averagemeta
+main *-- standarddev
+main *-- arraydata
+
+class snapshot << (G,orchid) >> <<optional>> {}
+
+snapshot *-- "<data>"
+
+note right of snapshot
+    Snapshots do //not// contain the other groups
+    "normalized", "averagemeta", and "standarddev",
+    as for snapshots only single values are recorded.
+    For "arraydata" this has //not// been tested yet.
+endnote
+
+class meta << (G,orchid) >> {}
+
+meta *-- PosCountTimer
+
+class "<data>" << (D,orange) >> {
+    Access : string
+    DeviceType : string
+    Name : string
+    XML-ID : string
+    - Detectortype : string
+    - Unit : string
+    --
+    PosCounter : int32
+    <XML-ID> : any
+}
+
+class normalized << (G,orchid) >> <<optional>> {}
+
+normalized *-- "<channel>__<normalizeId>"
+
+class "<channel>__<normalizeId>" << (D,orange) >> {
+    Access : string
+    DeviceType : string
+    Name : string
+    XML-ID : string
+    Detectortype : string
+    Unit : string
+    channel : string
+    normalizeId : string
+    --
+    PosCounter : int32
+    <XML-ID> : <i>any</i>
+}
+
+note bottom of "<channel>__<normalizeId>"
+    If a channel is normalized,
+    the dataset only appears
+    in the group ""normalized",
+    but not in main.
+end note
+
+class averagemeta << (G,orchid) >> <<optional>> {}
+
+averagemeta *-- "<channel>[__<normalizeId>]__Attempts"
+averagemeta *-- "<channel>[__<normalizeId>]__AverageCount"
+averagemeta *-- "<channel>[__<normalizeId>]__Limit-Maxdev"
+
+class "<channel>[__<normalizeId>]__Attempts" << (D,orange) >> <<optional>> {
+    Name : string
+    channel : string
+    - normalizeId : string
+    --
+    PosCounter : int32
+    Attempts : int32
+    MaxAttempts : int32
+}
+
+class "<channel>[__<normalizeId>]__AverageCount" << (D,orange) >> {
+    Name : string
+    channel : string
+    - normalizeId : string
+    --
+    PosCounter : int32
+    AverageCount : int32
+    Preset : int32
+}
+
+class "<channel>[__<normalizeId>]__Limit-Maxdev" << (D,orange) >> <<optional>> {
+    Name : string
+    channel : string
+    - normalizeId : string
+    --
+    PosCounter : int32
+    Limit : float64
+    maxDeviation : float64
+}
+
+class standarddev << (G,orchid) >> <<optional>> {}
+
+standarddev *-- "<channel>[__<normalizeId>]__Count"
+standarddev *-- "<channel>[__<normalizeId>]__TrigIntv-StdDev"
+
+class "<channel>[__<normalizeId>]__Count" << (D,orange) >> {
+    Name : string
+    channel : string
+    - normalizeId : string
+    --
+    PosCounter : int32
+    Count : int32
+}
+
+class "<channel>[__<normalizeId>]__TrigIntv-StdDev" << (D,orange) >> {
+    Name : string
+    channel : string
+    - normalizeId : string
+    --
+    PosCounter : int32
+    TriggerIntv : float64
+    StandardDeviation : float64
+}
+
+class arraydata << (G,orchid) >> <<optional>> {}
+
+arraydata *-- "<XML-ID>"
+
+class "<XML-ID>" << (G,orchid) >> {
+    Access : string
+    DeviceType : string
+    Name : string
+    XML-ID : string
+    Detectortype : string
+    Unit : string
+}
+
+"<XML-ID>" *-- "<posCount>"
+
+class "<posCount>" << (D,orange) >> {
+  --
+  : <i>any</i>
+}
+
+class PosCountTimer << (D,orange) >> {
+    unit : string
+    --
+    PosCounter : int32
+    PosCountTimer : int32
+}
+
+class "<monitordata>" << (D,orange) >> {
+    Name : string
+    Access : string
+    --
+    mSecsSinceStart : int32
+    <xmlid> : <i>any</i>
+}
+
+@enduml
