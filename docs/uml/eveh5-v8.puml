@@ -1,0 +1,179 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+legend top left
+    **eveH5 schema v8** <U+2014> not yet released, complete overhaul
+
+    G: HDF5 groups; D: HDF5 datasets; <color:#firebrick><U+2610></color>: optional attributes
+    Dataset columns appear below the attributes.
+    Dataset names in angle brackets <> are replaced with actual names in an eveH5 file.
+    Name parts in square brackets [] are optional.
+endlegend
+
+class Root << (G,orchid) >> {
+    EVEH5Version : string
+    EVEVersion : string
+    Location : string
+    Start : string
+    End : string
+    Comment : string
+    Simulation : string
+    - PreferredAxis : string
+    - PreferredChannel : string
+}
+
+Root *-- monitor
+Root *-- main
+Root *-- snapshot
+Root *-- meta
+
+class monitor << (G,orchid) >> <<optional>> {
+}
+
+monitor *-- "<monitordata>"
+
+class main << (G,orchid) >> {}
+
+main *-- normalized
+main *-- "scanmodule_<#>"
+
+class snapshot << (G,orchid) >> <<optional>> {}
+
+snapshot *-- "<data>"
+
+class meta << (G,orchid) >> {}
+
+meta *-- PositionCountTime
+meta *-- LogMessages
+meta *-- SCML
+meta *-- Setup
+
+class "<data>" << (D,orange) >> {
+    Access : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    - Detectortype : string
+    - Unit : string
+    --
+    PositionCount : int32
+    Values : <i>any</i>
+}
+
+class "scanmodule_<#>" << (G,orchid) >> {
+    Name : string
+    ID : int32
+}
+
+"scanmodule_<#>" *-- "<data>"
+"scanmodule_<#>" *-- "<averagedata>"
+"scanmodule_<#>" *-- "<intervaldata>"
+"scanmodule_<#>" *-- "<arraydata>"
+
+class normalized << (G,orchid) >> <<optional>> {}
+
+normalized *-- "<channel>__<normalizeId>"
+
+class "<channel>__<normalizeId>" << (D,orange) >> {
+    Access : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    Detectortype : string
+    Unit : string
+    Channel : string
+    NormalizeId : string
+    --
+    PositionCount : int32
+    Values : <i>any</i>
+}
+
+class "<averagedata>" << (D,orange) >> {
+    Access : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    Detectortype : string
+    Unit : string
+    - NormalizeId : string
+    - MaxAttempts : int32
+    - MaxDeviation : float64
+    - LowLimit : float64
+    - Averages : int32
+    --
+    PositionCount : int32
+    Values : float64
+    RawValues : vlen_float64
+    Preset : int32
+    - Attempts : int32
+}
+
+class "<intervaldata>" << (D,orange) >> {
+    Access : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    Detectortype : string
+    Unit : string
+    - NormalizeId : string
+    TriggerInterval : float64
+    --
+    PositionCount : int32
+    Values : float64
+    RawValues : vlen_float64
+    Count : int32
+    StandardDeviation : float64
+}
+
+class "<arraydata>" << (D,orange) >> {
+    Access : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    Detectortype : string
+    Unit : string
+    --
+    PositionCount : int32
+    Values : array
+}
+
+class PositionCountTime << (D,orange) >> {
+    Unit : string
+    --
+    PositionCount : int32
+    Time : int32
+}
+
+class LogMessages << (D,orange) >> <<optional>> {
+    --
+    Timestamp : string
+    Message : vlen_string
+}
+
+class SCML << (D,orange) >> {
+    Version : string
+    Filename : string
+    Author : string
+    --
+    XML : vlen_string
+}
+
+class Setup << (D,orange) >> {
+    Version : string
+    Filename : string
+    --
+    XML : vlen_string
+}
+
+
+class "<monitordata>" << (D,orange) >> {
+    Access : string
+    Name : string
+    XMLID : string
+    - Unit : string
+    --
+    Time : int32
+    Values : <i>any</i>
+}
+
+@enduml

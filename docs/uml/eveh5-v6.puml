@@ -63,7 +63,7 @@ main *-- "<data>"
 main *-- normalized
 main *-- averagemeta
 main *-- standarddev
-main *-- arraydata
+main *-- "<arraydata>"
 
 class snapshot << (G,orchid) >> <<optional>> {}
 
@@ -177,11 +177,7 @@ class "<channel>[__<normalizeId>]__TrigIntv-StdDev" << (D,orange) >> {
     StandardDeviation : float64
 }
 
-class arraydata << (G,orchid) >> <<optional>> {}
-
-arraydata *-- "<XML-ID>"
-
-class "<XML-ID>" << (G,orchid) >> {
+class "<arraydata>" << (G,orchid) >> <<optional>> {
     Access : string
     DeviceType : string
     Name : string
@@ -190,7 +186,7 @@ class "<XML-ID>" << (G,orchid) >> {
     Unit : string
 }
 
-"<XML-ID>" *-- "<posCount>"
+"<arraydata>" *-- "<posCount>"
 
 class "<posCount>" << (D,orange) >> {
   --
