@@ -52,14 +52,12 @@ class TimestampData extends MeasureData {
     get_position(timestamp, mode=last)
 }
 
-class StandardChannelData extends ChannelData {}
+class SinglePointChannelData extends ChannelData {}
 
-note bottom of StandardChannelData
-    This type does not exist
-    in eve-gui and SCML, but is
-    a logical functional distinction
-    from the AverageChannel.
-endnote
+class SinglePointNormalizedChannelData extends SinglePointChannelData {
+    normalized_data : np.ndarray
+    normalizing_data : np.ndarray
+}
 
 class AverageChannelData extends ChannelData {
     raw_data : raggedarray
@@ -71,8 +69,19 @@ class AverageChannelData extends ChannelData {
     averaged_data()
     has_raw_data()
 }
-note bottom: How does mean() differ\nfrom values in Data?
-note bottom of AverageChannelData: averaged_values() returns only\nthose values used to average over
+note bottom of AverageChannelData
+    averaged_values() returns only
+    those values used to average over.
+
+    How does mean() differ
+    from values in Data?
+end note
+
+class AverageNormalizedChannelData extends AverageChannelData {
+    normalized_data : raggedarray
+    normalizing_data : raggedarray
+}
+
 
 class IntervalChannelData extends ChannelData {
     raw_data : raggedarray
@@ -82,6 +91,11 @@ class IntervalChannelData extends ChannelData {
     mean()
     std()
     has_raw_data()
+}
+
+class IntervalNormalizedChannelData extends IntervalChannelData {
+    normalized_data : raggedarray
+    normalizing_data : raggedarray
 }
 
 class ArrayChannelData extends ChannelData {

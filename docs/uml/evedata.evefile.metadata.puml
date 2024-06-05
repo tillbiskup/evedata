@@ -25,13 +25,12 @@ class AxisMetadata extends MeasureMetadata implements DeviceMetadata  {
 }
 
 class ChannelMetadata extends MeasureMetadata implements DeviceMetadata  {
-    normalise_id : string
 }
 
 class TimestampMetadata extends MeasureMetadata {
 }
 
-class StandardChannelMetadata extends ChannelMetadata {}
+class SinglePointChannelMetadata extends ChannelMetadata {}
 
 class AverageChannelMetadata extends ChannelMetadata {
     n_averages : integer
@@ -39,16 +38,6 @@ class AverageChannelMetadata extends ChannelMetadata {
     max_attempts : integer
     max_deviation : float
 }
-note bottom
-    These attributes may change for individual values
-    if the channel is redefined in different scan modules
-    and are currently saved in eveH5 for each position.
-
-    As channels can be redefined from average to
-    interval in different scan modules, they should
-    be separated into individual datasets in any case
-    and in the future saved as separate datasets in eveH5.
-end note
 
 class IntervalChannelMetadata extends ChannelMetadata {
     trigger_interval : float
@@ -61,5 +50,15 @@ class AreaChannelMetadata extends ChannelMetadata {
 }
 
 Data *- Metadata
+
+interface NormalizedMetadata {
+    normalize_id : string
+}
+
+class SinglePointNormalizedChannelMetadata extends SinglePointChannelMetadata implements NormalizedMetadata {}
+
+class AverageNormalizedChannelMetadata extends AverageChannelMetadata implements NormalizedMetadata {}
+
+class IntervalNormalizedChannelMetadata extends IntervalChannelMetadata implements NormalizedMetadata {}
 
 @enduml
