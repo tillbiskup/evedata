@@ -7,7 +7,7 @@ legend top left
     G: HDF5 groups; D: HDF5 datasets; <color:#firebrick><U+2610></color>: optional attributes
     Dataset columns appear below the attributes.
     Dataset names in angle brackets <> are replaced with actual names in an eveH5 file.
-    Name parts in square brackets [] are optional.
+    'Name parts in square brackets [] are optional.
 endlegend
 
 class Root << (G,orchid) >> {
@@ -20,6 +20,7 @@ class Root << (G,orchid) >> {
     Simulation : string
     - PreferredAxis : string
     - PreferredChannel : string
+    - PreferredNormalizationChannel : string
 }
 
 Root *-- monitor
@@ -34,86 +35,75 @@ monitor *-- "<monitordata>"
 
 class main << (G,orchid) >> {}
 
-main *-- normalized
-main *-- "scanmodule_<#>"
-
 class snapshot << (G,orchid) >> <<optional>> {}
 
+note left of snapshot
+    The ""snapshot"" group contains only datasets
+    with scalar values per individual PositionCount.
+    This means that no average or interval channels
+    will appear here, but perhaps array or area channels.
+endnote
+
 snapshot *-- "<data>"
+snapshot *.. "<arraydata>"
+snapshot *.. "<areadata>"
 
 class meta << (G,orchid) >> {}
 
 meta *-- PositionCountTime
-meta *-- LogMessages
-meta *-- SCML
+meta *-- Scan
 meta *-- Setup
+meta *-- LogMessages
 
 class "<data>" << (D,orange) >> {
     Access : string
     Name : string
     XMLID : string
     DeviceType : string
-    - Detectortype : string
+    - DetectorType : string
     - Unit : string
+    - NormalizeId : string
     --
     PositionCount : int32
     Values : <i>any</i>
+    - NormalizedValues : <i>any</i>
+    - NormalizingValues : <i>any</i>
 }
 
-class "scanmodule_<#>" << (G,orchid) >> {
-    Name : string
-    ID : int32
-}
+main *-- "<data>"
+main *-- "<averagedata>_sm<#>"
+main *-- "<intervaldata>_sm<#>"
+main *-- "<arraydata>"
+main *-- "<areadata>"
 
-"scanmodule_<#>" *-- "<data>"
-"scanmodule_<#>" *-- "<averagedata>"
-"scanmodule_<#>" *-- "<intervaldata>"
-"scanmodule_<#>" *-- "<arraydata>"
-
-class normalized << (G,orchid) >> <<optional>> {}
-
-normalized *-- "<channel>__<normalizeId>"
-
-class "<channel>__<normalizeId>" << (D,orange) >> {
+class "<averagedata>_sm<#>" << (D,orange) >> {
     Access : string
     Name : string
     XMLID : string
     DeviceType : string
-    Detectortype : string
+    DetectorType : string
     Unit : string
-    Channel : string
-    NormalizeId : string
-    --
-    PositionCount : int32
-    Values : <i>any</i>
-}
-
-class "<averagedata>" << (D,orange) >> {
-    Access : string
-    Name : string
-    XMLID : string
-    DeviceType : string
-    Detectortype : string
-    Unit : string
+    Averages : int32
     - NormalizeId : string
     - MaxAttempts : int32
     - MaxDeviation : float64
     - LowLimit : float64
-    - Averages : int32
     --
     PositionCount : int32
     Values : float64
     RawValues : vlen_float64
     Preset : int32
     - Attempts : int32
+    - NormalizedValues : vlen_float64
+    - NormalizingValues : vlen_float64
 }
 
-class "<intervaldata>" << (D,orange) >> {
+class "<intervaldata>_sm<#>" << (D,orange) >> {
     Access : string
     Name : string
     XMLID : string
     DeviceType : string
-    Detectortype : string
+    DetectorType : string
     Unit : string
     - NormalizeId : string
     TriggerInterval : float64
@@ -123,18 +113,57 @@ class "<intervaldata>" << (D,orange) >> {
     RawValues : vlen_float64
     Count : int32
     StandardDeviation : float64
+    - NormalizedValues : vlen_float64
+    - NormalizingValues : vlen_float64
 }
+
+note as sm_channel_note
+    As (only) these two types of channels can change
+    for individual scan modules, they are generally
+    saved with the ""sm<#>"" prefix, where ""<#>"" denotes
+    the scan module ID, <i>i.e.</i> an integer value.
+end note
+
+"<intervaldata>_sm<#>" .. sm_channel_note
+"<averagedata>_sm<#>" .. sm_channel_note
 
 class "<arraydata>" << (D,orange) >> {
     Access : string
     Name : string
     XMLID : string
     DeviceType : string
-    Detectortype : string
+    DetectorType : string
     Unit : string
     --
     PositionCount : int32
     Values : array
+}
+
+class "<areadata>" << (D,orange) >> {
+    Access : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    DetectorType : string
+    Unit : string
+    --
+    PositionCount : int32
+    Values : array | string
+}
+
+class Setup << (D,orange) >> {
+    Version : string
+    Filename : string
+    --
+    XML : string
+}
+
+class Scan << (D,orange) >> {
+    Version : string
+    Filename : string
+    Author : string
+    --
+    XML : string
 }
 
 class PositionCountTime << (D,orange) >> {
@@ -150,21 +179,16 @@ class LogMessages << (D,orange) >> <<optional>> {
     Message : vlen_string
 }
 
-class SCML << (D,orange) >> {
-    Version : string
-    Filename : string
-    Author : string
-    --
-    XML : vlen_string
-}
+note as SCML_note
+    XML should be a fixed_length string
+    and the dataset compressed, to save
+    (a lot of) space.
+    Tests have revealed compression by
+    about 95% for real XML data.
+end note
 
-class Setup << (D,orange) >> {
-    Version : string
-    Filename : string
-    --
-    XML : vlen_string
-}
-
+Scan .. SCML_note
+Setup .. SCML_note
 
 class "<monitordata>" << (D,orange) >> {
     Access : string

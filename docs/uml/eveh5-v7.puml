@@ -47,6 +47,7 @@ class c1 << (G,orchid) >> {
     EndTimeISO : string
     - preferredAxis : string
     - preferredChannel : string
+    - PreferredNormalizationChannel : string
 }
 
 c1 *-- main

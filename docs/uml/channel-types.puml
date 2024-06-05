@@ -1,0 +1,17 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Channel {}
+
+class Point_0D extends Channel {}
+
+class SinglePoint extends Point_0D {}
+
+class Average extends Point_0D {}
+
+class Interval extends Point_0D {}
+
+class Array_1D extends Channel {}
+
+class Area_2D extends Channel {}
+@enduml

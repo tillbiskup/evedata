@@ -1,0 +1,85 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Data {
+    values
+}
+
+class MeasureData extends Data {
+    positions
+}
+
+note left of MeasureData
+    Values are always numeric,
+    but can be 0D...2D per position.
+end note
+
+class MonitorData extends Data {
+    milliseconds
+}
+
+note right of MonitorData
+    Values can be
+    of any type.
+end note
+
+class Axis extends MeasureData {}
+
+note left of Axis
+    Values are always
+    0D per position.
+end note
+
+class Channel extends MeasureData {}
+
+note right of Channel
+    Values can be
+    0D...2D per position.
+end note
+
+class "Point (0D)" extends Channel {}
+
+class SinglePoint extends "Point (0D)" {}
+
+class SinglePointNormalized extends SinglePoint {
+    normalized_values
+    normalizing_values
+}
+
+class Average extends "Point (0D)" {
+    raw_values
+    attempts
+}
+
+class AverageNormalized extends Average {
+    normalized_raw_values
+    normalizing_raw_values
+}
+
+class Interval extends "Point (0D)" {
+    raw_values
+    counts
+}
+
+class IntervalNormalized extends Interval {
+    normalized_raw_values
+    normalizing_raw_values
+}
+
+note as NormalizeNote
+    Normalized data store additionally both,
+    the normalized and the normalizing values.
+
+    For ""Average"" and ""Interval"", probably both are
+    vectors of the same length as the individual
+    ""raw_values"" vector per position.
+end note
+
+SinglePointNormalized .. NormalizeNote
+AverageNormalized .. NormalizeNote
+IntervalNormalized .. NormalizeNote
+
+class "Array (1D)" extends Channel {}
+
+class "Area (2D)" extends Channel {}
+@enduml
