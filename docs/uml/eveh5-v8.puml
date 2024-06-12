@@ -39,23 +39,24 @@ class snapshot << (G,orchid) >> <<optional>> {}
 
 note left of snapshot
     The ""snapshot"" group contains only datasets
-    with scalar values per individual PositionCount.
+    with scalar "values" per individual Position.
+    "Data", however, can be 0D..2D per Position.
     This means that no average or interval channels
     will appear here, but perhaps array or area channels.
 endnote
 
-snapshot *-- "<data>"
+snapshot *-- "<singlepointdata>"
 snapshot *.. "<arraydata>"
 snapshot *.. "<areadata>"
 
 class meta << (G,orchid) >> {}
 
-meta *-- PositionCountTime
+meta *-- Positions2Milliseconds
 meta *-- Scan
 meta *-- Setup
 meta *-- LogMessages
 
-class "<data>" << (D,orange) >> {
+class "<singlepointdata>" << (D,orange) >> {
     Access : string
     Name : string
     XMLID : string
@@ -64,13 +65,13 @@ class "<data>" << (D,orange) >> {
     - Unit : string
     - NormalizeId : string
     --
-    PositionCount : int32
-    Values : <i>any</i>
-    - NormalizedValues : <i>any</i>
-    - NormalizingValues : <i>any</i>
+    Positions : int32
+    Data : <i>any</i>
+    - NormalizedData : <i>any</i>
+    - NormalizingData : <i>any</i>
 }
 
-main *-- "<data>"
+main *-- "<singlepointdata>"
 main *-- "<averagedata>_sm<#>"
 main *-- "<intervaldata>_sm<#>"
 main *-- "<arraydata>"
@@ -89,13 +90,13 @@ class "<averagedata>_sm<#>" << (D,orange) >> {
     - MaxDeviation : float64
     - LowLimit : float64
     --
-    PositionCount : int32
-    Values : float64
-    RawValues : vlen_float64
+    Positions : int32
+    Data : float64
+    RawData : vlen_float64
     Preset : int32
     - Attempts : int32
-    - NormalizedValues : vlen_float64
-    - NormalizingValues : vlen_float64
+    - NormalizedData : vlen_float64
+    - NormalizingData : vlen_float64
 }
 
 class "<intervaldata>_sm<#>" << (D,orange) >> {
@@ -108,20 +109,20 @@ class "<intervaldata>_sm<#>" << (D,orange) >> {
     - NormalizeId : string
     TriggerInterval : float64
     --
-    PositionCount : int32
-    Values : float64
-    RawValues : vlen_float64
+    Positions : int32
+    Data : float64
+    RawData : vlen_float64
     Count : int32
     StandardDeviation : float64
-    - NormalizedValues : vlen_float64
-    - NormalizingValues : vlen_float64
+    - NormalizedData : vlen_float64
+    - NormalizingData : vlen_float64
 }
 
 note as sm_channel_note
     As (only) these two types of channels can change
     for individual scan modules, they are generally
     saved with the ""sm<#>"" prefix, where ""<#>"" denotes
-    the scan module ID, <i>i.e.</i> an integer value.
+    the scan module ID, <i>i.e.</i> a positive integer value.
 end note
 
 "<intervaldata>_sm<#>" .. sm_channel_note
@@ -135,8 +136,8 @@ class "<arraydata>" << (D,orange) >> {
     DetectorType : string
     Unit : string
     --
-    PositionCount : int32
-    Values : array
+    Positions : int32
+    Data : array
 }
 
 class "<areadata>" << (D,orange) >> {
@@ -147,8 +148,8 @@ class "<areadata>" << (D,orange) >> {
     DetectorType : string
     Unit : string
     --
-    PositionCount : int32
-    Values : array | string
+    Positions : int32
+    Data : array | string
 }
 
 class Setup << (D,orange) >> {
@@ -166,11 +167,11 @@ class Scan << (D,orange) >> {
     XML : string
 }
 
-class PositionCountTime << (D,orange) >> {
+class Positions2Milliseconds << (D,orange) >> {
     Unit : string
     --
-    PositionCount : int32
-    Time : int32
+    Positions : int32
+    Milliseconds : int32
 }
 
 class LogMessages << (D,orange) >> <<optional>> {
@@ -180,11 +181,11 @@ class LogMessages << (D,orange) >> <<optional>> {
 }
 
 note as SCML_note
-    XML should be a fixed_length string
-    and the dataset compressed, to save
-    (a lot of) space.
-    Tests have revealed compression by
-    about 95% for real XML data.
+    XML should be a fixed_length string and the dataset compressed,
+    to save (a lot of) space.
+    Tests have revealed compression by about 95% for real XML data.
+    Not naming the data field results in proper display of the XML
+    in HDFView, including line breaks, and regardless of compression.
 end note
 
 Scan .. SCML_note
@@ -196,8 +197,8 @@ class "<monitordata>" << (D,orange) >> {
     XMLID : string
     - Unit : string
     --
-    Time : int32
-    Values : <i>any</i>
+    Milliseconds : int32
+    Data : <i>any</i>
 }
 
 @enduml
