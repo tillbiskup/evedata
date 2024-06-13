@@ -161,6 +161,7 @@ note as sm_channel_note
     for individual scan modules, they are generally
     saved with the ""sm<#>"" prefix, where ""<#>"" denotes
     the scan module ID, <i>i.e.</i> a positive integer value.
+    The "Name" attribute should have the same suffix.
 end note
 
 "<intervaldata>_sm<#>" .. sm_channel_note

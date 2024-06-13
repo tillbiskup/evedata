@@ -113,6 +113,12 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
+    * "data", "snapshots", "monitors": lists or dicts?
+
+      Currently, the three attributes are modelled as plain lists. How about modelling them as dictionaries, with the keys being the names of the corresponding datasets?
+
+      If using dictionaries, what would be sensible names for the datasets? The content of the "Name" attribute of the corresponding HDF5 dataset? How is this currently handled for the (in)famous Pandas dataframe column names?
+
     * Comments
 
       Is there a need to distinguish between file-level comments and life comments (aka log messages)? If so, shall this be done in the ``EveFile`` class or in the ``Comment`` class (possibly by means of two subtypes of the ``Comment`` class)?
@@ -184,7 +190,13 @@ Some comments (not discussions any more, though):
 
   While for a usual HDF5 dataset, the ``DataImporter`` object contains the eveH5 filename and dataset path for accessing the data, in case of external data, it contains a list of external filenames/references.
 
+* Filled data
 
+  Only axis data can and will be filled, and they will be filled differently depending on the channel data they are plotted against.
+
+  If we allow several channels to be plotted against one axis, things will get slightly more involved, as the axis data need to be filled with respect to both channels in this case, and probably the channel data filled with NaN values as well. Alternatives would be to have the axis data filled individually for the individual channels, or to delete those points in the channel datasets where the other channel(s) don't have corresponding values (hooray, there we are again with our different fill modes...).
+
+  Filling takes place by objects located in the controllers technical layer, and the filled data will be stored in a separate attribute, retaining the original unfilled data.
 
 
 metadata module
@@ -242,6 +254,7 @@ What may be in here:
 * mapping timestamps to position counts
 * Converting MPSKIP scans into average detector channel with adaptive number of recorded points
 * Separating datasets for channels redefined within one scan and currently (up to eveH5 v7) stored in *one* HDF5 dataset
+* Sorting non-monotonic positions in eveH5 datasets
 
 
 version_mapping module
@@ -293,6 +306,14 @@ Separating datasets for redefined channels
 Given the data model to not correspond to the current eveH5 structure (v7), it makes sense to split datasets for channels redefined within one scan on this level. A more detailed discussion of how to handle these datasets can be found above in the section on the data model.
 
 
+Sorting non-monotonic positions in eveH5 datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, positions need to be sorted monotonically.
+
+Given that monitor datasets can contain several data points with identical time ``-1`` that shall not be changed in their sorting, use "stable" as "kind" parameter to choose the sorting algorithm in :func:`numpy.argsort`.
+
+
 Boundaries
 ----------
 
@@ -337,6 +358,10 @@ Some comments (not discussions any more, though):
 
   There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). This information needs to be mapped to the respective metadata classes (and those classes be extended accordingly). This mapping will take place here, as per schema of the functional and technical layers, the ``evefile`` subpackage depends on the ``scan`` subpackage.
 
+* Non-monotonic position counts in eveH5 datasets
+
+  Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, the sorting logic should be implemented in  the controller layer and called by the facade.
+
 
 eveH5 module (resource)
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -351,13 +376,6 @@ The aim of this module is to provide a Python representation (in form of a hiera
 
 
 As such, the ``HDF5Item`` class hierarchy shown above is pretty generic and should work with all eveH5 versions. However, it is *not* meant as a generic HDF5 interface, as it does make some assumptions based on the eveH5 file structure and format.
-
-
-.. admonition:: Points to discuss further (without claiming to be complete)
-
-    * Non-monotonic position counts in eveH5 datasets
-
-      Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore: Where to implement the sorting logic? Here in the IO boundary, or rather at the facade level?
 
 
 Some comments (not discussions any more, though):

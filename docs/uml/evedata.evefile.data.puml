@@ -27,7 +27,7 @@ class DataImporter {
 
 class Metadata {
 }
-note bottom: See diagram for\nmetadata module.
+note right: See diagram for\nmetadata module.
 
 Data *- DataImporter
 Data *-- Metadata
@@ -41,7 +41,15 @@ class MonitorData extends Data {
 }
 
 class AxisData extends MeasureData {
+    _filled_data
+    filled_data()
 }
+note right of AxisData
+    Data are filled depending on the
+    ChannelData they are plotted against.
+    Hence for different channels, generally
+    different filled data will exist.
+endnote
 
 class ChannelData extends MeasureData {
 }
