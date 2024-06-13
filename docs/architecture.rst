@@ -113,67 +113,41 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Monitors
-
-      It turned out that we most probably need to distinguish between datasets from the standard and snapshot sections, as datasets on the HDF5 level can have identical names in both sections (and for good reasons). Hence, the current data model has two attributes/lists: data (for datasets of the standard section) and snapshots (for datasets of the snapshot section).
-
-      How to deal with monitors? It seems more consistent and logical to separate them into their own list as well, at least on the evefile subpackage level. This would relax the discussion as of how to map monitor timestamps to position counts, as monitors would be once more marked as clearly different from motor axes/detector channels.
-
     * Comments
 
       Is there a need to distinguish between file-level comments and life comments (aka log messages)? If so, shall this be done in the ``EveFile`` class or in the ``Comment`` class (possibly by means of two subtypes of the ``Comment`` class)?
-
-    * location attribute
-
-      In the UML schema, the "location" attribute of the HDF5 root group has already been renamed into "measurement_station", as this seems to fit better. How about renaming the attribute in the eveH5 schema as well?
 
 
 data module
 ~~~~~~~~~~~
 
-Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 03/2024, eve version 2.0) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector channel saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
+Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 06/2024, eve version 2.1) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector channel saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
 
 
 .. figure:: uml/evedata.evefile.data.*
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, the child classes of MeasureData seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, some child classes seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * How to cope with normalised data?
-
-      Normalised data are currently stored as separate datasets in the eveH5 file. However, there are both, not-normalised and normalised data available. Shall these two still be separated on this level, or shall the ``ChannelData`` class be extended/subclassed to contain normalised data?
-
     * Do we need additional classes for ``DeviceData`` and ``OptionData``?
 
-      Snapshots usually do contain a lot of options that are strictly speaking no channels nor axes, although their "DeviceType" attribute is usually set to either "Channel" or "Axis". Using the SCML these options could most probably identified as options rather than actual channels/axes.
+      Snapshots usually do contain a lot of options that are strictly speaking no channels nor axes, although their "DeviceType" attribute is usually set to either "Channel" or "Axis". Using the SCML these options could most probably be identified as options rather than actual channels/axes.
 
       Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
 
       When timestamps of monitor data should be mapped to position counts, while retaining the original monitor data, this most probably means to create new instances of (subclasses of) ``MeasureData``. As monitors usually are either options or devices, this would be the case for the two additional classes.
 
-    * Can MonitorData have more than one value per time?
-
-      This would be similar to AverageChannel and IntervalChannel, thus requiring an additional attribute (and probably a ragged array).
-
-      Most probably, MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_. A special case are monitor data occurring before starting the actual scan, as these all get the special timestamp ``-1``, see `#7688, note-10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_
-
-    * Values of MonitorData
-
-      MonitorData can have textual (non-numeric) values. This should not be too much of a problem given that numpy can handle string arrays (though <v2.0 only fixed-size string values, AFAIK, with v2.0 not yet released, as of 2024-04-04).
-
-    * raw (*i.e.* individual) values of AverageChannelData and IntervalChannelData
-
-      Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this. Given that the overarching idea of the evefile subpackage is to *faithfully* represent the eveH5 file contents, it seems not sensible to map the "fake" average detector channel saving each individual value using MPSKIP to this detector channel type, though. This should probably rather be done in the mapping later on and towards the dataset subpackage.
-
     * Detector channels that are redefined within an experiment/scan
 
-      Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently, all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. How to handle this situation in the future, or more important: how to deal with this in the data model described here? Currently, there seems to be no unique identifier for a detector channel beyond the XML-ID/PV. The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector channel. For a discussion, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_.
+      Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently (eveH5 v7), all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. Currently, there seems to be no unique identifier for a detector channel beyond the XML-ID/PV.
 
-      Generally, what seems necessary is to have separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector channel and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector channel change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
+      The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector channel. For a discussion, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_. Generally, what seems necessary is to have separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector channel and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector channel change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
+
+      The current state of affairs (as of 06/2024) regarding a new eveH5 scheme (v8) is to separate single-point channels from average and interval channels and have average and interval channel datasets *per se* be suffixed by the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique.
 
       While the future way of storing those detector channels in eveH5 files is discussed in `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_, we need a solution for **legacy data** solving two problems:
 
@@ -181,17 +155,36 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
          This is rather complicated, but probably possible by looking at the different HDF5 datasets where present -- although this would require reading the *data* of the HDF5 datasets if corresponding datasets are available in the "averagemeta" or/and "standarddev" group to check for changes in these data.
 
+        Separating the data is but only necessary if correspnding datasets are available in the "averagemeta" or/and "standarddev" groups. *I.e.*, loading the data needs only to happen once this condition is met. However, as soon as this condition is met, data for legacy files need to be loaded to separate the data into separate datasets and not to have the surprise afterwards when first accessing the presumably single detector channel to all of a sudden have it split into several datasets.
+
       #. sensibly naming the resulting multiple datasets.
 
-      For the latter, the easiest solution would be to suffix an incrementing integer number for each individual detector channel. However: suffix *all* channel datasets if the channel got redefined, or only starting with the second?
+         Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
 
-    * References to external data/files
 
-      There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. Currently, the file name (including the full path, starting with which version of the eveH5 schema?) is stored as value in the dataset in these cases. For a discussion, see `#7732 <https://redmine.ahf.ptb.de/issues/7732>`_.
+Some comments (not discussions any more, though):
 
-      Generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayChannelData``, with the ``_data`` attribute being a 2D numpy array. In case of storing images (2D data per position count), these data are modelled as ``AreaChannelData``, with the ``_data`` attribute being either a list of 2D/3D numpy arrays (containing the image data for one or different channels), a numpy array of arrays, or a 3D/4D array.
+* MonitorData with more than one value per time
 
-      While for a usual HDF5 dataset, the ``DataImporter`` object contains the eveH5 filename and dataset path for accessing the data, in case of external data, it contains a list of external filenames/references.
+  MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_. However, this should be regarded as a bug (and if actually occuring in an eveH5 file, treated in some deterministic way). A special case are monitor data occurring before starting the actual scan, as these all get the special timestamp ``-1``, see `#7688, note-10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_
+
+* Values of MonitorData
+
+  MonitorData can have textual (non-numeric) values. This should not be too much of a problem given that numpy can handle string arrays (though <v2.0 only fixed-size string values, AFAIK, with v2.0 not yet released, as of 2024-04-04).
+
+* raw (*i.e.* individual) values of AverageChannelData and IntervalChannelData
+
+  Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this. Given that the overarching idea of the evefile subpackage is to *faithfully* represent the eveH5 file contents, it seems not sensible to map the "fake" average detector channel saving each individual value using MPSKIP to this detector channel type, though. This should probably rather be done in the mapping later on and towards the dataset subpackage.
+
+* References to external data/files
+
+  There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. Currently, the file name (including the full path, starting with which version of the eveH5 schema?) is stored as value in the dataset in these cases. For a discussion, see `#7732 <https://redmine.ahf.ptb.de/issues/7732>`_.
+
+  Generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayChannelData``, with the ``_data`` attribute being a 2D numpy array. In case of storing images (2D data per position count), these data are modelled as ``AreaChannelData``, with the ``_data`` attribute being either a list of 2D/3D numpy arrays (containing the image data for one or different channels), a numpy array of arrays, or a 3D/4D array.
+
+  While for a usual HDF5 dataset, the ``DataImporter`` object contains the eveH5 filename and dataset path for accessing the data, in case of external data, it contains a list of external filenames/references.
+
+
 
 
 metadata module
@@ -202,7 +195,7 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
 
 .. note::
 
-    As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. Furthermore, there seems to be some (immutable) information currently stored in a dataset in HDF5 that could be stored as attribute - if it is truly not changing. Note, however, that detector channels can be redefined during a scan, but all values are stored in the identical dataset. Latest with average and interval detector channel, this leads already to problems in current eveH5 files, as information what kind of detector channel it was when is probably lost. Hence, this situation needs to be solved more fundamentally, probably.
+    As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. The main reason for this is the problem in current (as of eveH5 v7) files and redefined detector channels, leading to a loss of information that needs to be changed anyway and is discussed above for the data module. With separate datasets for different detector channels, the problem is solved and the immutable metadata belong to the metadata classes (and are converted to attributes on the HDF5 level in the future scheme, v8).
 
 
 .. figure:: uml/evedata.evefile.metadata.*
@@ -222,25 +215,15 @@ A note on the ``DeviceMetadata`` interface class: The eveH5 dataset correspondin
 As obvious from the UML diagram, the last option has been chosen. The name "DeviceMetadata" resembles the hierarchy in the ``scml.setup`` module and clearly distinguishes actual devices from datasets not containing data read from some instrument.
 
 
-.. admonition:: Points to discuss further (without claiming to be complete)
+Some comments (not discussions any more, though):
 
-    * Attributes "pv" and "transport_type"
+* Attributes "pv" and "access_mode"
 
-      "pv" is the EPICS process variable, transport type refers to the access mode (local vs. ca). Both are currently stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<transport_type>:<pv>``. Is there any good reason why these two values should be stored together in one attribute? If not, it may be sensible to change the eveH5 schema in the future for consistency. Reasons for separating both values come from the SCML schema.
+  "pv" is the EPICS process variable, "access_mode" refers to the access mode (local vs. ca, in the future additionally pva). Both are currently (as of eveH5 v7) stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<access_mode>:<pv>``. In the new eveH5 schema (v8), these attributes will be split into two attributes with the corresponding names.
 
-      Is there any real chance of having the identical PV with different transport types? If not, we could skip the "transport_type" attribute here, as this information is obtained from the SCML file anyway. The PV serves as unique identifier to map the information contained in the SCML to the datasets read from the eveH5 file.
+* Attributes for ``AverageChannelMetadata`` and ``IntervalChannelMetadata``
 
-    * Monitor metadata
-
-      Clearly, monitor metadata are not sufficiently modelled yet. In recent eveH5 files, they have only few attributes. Are there other attributes (comparable to the attributes of ``MeasureMetadata``) contained in the SCML file and could be read from there?
-
-      On a more fundamental level: What kind of data are the monitor data contained in the "device" group of an eveH5 file? Only options of detectors/channels and motors/axes? Or devices as well? Or even axes positions or channel values?
-
-      Is there any sensible chance to relate monitor datasets to datasets in the standard section? Currently, it looks like the eveH5 monitor datasets have no sensible/helpful "name" attribute, only an ID that partly resembles IDs in the standard section. (And of course, there are usually monitors that do not appear in any other section, hence cannot be related to other devices/datasets.)
-
-    * Attributes for ``AverageChannelMetadata`` and ``IntervalChannelMetadata``
-
-      The current model in the UML schemas of data and metadata assumes different data(sets) in case a detector channel gets redefined within a scan, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_ and the discussion above. This should be verified and specified.
+  The current model in the UML schemas of data and metadata assumes different data(sets) in case a detector channel gets redefined within a scan, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_ and the discussion above. This should be verified and specified.
 
 
 Controllers

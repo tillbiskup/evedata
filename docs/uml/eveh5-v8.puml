@@ -13,7 +13,7 @@ endlegend
 class Root << (G,orchid) >> {
     EVEH5Version : string
     EVEVersion : string
-    Location : string
+    MeasurementStation : string
     Start : string
     End : string
     Comment : string
@@ -57,7 +57,8 @@ meta *-- Setup
 meta *-- LogMessages
 
 class "<singlepointdata>" << (D,orange) >> {
-    Access : string
+    PV : string
+    AccessMode : string
     Name : string
     XMLID : string
     DeviceType : string
@@ -78,7 +79,8 @@ main *-- "<arraydata>"
 main *-- "<areadata>"
 
 class "<averagedata>_sm<#>" << (D,orange) >> {
-    Access : string
+    PV : string
+    AccessMode : string
     Name : string
     XMLID : string
     DeviceType : string
@@ -100,7 +102,8 @@ class "<averagedata>_sm<#>" << (D,orange) >> {
 }
 
 class "<intervaldata>_sm<#>" << (D,orange) >> {
-    Access : string
+    PV : string
+    AccessMode : string
     Name : string
     XMLID : string
     DeviceType : string
@@ -129,7 +132,8 @@ end note
 "<averagedata>_sm<#>" .. sm_channel_note
 
 class "<arraydata>" << (D,orange) >> {
-    Access : string
+    PV : string
+    AccessMode : string
     Name : string
     XMLID : string
     DeviceType : string
@@ -141,7 +145,8 @@ class "<arraydata>" << (D,orange) >> {
 }
 
 class "<areadata>" << (D,orange) >> {
-    Access : string
+    PV : string
+    AccessMode : string
     Name : string
     XMLID : string
     DeviceType : string
@@ -192,9 +197,11 @@ Scan .. SCML_note
 Setup .. SCML_note
 
 class "<monitordata>" << (D,orange) >> {
-    Access : string
+    PV : string
+    AccessMode : string
     Name : string
     XMLID : string
+    DeviceType : string
     - Unit : string
     --
     Milliseconds : int32

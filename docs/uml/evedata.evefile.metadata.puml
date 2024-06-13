@@ -11,7 +11,7 @@ note bottom: See diagram for\ndata module.
 interface DeviceMetadata {
     id : string
     pv : string
-    transport_type : string
+    access_mode : string
 }
 
 class MeasureMetadata extends Metadata {
