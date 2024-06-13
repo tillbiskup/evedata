@@ -28,6 +28,41 @@ Root *-- main
 Root *-- snapshot
 Root *-- meta
 
+enum DeviceType {
+    SinglePointChannel
+    AverageChannel
+    IntervalChannel
+    ArrayChannel
+    AreaChannel
+    Axis
+    Device
+    Option
+}
+note right of DeviceType
+    This enum class may not be present
+    in the actual HDF5 file, but it contains
+    the controlled vocabulary for the
+    DeviceType attribute of the datasets.
+
+    This string gets used to map the datasets
+    to the corresponding classes, and it
+    corresponds to the overall data model.
+endnote
+
+enum DetectorType {
+}
+note left of DetectorType
+    This enum class may not be present
+    in the actual HDF5 file, but it contains
+    the controlled vocabulary for the
+    DetectorType attribute of the datasets.
+
+    Valid entries need to be decided upon,
+    but ideally they allow for sensible
+    handling of the data in downstream
+    packages.
+endnote
+
 class monitor << (G,orchid) >> <<optional>> {
 }
 
@@ -152,10 +187,19 @@ class "<areadata>" << (D,orange) >> {
     DeviceType : string
     DetectorType : string
     Unit : string
+    - FileType : string
     --
     Positions : int32
     Data : array | string
 }
+
+note bottom of "<areadata>"
+    The "FileType" attribute will contain the relevant
+    information on the file type of external files, in case
+    the actual data are stored external to the HDF5 file.
+    The string needs to be a controlled vocabulary understood
+    by the importing routines and is set in the defining XML.
+endnote
 
 class Setup << (D,orange) >> {
     Version : string
