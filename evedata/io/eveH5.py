@@ -19,6 +19,11 @@ Furthermore, each object contains a reference to both, the original HDF5
 file and the HDF5 item, thus making reading dataset data (and attributes) on
 demand as simple as possible.
 
+Another reason for having a separate module rather than directly using the 
+h5py package in different modules: modularity. If the IO framework (h5py for 
+the time being) is to be replaced at some point, there will be only this one 
+place.
+
 
 Overview
 ========
