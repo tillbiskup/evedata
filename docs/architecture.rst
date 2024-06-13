@@ -226,6 +226,11 @@ Some comments (not discussions any more, though):
   The current model in the UML schemas of data and metadata assumes different data(sets) in case a detector channel gets redefined within a scan, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_ and the discussion above. This should be verified and specified.
 
 
+.. todo::
+
+    Extend Metadata classes to contain all relevant attributes from the SCML/setup description. This should already include metadata regarding the actual devices used not yet available from the SCML/XML but relevant for a true traceability of changes in the setup.
+
+
 Controllers
 -----------
 
@@ -235,7 +240,8 @@ What may be in here:
 
 * mapping different versions of eveH5 files to the entities
 * mapping timestamps to position counts
-* Converting MPSKIP scans into average detector channel with adaptive number of recorded points (?)
+* Converting MPSKIP scans into average detector channel with adaptive number of recorded points
+* Separating datasets for channels redefined within one scan and currently (up to eveH5 v7) stored in *one* HDF5 dataset
 
 
 version_mapping module
@@ -275,6 +281,18 @@ Special cases that need to be addressed either here or during import of the data
 Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new ``MeasureData`` object. Most probably, this is the case for additional ``OptionData`` and ``DeviceData`` classes as subclasses of ``MeasureData``. The next question: Where to place these new objects in the ``File`` class of the evefile.entities.file module? Alternatively: Would this be something outside the evefile subpackage, probably within the dataset subpackage?
 
 
+Converting MPSKIP scans into average detector channel
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Given the data model to not correspond to the current eveH5 structure (v7), it makes sense to convert scans using MPSKIP to "fake" average detector channels storing the individual data points on this level.
+
+
+Separating datasets for redefined channels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Given the data model to not correspond to the current eveH5 structure (v7), it makes sense to split datasets for channels redefined within one scan on this level. A more detailed discussion of how to handle these datasets can be found above in the section on the data model.
+
+
 Boundaries
 ----------
 
@@ -298,25 +316,11 @@ resources:
   * One potential candidate for an exchange format would be the NeXus format. However, there is not one NeXus file format, but there are several schemas for different types of experiments. For details, see the `NeXus application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. Hence, those exporters may better be located in the ``radiometry`` package.
 
 
-.. admonition:: Points to discuss further (without claiming to be complete)
-
-    * How to deal with reading the entire content of an eveH5 file at once vs. deferred reading?
-
-      * Reading relevant metadata (*e.g.*, to decide about what data to plot) should be rather fast. And generally, only two "columns" will be displayed (as f(x,y) plot) at any given time -- at least if we don't radically change the way data are looked at compared to the IDL Cruncher.
-      * If references to the internal datasets of a given HDF5 file are stored in the corresponding Python data structures (together with the HDF5 file name), one could even close the HDF5 file after each operation, such as not to have open file handles that may be problematic (but see the quote from A. Collette below).
-      * However, plotting requires data to be properly filled, and this may require reading all data. See the discussion on fill modes above.
-
-
-    From the book "Python and HDF5" by Andrew Collette:
-
-        You might wonder what happens if your program crashes with open files. If the program exits with a Python exception, don't worry! The HDF library will automatically close every open file for you when the application exits.
-
-        -- Andrew Collette, 2014 (p. 18)
-
-
 evefile module (facade)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
+
+.. _fig-uml_evefile_boundaries_evefile:
 
 .. figure:: uml/evedata.evefile.boundaries.evefile.*
     :align: center
@@ -324,19 +328,14 @@ evefile module (facade)
     Class hierarchy of the evefile.boundaries.evefile module, providing the facade for an eveH5 file. Currently, the basic idea is to inherit from the ``File`` entity and extend it accordingly, adding behaviour.
 
 
+As per :numref:`Fig. %s <fig-uml_evefile_boundaries_evefile>`, the ``EveFile`` class inherits from the ``File`` class of the entities subpackage. Reading (loading) an eveH5 file will result in calling out to :meth:`eveH5.HDF5File.read`, followed by mapping the eveH5 contents to the data model. Additionally, for eveH5 v7 and below, datasets for detector channels that have been redefined within one scan and scans using MPSKIP are mapped to the respective datasets accordingly. Last but not least, the corresponding SCML (and setup description, where applicable) are loaded and the metadata contained therein mapped to the metadata of the corresponding datasets.
 
-.. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Metadata from SCML file
+Some comments (not discussions any more, though):
 
-      There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). How to map this to the respective metadata classes? Shall this be done here, or rather in the dataset subpackage? An argument in favour of the latter would be to keep up with the distinction HDF5/SCML.
+* Metadata from SCML file
 
-    * Information on the individual devices
-
-      Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup.
-
-      Looks like as of now there is no such information stored anywhere. It might be rather straight-forward to expand the SCML schema for this purpose, not affecting the GUI or engine (both do not care about this information).
-
+  There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). This information needs to be mapped to the respective metadata classes (and those classes be extended accordingly). This mapping will take place here, as per schema of the functional and technical layers, the ``evefile`` subpackage depends on the ``scan`` subpackage.
 
 
 eveH5 module (resource)
@@ -359,6 +358,23 @@ As such, the ``HDF5Item`` class hierarchy shown above is pretty generic and shou
     * Non-monotonic position counts in eveH5 datasets
 
       Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore: Where to implement the sorting logic? Here in the IO boundary, or rather at the facade level?
+
+
+Some comments (not discussions any more, though):
+
+* Reading the entire content of an eveH5 file at once vs. deferred reading?
+
+  * Reading relevant metadata (*e.g.*, to decide about what data to plot) should be rather fast. And generally, only two "columns" will be displayed (as f(x,y) plot) at any given time -- at least if we don't radically change the way data are looked at compared to the IDL Cruncher.
+  * References to the internal datasets of a given HDF5 file are stored in the corresponding Python data structures (together with the HDF5 file name). Hence, HDF5 files are closed after each operation, such as not to have open file handles that may be problematic (but see the quote from A. Collette below).
+  * Plotting requires data to be properly filled, although filling will most probably not take place globally once, but on a per plot base. See the discussion on fill modes, currently below in the Dataset subpackage section.
+
+
+  From the book "Python and HDF5" by Andrew Collette:
+
+    You might wonder what happens if your program crashes with open files. If the program exits with a Python exception, don't worry! The HDF library will automatically close every open file for you when the application exits.
+
+    -- Andrew Collette, 2014 (p. 18)
+
 
 
 Dataset
@@ -726,6 +742,12 @@ setup module
     * Better name for "Device"?
 
       All three, Detector, Motor and Device (as well as Axis and Channel, and Option), are abstract devices.
+
+    * Information on the individual devices
+
+      Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup.
+
+      Looks like as of now there is no such information stored anywhere. It might be rather straight-forward to expand the SCML schema for this purpose, not affecting the GUI or engine (both do not care about this information).
 
 
 Controllers
