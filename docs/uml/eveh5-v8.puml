@@ -16,7 +16,7 @@ class Root << (G,orchid) >> {
     MeasurementStation : string
     Start : string
     End : string
-    Comment : string
+    Description : string
     Simulation : string
     - PreferredAxis : string
     - PreferredChannel : string
