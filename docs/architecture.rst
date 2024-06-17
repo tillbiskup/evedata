@@ -119,10 +119,6 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 
       If using dictionaries, what would be sensible names for the datasets? The content of the "Name" attribute of the corresponding HDF5 dataset? How is this currently handled for the (in)famous Pandas dataframe column names?
 
-    * Comments
-
-      Is there a need to distinguish between file-level comments and life comments (aka log messages)? If so, shall this be done in the ``EveFile`` class or in the ``Comment`` class (possibly by means of two subtypes of the ``Comment`` class)?
-
 
 data module
 ~~~~~~~~~~~
@@ -146,26 +142,6 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
       Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
 
       When timestamps of monitor data should be mapped to position counts, while retaining the original monitor data, this most probably means to create new instances of (subclasses of) ``MeasureData``. As monitors usually are either options or devices, this would be the case for the two additional classes.
-
-    * Detector channels that are redefined within an experiment/scan
-
-      Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently (eveH5 v7), all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. Currently, there seems to be no unique identifier for a detector channel beyond the XML-ID/PV.
-
-      The simplest way would be to attach the scan module ID to the name of the HDF5 dataset for the detector channel. For a discussion, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_. Generally, what seems necessary is to have separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_. As a detector channel cannot change its attributes within one scan module, we could have one dataset per detector channel and scan module, regardless of how often a scan module has been run within an overall measurement (inner scans). If the attributes (or even the type) of a detector channel change within a measurement, I would assume this to be a relevant information for handling the data appropriately.
-
-      The current state of affairs (as of 06/2024) regarding a new eveH5 scheme (v8) is to separate single-point channels from average and interval channels and have average and interval channel datasets *per se* be suffixed by the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique.
-
-      While the future way of storing those detector channels in eveH5 files is discussed in `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_, we need a solution for **legacy data** solving two problems:
-
-      1. separating the values for the different channels into separate datasets
-
-         This is rather complicated, but probably possible by looking at the different HDF5 datasets where present -- although this would require reading the *data* of the HDF5 datasets if corresponding datasets are available in the "averagemeta" or/and "standarddev" group to check for changes in these data.
-
-        Separating the data is but only necessary if correspnding datasets are available in the "averagemeta" or/and "standarddev" groups. *I.e.*, loading the data needs only to happen once this condition is met. However, as soon as this condition is met, data for legacy files need to be loaded to separate the data into separate datasets and not to have the surprise afterwards when first accessing the presumably single detector channel to all of a sudden have it split into several datasets.
-
-      2. sensibly naming the resulting multiple datasets.
-
-         Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
 
 
 Some comments (not discussions any more, though):
@@ -197,6 +173,24 @@ Some comments (not discussions any more, though):
   If we allow several channels to be plotted against one axis, things will get slightly more involved, as the axis data need to be filled with respect to both channels in this case, and probably the channel data filled with NaN values as well. Alternatives would be to have the axis data filled individually for the individual channels, or to delete those points in the channel datasets where the other channel(s) don't have corresponding values (hooray, there we are again with our different fill modes...).
 
   Filling takes place by objects located in the controllers technical layer, and the filled data will be stored in a separate attribute, retaining the original unfilled data.
+
+* Detector channels that are redefined within an experiment/scan
+
+  Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently (eveH5 v7), all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes.Generally, we need separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_.
+
+  The current state of affairs (as of 06/2024) regarding a new eveH5 scheme (v8) is to separate single-point channels from average and interval channels and have average and interval channel datasets *per se* be suffixed by the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique.
+
+  While the future way of storing those detector channels in eveH5 files is discussed in `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_, we need a solution for **legacy data** solving two problems:
+
+  1. separating the values for the different channels into separate datasets
+
+     This is rather complicated, but probably possible by looking at the different HDF5 datasets where present -- although this would require reading the *data* of the HDF5 datasets if corresponding datasets are available in the "averagemeta" or/and "standarddev" group to check for changes in these data.
+
+    Separating the data is but only necessary if correspnding datasets are available in the "averagemeta" or/and "standarddev" groups. *I.e.*, loading the data needs only to happen once this condition is met. However, as soon as this condition is met, data for legacy files need to be loaded to separate the data into separate datasets and not to have the surprise afterwards when first accessing the presumably single detector channel to all of a sudden have it split into several datasets.
+
+  2. sensibly naming the resulting multiple datasets.
+
+     Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
 
 
 metadata module
