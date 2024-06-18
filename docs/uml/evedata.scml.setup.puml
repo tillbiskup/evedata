@@ -2,6 +2,7 @@
 'https://plantuml.com/class-diagram
 
 class Setup {
+    measurement_station : string
     detectors : Detector[]
     motors : Motor[]
     devices : Device[]

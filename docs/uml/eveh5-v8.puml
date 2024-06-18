@@ -17,6 +17,7 @@ class Root << (G,orchid) >> {
     Start : string
     End : string
     Description : string
+    Comment : string
     Simulation : string
     - PreferredAxis : string
     - PreferredChannel : string

@@ -3,6 +3,7 @@
 
 class Scan {
     repeatcount : integer
+    description : string
     comment : string
     savefilename : string
     confirmsave : boolean

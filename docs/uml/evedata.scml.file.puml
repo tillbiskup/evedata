@@ -1,7 +1,6 @@
 @startuml
 
 class File {
-    location : string
     version : string
     scan : Scan
     setup : Setup
