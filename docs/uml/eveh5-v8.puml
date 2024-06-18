@@ -18,11 +18,12 @@ class Root << (G,orchid) >> {
     End : string
     Description : string
     Comment : string
-    Simulation : string
+    Simulation : int | "boolean" enum
     - PreferredAxis : string
     - PreferredChannel : string
     - PreferredNormalizationChannel : string
 }
+
 
 Root *-- monitor
 Root *-- main
@@ -82,8 +83,8 @@ note left of snapshot
 endnote
 
 snapshot *-- "<singlepointdata>"
-snapshot *.. "<arraydata>"
-snapshot *.. "<areadata>"
+snapshot *.. "<arraydata>_sm<#>"
+snapshot *.. "<areadata>_sm<#>"
 
 class meta << (G,orchid) >> {}
 
@@ -100,7 +101,7 @@ class "<singlepointdata>" << (D,orange) >> {
     DeviceType : string
     - DetectorType : string
     - Unit : string
-    - NormalizeId : string
+    - NormalizeID : string
     --
     Positions : int32
     Data : <i>any</i>
@@ -111,8 +112,8 @@ class "<singlepointdata>" << (D,orange) >> {
 main *-- "<singlepointdata>"
 main *-- "<averagedata>_sm<#>"
 main *-- "<intervaldata>_sm<#>"
-main *-- "<arraydata>"
-main *-- "<areadata>"
+main *-- "<arraydata>_sm<#>"
+main *-- "<areadata>_sm<#>"
 
 class "<averagedata>_sm<#>" << (D,orange) >> {
     PV : string
@@ -123,7 +124,7 @@ class "<averagedata>_sm<#>" << (D,orange) >> {
     DetectorType : string
     Unit : string
     Averages : int32
-    - NormalizeId : string
+    - NormalizeID : string
     - MaxAttempts : int32
     - MaxDeviation : float64
     - LowLimit : float64
@@ -145,7 +146,7 @@ class "<intervaldata>_sm<#>" << (D,orange) >> {
     DeviceType : string
     DetectorType : string
     Unit : string
-    - NormalizeId : string
+    - NormalizeID : string
     TriggerInterval : float64
     --
     Positions : int32
@@ -168,7 +169,7 @@ end note
 "<intervaldata>_sm<#>" .. sm_channel_note
 "<averagedata>_sm<#>" .. sm_channel_note
 
-class "<arraydata>" << (D,orange) >> {
+class "<arraydata>_sm<#>" << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -181,7 +182,7 @@ class "<arraydata>" << (D,orange) >> {
     Data : array
 }
 
-class "<areadata>" << (D,orange) >> {
+class "<areadata>_sm<#>" << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -195,7 +196,7 @@ class "<areadata>" << (D,orange) >> {
     Data : array | string
 }
 
-note bottom of "<areadata>"
+note bottom of "<areadata>_sm<#>"
     The "FileType" attribute will contain the relevant
     information on the file type of external files, in case
     the actual data are stored external to the HDF5 file.
