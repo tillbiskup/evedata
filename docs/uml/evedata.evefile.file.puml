@@ -2,21 +2,12 @@
 
 class File {
     metadata : Metadata
-    comments : Comment[]
+    log_messages : LogMessage[]
     scan : Scan
     data : Data[]
     snapshots : Data[]
     monitors : Data[]
 }
-note left of File::snapshots
-    Snapshot datasets can have
-    identical names/IDs to datasets
-    in the standard section.
-    This makes a separate list
-    probably unavoidable.
-
-    How to deal with monitors?
-end note
 
 File *-- "n" Data
 note bottom: See diagram for\ndata module.
@@ -36,23 +27,18 @@ class Metadata{
     preferred_normalisation_channel : string
 }
 
-class Comment {
+class LogMessage {
     timestamp : datetime
     comment : string
 }
-note bottom of Comment
-    Comments are both, file comment
-    and log messages. Discriminating
-    could be done in the File class.
-end note
 
 class Scan extends scan.boundaries.Scan {
     author : string
 }
-note right: See diagrams for\nscan subpackage.
+note left: See diagrams for\nscan subpackage.
 
 File *-- Metadata
-File "1" *-- "n" Comment
+File "1" *-- "n" LogMessage
 File *-- Scan
 
 @enduml
