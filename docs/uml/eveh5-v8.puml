@@ -159,10 +159,10 @@ class "<intervaldata>_sm<#>" << (D,orange) >> {
 }
 
 note as sm_channel_note
-    As (only) these two types of channels can change
-    for individual scan modules, they are generally
-    saved with the ""sm<#>"" prefix, where ""<#>"" denotes
-    the scan module ID, <i>i.e.</i> a positive integer value.
+    All types of channels whose attributes can change
+    for individual scan modules, are saved with the
+    ""sm<#>"" prefix, where ""<#>"" denotes the scan module ID,
+    <i>i.e.</i> a positive integer value.
     The "Name" attribute should have the same suffix.
 end note
 
@@ -229,6 +229,8 @@ class Positions2Milliseconds << (D,orange) >> {
 class LogMessages << (D,orange) >> <<optional>> {
     --
     Timestamp : string
+    Source : string
+    Severity : string
     Message : vlen_string
 }
 

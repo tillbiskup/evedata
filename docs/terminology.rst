@@ -124,6 +124,9 @@ IOC
 
     For details see, *e.g.* https://docs.epics-controls.org/projects/how-tos/en/latest/getting-started/creating-ioc.html
 
+MCA
+    multichannel analyzer
+
 monitor (section)
     Section of the measurement data for everything that is not changed or read during a scan, but still of interest.
 
