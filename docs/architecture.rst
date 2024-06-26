@@ -137,8 +137,6 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
     * Do we need additional classes for ``DeviceData`` and ``OptionData``?
 
-      Snapshots usually do contain a lot of options that are strictly speaking no channels nor axes, although their "DeviceType" attribute is usually set to either "Channel" or "Axis". Using the SCML these options could most probably be identified as options rather than actual channels/axes.
-
       Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
 
       When timestamps of monitor data should be mapped to position counts, while retaining the original monitor data, this most probably means to create new instances of (subclasses of) ``MeasureData``. As monitors usually are either options or devices, this would be the case for the two additional classes.

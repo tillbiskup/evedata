@@ -1,0 +1,30 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class MeasureData {
+    positions
+    values
+}
+
+class Axis extends MeasureData {}
+
+class Channel extends MeasureData {}
+
+class "Point (0D)" extends Channel {}
+
+class SinglePoint extends "Point (0D)" {}
+
+class Average extends "Point (0D)" {
+    raw_values
+    attempts
+}
+
+class Interval extends "Point (0D)" {
+    raw_values
+    counts
+}
+
+class "Array (1D)" #FFCCCC extends Channel {}
+
+class "Area (2D)" #FFCCCC extends Channel {}
+@enduml
