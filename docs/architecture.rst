@@ -399,6 +399,11 @@ Measurement
     In any case, as the facade(s) provide probably the main entry point to the entire evedata package, importing the corresponding modules into the global ``evedata`` namespace may be a sensible idea. This would reduce *e.g.* ``evedata.measurement.boundaries.measurement.Measurement`` to ``evedata.measurement.Measurement`` or even ``evedata.Measurement``.
 
 
+.. important::
+
+    Currently, this part is not well modelled and has just been renamed from "dataset" to "measurement". Furthermore, the ideas only start to converge, with a dataset representing the high(er)-level view of what has actually happened during a measurement, with devices rather than HDF5 datasets, *i.e.* all those abstractions that really help with viewing and analysing data.
+
+
 The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the measurement subpackage are shown below, reflecting the current state of affairs (and thinking).
 
 Generally, the measurement subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
