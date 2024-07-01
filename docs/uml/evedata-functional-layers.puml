@@ -55,21 +55,21 @@ package evedata {
         evedata.evefile.controllers --> evedata.evefile.entities
     }
 
-    package evedata.dataset {
-        package evedata.dataset.boundaries {
-            package dataset {}
+    package evedata.measurement {
+        package evedata.measurement.boundaries {
+            package measurement {}
         }
-        package evedata.dataset.controllers {
+        package evedata.measurement.controllers {
             package transforming {}
             package filling {}
         }
-        package evedata.dataset.entities {
+        package evedata.measurement.entities {
             package data {}
             package metadata {}
         }
 
-        evedata.dataset.boundaries --> evedata.dataset.controllers
-        evedata.dataset.controllers --> evedata.dataset.entities
+        evedata.measurement.boundaries --> evedata.measurement.controllers
+        evedata.measurement.controllers --> evedata.measurement.entities
     }
 }
 

@@ -25,10 +25,10 @@ An alternative view that may be more helpful in the long run, leading to a bette
     A two-dimensional view of the architecture, with technical and functional layers. The primary line of organisation in the code, according to different authors, should be the functional layers or packages, and each of the functional blocks should be organised into three technical layers: boundaries, controllers, entities. The idea and name of these three technical layers goes back to Ivar Jacobson (1992). The boundaries (sometimes called interfaces) contain two different kinds of elements: facades and resources. While resources are typically concerned with the persistence layer and similar things, facades are the user-facing elements providing access to the underlying entities and controllers.
 
 
-There are three functional layers with dependencies in one direction: dataset, evefile, and scan. Each of the functional layers is divided into three technical layers, *i.e.* boundaries ("interfaces"), controllers, and entities (BCE). The boundaries layer contains both, the "interfaces" ("adapters") pointing to the user (facades) and those pointing to the underlying infrastructure (resources). Here, "user" can be either actual human users or other functional layers. This means that high-level functional layers shall not directly depend on elements of the lower technical layers of lower-level functional layers, but use the respective facades of the lower-level functional layers. As an example for the ``evedata`` package: the dataset functional layer uses the evefile and scan facades of the evefile and scan functional layers.
+There are three functional layers with dependencies in one direction: measurement, evefile, and scan. Each of the functional layers is divided into three technical layers, *i.e.* boundaries ("interfaces"), controllers, and entities (BCE). The boundaries layer contains both, the "interfaces" ("adapters") pointing to the user (facades) and those pointing to the underlying infrastructure (resources). Here, "user" can be either actual human users or other functional layers. This means that high-level functional layers shall not directly depend on elements of the lower technical layers of lower-level functional layers, but use the respective facades of the lower-level functional layers. As an example for the ``evedata`` package: the measurement functional layer uses the evefile and scan facades of the evefile and scan functional layers.
 
 
-A corresponding UML package diagram for :numref:`Fig. %s <fig-architecture_layers_technical_functional>` is shown in the figure below. Here, only the dependencies *within* the individual functional layers are shown, not the dependencies *between* the functional layers. The latter proceed from left to right: dataset > evefile > scan.
+A corresponding UML package diagram for :numref:`Fig. %s <fig-architecture_layers_technical_functional>` is shown in the figure below. Here, only the dependencies *within* the individual functional layers are shown, not the dependencies *between* the functional layers. The latter proceed from left to right: measurement > evefile > scan.
 
 .. _fig-uml_evedata:
 
@@ -38,7 +38,7 @@ A corresponding UML package diagram for :numref:`Fig. %s <fig-architecture_layer
     An UML package diagram of the evedata package following the organisation in functional layers that each contain three technical layers, as shown in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`. To hide the names of the technical layers from the user, one could think of importing the relevant classes (basically the facades) in the ``__init__.py`` files of the respective top-level functional packages.
 
 
-For each of the functional layers, the corresponding technical layers are described below. Deviating from the direction of dependencies as shown in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`, we start with the evefile functional layer, and for each of the layers we start with the entities and proceed via the controllers to the boundaries. From a user perspective interested in measured data, the journey starts with the data file (eveH5), represented on a low level by the evefile functional layer and on a high level as user interface by the dataset functional layer. The measurement functional layer representing the information originally contained in the SCML file, while technically at the bottom of the dependencies chain, is the least interesting from a user's perspective primarily interested in the data, and is probably the layer fully implemented last.
+For each of the functional layers, the corresponding technical layers are described below. Deviating from the direction of dependencies as shown in :numref:`Fig. %s <fig-architecture_layers_technical_functional>`, we start with the evefile functional layer, and for each of the layers we start with the entities and proceed via the controllers to the boundaries. From a user perspective interested in measured data, the journey starts with the data file (eveH5), represented on a low level by the evefile functional layer and on a high level as user interface by the measurement functional layer. The scan functional layer representing the information originally contained in the SCML file, while technically at the bottom of the dependencies chain, is the least interesting from a user's perspective primarily interested in the data, and is probably the layer fully implemented last.
 
 
 .. admonition:: General remarks on the UML class diagrams
@@ -88,11 +88,6 @@ Furthermore, the evefile functional layer provides a stable abstraction of the c
     As the evefile functional layer is *not* meant as a (human-facing) user interface, it is *not* concerned with concepts such as fill modes, but represents the data "as is". This means that the different data can generally not be plotted against each other. This is a deliberate decision, as filling data for a (two-dimensional) data array, although generally desirable for (simple) plotting purposes, masks/removes some highly important information, *e.g.* whether a value has not been measured in the first place, or whether obtaining a value has failed for some reason.
 
 
-.. note::
-
-    Given that in the future (starting with the adoption of the evedata package) the full contents of the SCML file will be made available to the users of eveH5 files, the amount of metadata present in the HDF5 layer of eveH5 files may probably be reduced. How would this impact the data model developed within the ``evefile`` subpackage? Furthermore: Would it be wise to (dramatically) reduce the metadata (attributes in HDF5 language) of the individual datasets on the HDF5 level? After all, one big advantage of the HDF5 format (besides its support for hierarchical organisation) is its capability to amend data with metadata, *i.e.* being potentially "self-describing".
-
-
 Entities
 --------
 
@@ -123,7 +118,7 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 data module
 ~~~~~~~~~~~
 
-Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 06/2024, eve version 2.1) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists (see their use of the MPSKIP feature to "fake" an average detector channel saving the individual data points). Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
+Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 06/2024, eve version 2.1) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists. Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
 
 
 .. figure:: uml/evedata.evefile.data.*
@@ -146,7 +141,7 @@ Some comments (not discussions any more, though):
 
 * MonitorData with more than one value per time
 
-  MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_. However, this should be regarded as a bug (and if actually occuring in an eveH5 file, treated in some deterministic way). A special case are monitor data occurring before starting the actual scan, as these all get the special timestamp ``-1``, see `#7688, note-10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_
+  MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_. However, this should be regarded as a bug (and if actually occuring in an eveH5 file, treated in some deterministic way). A special case are monitor data occurring before starting the actual scan, as these all get the special timestamp ``-1``, see `#7688, note-10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_. In this case, only the last (youngest) data point should be retained/used.
 
 * Values of MonitorData
 
@@ -154,11 +149,11 @@ Some comments (not discussions any more, though):
 
 * raw (*i.e.* individual) values of AverageChannelData and IntervalChannelData
 
-  Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this. Given that the overarching idea of the evefile subpackage is to *faithfully* represent the eveH5 file contents, it seems not sensible to map the "fake" average detector channel saving each individual value using MPSKIP to this detector channel type, though. This should probably rather be done in the mapping later on and towards the dataset subpackage.
+  Currently, the measurement program only collects the average values in both cases. However, there is the frequent request to collect the raw values as well. The data structure already supports this.
 
 * References to external data/files
 
-  There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. Currently, the file name (including the full path, starting with which version of the eveH5 schema?) is stored as value in the dataset in these cases. For a discussion, see `#7732 <https://redmine.ahf.ptb.de/issues/7732>`_.
+  There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. Currently, the file name (including the full path, starting with which version of the eveH5 schema?) is stored as value in the dataset in these cases. For a discussion, see `#7732 <https://redmine.ahf.ptb.de/issues/7732>`_. An additional complication: historically, the has been some mismatch between file number stored in the HDF5 dataset and actual file number. Hence, some way of correcting the mapping after reading the file needs to be possible.
 
   Generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayChannelData``, with the ``_data`` attribute being a 2D numpy array. In case of storing images (2D data per position count), these data are modelled as ``AreaChannelData``, with the ``_data`` attribute being either a list of 2D/3D numpy arrays (containing the image data for one or different channels), a numpy array of arrays, or a 3D/4D array.
 
@@ -170,7 +165,7 @@ Some comments (not discussions any more, though):
 
   If we allow several channels to be plotted against one axis, things will get slightly more involved, as the axis data need to be filled with respect to both channels in this case, and probably the channel data filled with NaN values as well. Alternatives would be to have the axis data filled individually for the individual channels, or to delete those points in the channel datasets where the other channel(s) don't have corresponding values (hooray, there we are again with our different fill modes...).
 
-  Filling takes place by objects located in the controllers technical layer, and the filled data will be stored in a separate attribute, retaining the original unfilled data.
+  Filling takes place by objects located in the controllers technical layer of the **measurement functional layer**, and the filled data will be stored in a separate attribute, retaining the original unfilled data.
 
 * Detector channels that are redefined within an experiment/scan
 
@@ -247,6 +242,7 @@ What may be in here:
 * Converting MPSKIP scans into average detector channel with adaptive number of recorded points
 * Separating datasets for channels redefined within one scan and currently (up to eveH5 v7) stored in *one* HDF5 dataset
 * Sorting non-monotonic positions in eveH5 datasets
+* Correct mapping of file numbers for external files
 
 
 version_mapping module
@@ -283,7 +279,7 @@ Special cases that need to be addressed either here or during import of the data
 
   Not clear whether this situation can actually occur, but if so, most probably in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
 
-Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new ``MeasureData`` object. Most probably, this is the case for additional ``OptionData`` and ``DeviceData`` classes as subclasses of ``MeasureData``. The next question: Where to place these new objects in the ``File`` class of the evefile.entities.file module? Alternatively: Would this be something outside the evefile subpackage, probably within the dataset subpackage?
+Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new ``MeasureData`` object. Most probably, this is the case for additional ``OptionData`` and ``DeviceData`` classes as subclasses of ``MeasureData``. The next question: Where to place these new objects in the ``File`` class of the evefile.entities.file module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
 
 
 Converting MPSKIP scans into average detector channel
@@ -304,6 +300,12 @@ Sorting non-monotonic positions in eveH5 datasets
 Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, positions need to be sorted monotonically.
 
 Given that monitor datasets can contain several data points with identical time ``-1`` that shall not be changed in their sorting, use "stable" as "kind" parameter to choose the sorting algorithm in :func:`numpy.argsort`.
+
+
+Correct mapping of file numbers for external files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In the past, there has been some occasions where the stored file numbers for external files (usually images from 2D detectors) do not match with the *correct* files. Hence, we need some mechanism to modify the file numbers after loading a file for a correct mapping. It is unclear so far whether there is a way to automatically and reliably detect when to apply this correction.
 
 
 Boundaries
@@ -358,7 +360,7 @@ Some comments (not discussions any more, though):
 eveH5 module (resource)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The aim of this module is to provide a Python representation (in form of a hierarchy of objects) of the contents of an eveH5 file that can be mapped to both, the evefile and dataset interfaces. While the Python h5py package already provides the low-level access and gets used, the eveH5 module contains Python objects that are independent of an open HDF5 file, represent the hierarchy of HDF5 items (groups and datasets), and contain the attributes of each HDF5 item in form of a Python dictionary. Furthermore, each object contains a reference to both, the original HDF5 file and the HDF5 item, thus making reading dataset data on demand as simple as possible.
+The aim of this module is to provide a Python representation (in form of a hierarchy of objects) of the contents of an eveH5 file that can be mapped to both, the evefile and measurement interfaces. While the Python h5py package already provides the low-level access and gets used, the eveH5 module contains Python objects that are independent of an open HDF5 file, represent the hierarchy of HDF5 items (groups and datasets), and contain the attributes of each HDF5 item in form of a Python dictionary. Furthermore, each object contains a reference to both, the original HDF5 file and the HDF5 item, thus making reading dataset data on demand as simple as possible.
 
 
 .. figure:: uml/evedata.io.eveH5.*
@@ -387,31 +389,29 @@ Some comments (not discussions any more, though):
 
 
 
-Dataset
-=======
+Measurement
+===========
 
 .. note::
 
-    The name of this subpackage is most probably not final yet. Other options for naming the subpackage may be: ``measurement``, ``scan``.
+    The name of this subpackage has changed and oscillated somewhat. The reason for (currently) preferring ``measurement`` over ``dataset`` is the quite different concepts of the entities provided in this subpackage with the ASpecD dataset concept. Not naming it ``scan`` simply prevents name clashes with the ``scan`` subpackage concerned with the actual scan (and setup) description.
 
-    Another option would be to keep the subpackage name ``dataset``, but to import the modules into the global ``evedata`` namespace, as this subpackage is meant to be the main user interface. This would reduce *e.g.* ``evedata.dataset.dataset.Dataset`` to ``evedata.dataset.Dataset``.
+    In any case, as the facade(s) provide probably the main entry point to the entire evedata package, importing the corresponding modules into the global ``evedata`` namespace may be a sensible idea. This would reduce *e.g.* ``evedata.measurement.boundaries.measurement.Measurement`` to ``evedata.measurement.Measurement`` or even ``evedata.Measurement``.
 
 
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the dataset subpackage are shown below, reflecting the current state of affairs (and thinking).
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the measurement subpackage are shown below, reflecting the current state of affairs (and thinking).
 
-Generally, the dataset subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
+Generally, the measurement subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages.
 
 
 .. note::
 
-    The mapping of the information contained in both, the HDF5 and SCML layers of an eveH5 file, to the dataset is far from being properly modelled or understood. This is partly due to the step-wise progress in understanding. On a rather fundamental level, it remains to be decided whether a ``Dataset`` should allow for reconstructing how a measurement has actually been carried out (*i.e.*, provide access to the SCML and hence the anatomy of the scan).
-
-    Part of the problem: The currently widely agreed-upon abstraction from the user perspective of the data is the infamous 2D data table incapable of conveying all or even most of the relevant information for processing and analysing the data. As long as the users do not invest the time to understand the true complexity of their data and measurements, developing whatever interface towards the data will continue to be seriously hampered.
+    The mapping of the information contained in both, the HDF5 and SCML layers of an eveH5 file, to the measurement is far from being properly modelled or understood. This is partly due to the step-wise progress in understanding. On a rather fundamental level, it remains to be decided whether a ``Measurement`` should allow for reconstructing how a measurement has actually been carried out (*i.e.*, provide access to the SCML and hence the anatomy of the scan).
 
 
-What is the main difference between the ``evefile`` and the ``dataset`` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the ``evefile`` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the ``dataset`` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
+What is the main difference between the ``evefile`` and the ``measurement`` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the ``evefile`` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the ``measurement`` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
 
-However, the ``dataset`` subpackage is still general enough to cope with all the different kinds of measurements the eve measurement program can deal with. Hence, it may be a wise idea to create dedicated dataset classes in the ``radiometry`` package for different types of experiments. The NeXus file format may be a good source of inspiration here, particularly their `application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. The ``evedataviewer`` package in contrast aims at displaying whatever kind of measurement has been performed using the eve measurement program. Hence it will deal directly with ``Dataset`` objects of the ``dataset`` subpackage.
+However, the ``measurement`` subpackage is still general enough to cope with all the different kinds of measurements the eve measurement program can deal with. Hence, it may be a wise idea to create dedicated dataset classes in the ``radiometry`` package for different types of experiments. The NeXus file format may be a good source of inspiration here, particularly their `application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. The ``evedataviewer`` package in contrast aims at displaying whatever kind of measurement has been performed using the eve measurement program. Hence it will deal directly with ``Measurement`` objects of the ``measurement`` subpackage.
 
 
 
@@ -448,8 +448,8 @@ Entities
       Given more abstract concepts such as detector, motor, or even camera to be introduced, there still may be the need/wish to plot arbitrary channels/axes/options against each other. Would that demand for two different layers of an evedataviewer, one more in line of the current Cruncher and BessyHDFViewer that are rather close to the eveH5 files, and one dealing with the far more abstract and powerful concepts?
 
 
-dataset module
-~~~~~~~~~~~~~~
+measurement module
+~~~~~~~~~~~~~~~~~~
 
 Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step. Reproducibility and history are concerns of the ``radiometry`` package, the ``dataset.dataset`` module should nevertheless allow for a rather straight-forward mapping to the ASpecD-inspired dataset structure.
 
@@ -525,7 +525,7 @@ What may be in here:
 
       Monitor data (with time in milliseconds as primary axis) need to be mapped to measured data (with position counts as primary axis). Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon. There is an age-long discussion on this topic (`#5295 note 3 <https://redmine.ahf.ptb.de/issues/5295#note-3>`_). For a current discussion see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_.
 
-      Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): This mapping should most probably take place in the controllers technical layer of the dataset functional layer. The individual ``MonitorData`` class cannot do the mapping without having access to the mapping table.
+      Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): This mapping should most probably take place in the controllers technical layer of the measurement functional layer. The individual ``MonitorData`` class cannot do the mapping without having access to the mapping table.
 
 
 Fill modes
@@ -625,8 +625,8 @@ What may be in here:
   * Given a filename of an eveH5 file, returns a ``Dataset`` object.
 
 
-dataset module (facade)
-~~~~~~~~~~~~~~~~~~~~~~~
+measurement module (facade)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 .. figure:: uml/evedata.dataset.boundaries.dataset.*
