@@ -432,6 +432,13 @@ However, the ``measurement`` subpackage is still general enough to cope with all
     Other problems inherent in the 2D data array abstraction are the necessary filling of values that have not been obtained. Currently, once filled there is no way to figure out for an individual position whether values have been recorded (in case of LastFill) or whether a value has not been recorded or recording failed (in case of NaNFill).
 
 
+A few ideas/comments for further modelling this subpackage:
+
+* ``evefile`` represents the eveH5 file, while ``measurement`` maps the different datasets to more sensible abstractions.
+* Options seem to exist in different "flavours": options that are recorded for each PosCount (predominantly currently for area detectors) should be mapped to something similar to ``MeasureData`` objects, and options that are recorded in snapshots should be set as scalar attributes of the corresponding ``Data`` objects. How to deal with options that are monitored? Check whether they change for a given channel/axis and if so, expand them ("fill") for each PosCount of the corresponding channel/axis, and otherwise set as scalar attribute?
+* Deal with the situation that not all actual data read from eveH5 are numeric. Of course, non-numeric data cannot be plotted. But how to distinguish sensibly? Probably we need a method returning all plottable axes and channels.
+* Map pseudo-detectors with RBV from axes to ``AxisData`` objects?
+
 
 Entities
 --------

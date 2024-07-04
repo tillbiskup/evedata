@@ -107,9 +107,37 @@ class IntervalNormalizedChannelData extends IntervalChannelData {
 }
 
 class ArrayChannelData extends ChannelData {
+    roi[] : ArrayChannelROIData
 }
 
+ArrayChannelData *-- "0..n" ArrayChannelROIData
+
+class ArrayChannelROIData {
+    marker : np.ndarray((dtype=int)
+    positions : np.ndarray((dtype=int)
+}
+note bottom of ArrayChannelROIData
+    Should these ROI classes inherit from
+    ChannelData? In this case, the attribute
+    "positions" would not be necessary.
+
+    Marker should be a two-element vector
+    with positions on the x axis of the spectrum.
+    Is "marker" the best name? Can we generalise
+    to fit to AreaChannelROIData as well?
+
+    What other attributes are relevant for
+    Array Channel ROIs? What datasets exist
+    in an eveH5 file?
+endnote
+
 class AreaChannelData extends ChannelData {
+    roi[] : AreaChannelROIData
+}
+
+AreaChannelData *-- "0..n" AreaChannelROIData
+
+class AreaChannelROIData {
 }
 
 @enduml
