@@ -130,6 +130,14 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
+    * Modelling ``ArrayChannelData`` and ``AreaChannelData``
+
+      Array and area channels are not yet properly modelled. Both result in several additional HDF5 datasets in the current eveH5 scheme (v7), particularly, but not limited to ROI settings and the corresponding statistics. For each of these datasets, we need to decide which data *can* actually change for individual PosCounts (within one scan module) and hence need to be saved in the data section of a dataset, and which do not change, hence can be served as attributes. Furthermore, we would need to decide for the eveH5 scheme whether to store all ROIs within the channel dataset or alternatively to introduce a group for each array/area detector (and suffixed with the scanmodule ID).
+
+    * How to deal with axes read-back values (RBV)?
+
+      With the advent of precise optical encoders, it turned out that axes do move after arriving at their set point. Hence, for some measurements, axes RBVs are read as pseudo-detector channels. Currently (eveH5 v7), these data end up as detector channels in distinct HDF5 datasets. However, logically they belong to the corresponding axes. Further complications may arise from the fact that there exists the use case for recording these axes RBVs during averaging of detector channel data.
+
     * Do we need additional classes for ``DeviceData`` and ``OptionData``?
 
       Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
@@ -288,6 +296,11 @@ Converting MPSKIP scans into average detector channel
 Given the data model to not correspond to the current eveH5 structure (v7), it makes sense to convert scans using MPSKIP to "fake" average detector channels storing the individual data points on this level.
 
 
+.. important::
+
+    At least one group uses MPSKIP not only for storing the individual data points for averaging, but for recording axis RBV for each individual detector channel readout as well, due to motor axes changing their position slightly. Hence, in this case MPSKIP cannot be mapped sensibly to an average detector channel if we do not expand the data model of the ``evefile`` subpackage.
+
+
 Separating datasets for redefined channels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -435,6 +448,9 @@ However, the ``measurement`` subpackage is still general enough to cope with all
 A few ideas/comments for further modelling this subpackage:
 
 * ``evefile`` represents the eveH5 file, while ``measurement`` maps the different datasets to more sensible abstractions.
+
+  * Not all abstractions will necessarily be reflected in the future in the eveH5 file. Currently (eveH5 v7), most of the abstractions are clearly not visible there. How to deal with this situation? The entities in the ``evefile`` subpackage should reflect the future eveH5 scheme and abstractions therein, with the version mapping from the controller technical layer responsible for the mapping of older eveH5 schemata to the entities.
+
 * Options seem to exist in different "flavours": options that are recorded for each PosCount (predominantly currently for area detectors) should be mapped to something similar to ``MeasureData`` objects, and options that are recorded in snapshots should be set as scalar attributes of the corresponding ``Data`` objects. How to deal with options that are monitored? Check whether they change for a given channel/axis and if so, expand them ("fill") for each PosCount of the corresponding channel/axis, and otherwise set as scalar attribute?
 * Deal with the situation that not all actual data read from eveH5 are numeric. Of course, non-numeric data cannot be plotted. But how to distinguish sensibly? Probably we need a method returning all plottable axes and channels.
 * Map pseudo-detectors with RBV from axes to ``AxisData`` objects?

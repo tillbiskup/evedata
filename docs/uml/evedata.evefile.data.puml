@@ -113,13 +113,14 @@ class ArrayChannelData extends ChannelData {
 ArrayChannelData *-- "0..n" ArrayChannelROIData
 
 class ArrayChannelROIData {
-    marker : np.ndarray((dtype=int)
-    positions : np.ndarray((dtype=int)
+    {field} marker : np.ndarray((dtype=int)
+    {field} positions : np.ndarray((dtype=int)
+    {field} data : np.ndarray()
 }
 note bottom of ArrayChannelROIData
     Should these ROI classes inherit from
-    ChannelData? In this case, the attribute
-    "positions" would not be necessary.
+    ChannelData? In this case, the attributes
+    "positions" and "data" would not be necessary.
 
     Marker should be a two-element vector
     with positions on the x axis of the spectrum.

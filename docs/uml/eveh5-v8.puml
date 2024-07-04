@@ -82,6 +82,7 @@ note left of snapshot
     will appear here, but perhaps array or area channels.
 endnote
 
+snapshot *-- "<axisdata>"
 snapshot *-- "<singlepointdata>"
 snapshot *.. "<arraydata>_sm<#>"
 snapshot *.. "<areadata>_sm<#>"
@@ -93,22 +94,36 @@ meta *-- Scan
 meta *-- Setup
 meta *-- LogMessages
 
+class "<axisdata>" << (D,orange) >> {
+    PV : string
+    AccessMode : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    - Unit : string
+    --
+    Positions : int32
+    Data : float64
+    RBV : float64 | vlen_float64
+}
+
 class "<singlepointdata>" << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
     XMLID : string
     DeviceType : string
-    - DetectorType : string
-    - Unit : string
+    DetectorType : string
+    Unit : string
     - NormalizeID : string
     --
     Positions : int32
-    Data : <i>any</i>
-    - NormalizedData : <i>any</i>
-    - NormalizingData : <i>any</i>
+    Data : float64
+    - NormalizedData : float64
+    - NormalizingData : float64
 }
 
+main *-- "<axisdata>"
 main *-- "<singlepointdata>"
 main *-- "<averagedata>_sm<#>"
 main *-- "<intervaldata>_sm<#>"
