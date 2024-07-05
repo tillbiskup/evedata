@@ -14,8 +14,8 @@ class Root << (G,orchid) >> {
     EVEH5Version : string
     EVEVersion : string
     MeasurementStation : string
-    Start : string
-    End : string
+    {field} Start : string (YYYY-MM-DDThh:mm:ss)
+    {field} End : string (YYYY-MM-DDThh:mm:ss)
     Description : string
     Comment : string
     Simulation : int | "boolean" enum
