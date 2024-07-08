@@ -113,8 +113,9 @@ class ArrayChannelData extends ChannelData {
 ArrayChannelData *-- "0..n" ArrayChannelROIData
 
 class ArrayChannelROIData {
-    {field} marker : np.ndarray((dtype=int)
-    {field} positions : np.ndarray((dtype=int)
+    {field} label : string
+    {field} marker : np.ndarray(dtype=int)
+    {field} positions : np.ndarray(dtype=int)
     {field} data : np.ndarray()
 }
 note bottom of ArrayChannelROIData

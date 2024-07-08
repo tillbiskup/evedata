@@ -1,0 +1,95 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Data {
+    metadata : Metadata
+    _data : np.ndarray
+    _importer : DataImporter
+    data()
+}
+
+Data *- Metadata
+
+class MeasureData extends Data {
+    {field} positions : np.ndarray(dtype=int)
+}
+
+MeasureData *- MeasureMetadata
+
+class ChannelData extends MeasureData
+
+ChannelData *- ChannelMetadata
+
+class ArrayChannelData extends ChannelData {
+    roi[] : ArrayChannelROIData
+    life_time : np.ndarray
+    real_time : np.ndarray
+    preset_life_time : np.ndarray
+    preset_real_time : np.ndarray
+}
+note bottom of ArrayChannelData
+    Can the "preset_" parameters
+    change for each position in
+    real measurements <i>within</i> one
+    scan module?
+
+    If not, they are "static" attributes
+    and should probably go to the
+    corresponding metadata class
+    ""ArrayChannelMetadata"".
+end note
+
+ArrayChannelData *- ArrayChannelMetadata
+
+ArrayChannelROIData "0..n"  *- ArrayChannelData
+
+class ArrayChannelROIData extends ChannelData{
+    {field} label : string
+    {field} marker : np.ndarray(dtype=int)
+}
+note bottom of ArrayChannelROIData
+    Marker should be a two-element vector
+    with positions on the x axis of the spectrum.
+    Is "marker" the best name? Can we generalise
+    to fit to ""AreaChannelROIData"" as well?
+
+    What other attributes are relevant for
+    Array Channel ROIs?
+end note
+
+
+class Metadata {
+    name : string
+}
+
+class MeasureMetadata extends Metadata {
+    unit : string
+}
+
+interface DeviceMetadata {
+    id : string
+    pv : string
+    access_mode : string
+}
+
+class ChannelMetadata extends MeasureMetadata implements DeviceMetadata
+
+class ArrayChannelMetadata extends ChannelMetadata {
+    calibration : ArrayChannelCalibration
+}
+
+ArrayChannelMetadata *- ArrayChannelCalibration
+
+class ArrayChannelCalibration {
+    offset : float
+    slope : float
+    quadratic : float
+}
+note bottom of ArrayChannelCalibration
+    Shall this class have methods
+    performing some operations on
+    the calibration parameters stored
+    in its attributes?
+end note
+
+@enduml
