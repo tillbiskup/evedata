@@ -121,6 +121,8 @@ data module
 Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 06/2024, eve version 2.1) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists. Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
 
 
+.. _fig-uml_evedata-evefile.data:
+
 .. figure:: uml/evedata.evefile.data.*
     :align: center
     :width: 750px
@@ -194,6 +196,20 @@ Some comments (not discussions any more, though):
   When timestamps of monitor data should be mapped to position counts (while retaining the original monitor data), this most probably means to create new instances of (subclasses of) ``MeasureData``. Options should generally be mapped to the respective classes the options belong to, while devices are separate classes and should appear as ``DeviceData``. For options, we additionally need to distinguish between "scalar" options that do not change within one scan module (and should in the future appear as attributes on the HDF5 level), and options whose values need to be saved for each individual position count (and should in the future appear as additional dataset columns on the HDF5 level).
 
 
+.. figure:: uml/arraychannel.*
+    :align: center
+    :width: 750px
+
+    Preliminary data model for the ArrayChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the ``ArrayChannelCalibration`` class from the ``ArrayChannelMetadata`` rests on the assumption that the calibration class will get added distinct behaviour at some point, *e.g.* creating calibration curves from the parameters.
+
+
+.. figure:: uml/areachannel.*
+    :align: center
+    :width: 750px
+
+    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (cameras) have somewhat different options, probably there will appear a basic ``AreaDetector`` class with more specific subclasses. Whether the simplest form of a camera (a standard digital camera for making pictures of samples) shall be a subclass of the ``AreaDetector`` class or a separate class is another question to be discussed and decided.
+
+
 metadata module
 ~~~~~~~~~~~~~~~
 
@@ -204,6 +220,8 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
 
     As compared to the UML schemata for the IDL interface, the decision of whether a certain piece of information belongs to data or metadata is slightly different here. The main reason for this is the problem in current (as of eveH5 v7) files and redefined detector channels, leading to a loss of information that needs to be changed anyway and is discussed above for the data module. With separate datasets for different detector channels, the problem is solved and the immutable metadata belong to the metadata classes (and are converted to attributes on the HDF5 level in the future scheme, v8).
 
+
+.. _fig-uml_evedata-evefile.metadata:
 
 .. figure:: uml/evedata.evefile.metadata.*
     :align: center
