@@ -40,7 +40,10 @@ class MonitorData extends Data {
     {field} milliseconds : np.ndarray(dtype=int)
 }
 
+class DeviceData extends MeasureData
+
 class AxisData extends MeasureData {
+    set_values
     _filled_data
     filled_data()
 }
@@ -50,6 +53,10 @@ note right of AxisData
     Hence for different channels, generally
     different filled data will exist.
 endnote
+
+class EncoderAxisData extends AxisData {
+    read_back_values
+}
 
 class ChannelData extends MeasureData {
 }

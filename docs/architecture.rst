@@ -138,12 +138,6 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
       With the advent of precise optical encoders, it turned out that axes do move after arriving at their set point. Hence, for some measurements, axes RBVs are read as pseudo-detector channels. Currently (eveH5 v7), these data end up as detector channels in distinct HDF5 datasets. However, logically they belong to the corresponding axes. Further complications may arise from the fact that there exists the use case for recording these axes RBVs during averaging of detector channel data.
 
-    * Do we need additional classes for ``DeviceData`` and ``OptionData``?
-
-      Devices seem only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
-
-      When timestamps of monitor data should be mapped to position counts, while retaining the original monitor data, this most probably means to create new instances of (subclasses of) ``MeasureData``. As monitors usually are either options or devices, this would be the case for the two additional classes.
-
 
 Some comments (not discussions any more, though):
 
@@ -192,6 +186,12 @@ Some comments (not discussions any more, though):
   2. sensibly naming the resulting multiple datasets.
 
      Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
+
+* Additional classes for ``DeviceData`` and ``OptionData``?
+
+  Devices seem currently only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
+
+  When timestamps of monitor data should be mapped to position counts (while retaining the original monitor data), this most probably means to create new instances of (subclasses of) ``MeasureData``. Options should generally be mapped to the respective classes the options belong to, while devices are separate classes and should appear as ``DeviceData``. For options, we additionally need to distinguish between "scalar" options that do not change within one scan module (and should in the future appear as attributes on the HDF5 level), and options whose values need to be saved for each individual position count (and should in the future appear as additional dataset columns on the HDF5 level).
 
 
 metadata module

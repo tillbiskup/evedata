@@ -8,7 +8,7 @@ class Data {
 }
 note bottom: See diagram for\ndata module.
 
-interface DeviceMetadata {
+interface AbstractDeviceMetadata {
     id : string
     pv : string
     access_mode : string
@@ -18,13 +18,16 @@ class MeasureMetadata extends Metadata {
     unit : string
 }
 
-class MonitorMetadata extends Metadata implements DeviceMetadata {
+class MonitorMetadata extends Metadata implements AbstractDeviceMetadata {
 }
 
-class AxisMetadata extends MeasureMetadata implements DeviceMetadata  {
+class DeviceMetadata extends MeasureMetadata implements AbstractDeviceMetadata  {
 }
 
-class ChannelMetadata extends MeasureMetadata implements DeviceMetadata  {
+class AxisMetadata extends MeasureMetadata implements AbstractDeviceMetadata  {
+}
+
+class ChannelMetadata extends MeasureMetadata implements AbstractDeviceMetadata  {
 }
 
 class TimestampMetadata extends MeasureMetadata {
