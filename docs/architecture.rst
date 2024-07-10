@@ -189,11 +189,13 @@ Some comments (not discussions any more, though):
 
      Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
 
-* Additional classes for ``DeviceData`` and ``OptionData``?
+* Additional class ``DeviceData``, but not ``OptionData``
 
   Devices seem currently only to be saved as monitors in the "device" section of the eveH5 file and appear as ``MonitorData``. Generally, starting with eve v1.32, all pre-/postscan devices (and options) are automatically stored as monitors, *i.e.* in the "devices" section of the eveH5 file.
 
-  When timestamps of monitor data should be mapped to position counts (while retaining the original monitor data), this most probably means to create new instances of (subclasses of) ``MeasureData``. Options should generally be mapped to the respective classes the options belong to, while devices are separate classes and should appear as ``DeviceData``. For options, we additionally need to distinguish between "scalar" options that do not change within one scan module (and should in the future appear as attributes on the HDF5 level), and options whose values need to be saved for each individual position count (and should in the future appear as additional dataset columns on the HDF5 level).
+  When timestamps of monitor data should be mapped to position counts (while retaining the original monitor data), this most probably means to create new instances of (subclasses of) ``MeasureData``. If these monitor data are devices, this is the case for ``DeviceData``.
+
+  Options should generally be mapped to the respective classes the options belong to. For options, we additionally need to distinguish between "scalar" options that do not change within one scan module (and should in the future appear as attributes on the HDF5 level), and options whose values need to be saved for each individual position count (and should in the future appear as additional dataset columns on the HDF5 level).
 
 
 .. figure:: uml/arraychannel.*

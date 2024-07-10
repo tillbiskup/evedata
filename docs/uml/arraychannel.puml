@@ -41,7 +41,7 @@ end note
 
 ArrayChannelData *- ArrayChannelMetadata
 
-ArrayChannelROIData "0..n"  *- ArrayChannelData
+ArrayChannelROIData "0..n" -* ArrayChannelData
 
 class ArrayChannelROIData extends ChannelData{
     {field} label : string

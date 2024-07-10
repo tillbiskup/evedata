@@ -40,7 +40,7 @@ end note
 
 AreaChannelData *- AreaChannelMetadata
 
-AreaChannelROIData "0..n"  *- AreaChannelData
+AreaChannelROIData "0..n" -* AreaChannelData
 
 class AreaChannelROIData extends ChannelData{
     {field} label : string

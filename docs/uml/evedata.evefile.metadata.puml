@@ -25,6 +25,7 @@ class DeviceMetadata extends MeasureMetadata implements AbstractDeviceMetadata  
 }
 
 class AxisMetadata extends MeasureMetadata implements AbstractDeviceMetadata  {
+    deadband : float
 }
 
 class ChannelMetadata extends MeasureMetadata implements AbstractDeviceMetadata  {

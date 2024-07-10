@@ -44,19 +44,19 @@ class DeviceData extends MeasureData
 
 class AxisData extends MeasureData {
     set_values
+}
+
+class NonencodedAxisData extends AxisData {
     _filled_data
     filled_data()
 }
-note right of AxisData
-    Data are filled depending on the
-    ChannelData they are plotted against.
+note bottom of NonencodedAxisData
+    Data for axes without encoders are filled
+    depending on the ChannelData they are
+    plotted against.
     Hence for different channels, generally
     different filled data will exist.
 endnote
-
-class EncoderAxisData extends AxisData {
-    read_back_values
-}
 
 class ChannelData extends MeasureData {
 }
@@ -88,8 +88,9 @@ note bottom of AverageChannelData
     averaged_values() returns only
     those values used to average over.
 
-    How does mean() differ
-    from values in Data?
+    How does mean() differ from data()?
+    Probably, data() should return the
+    averaged data - <i>i.e.</i>, mean().
 end note
 
 class AverageNormalizedChannelData extends AverageChannelData {
@@ -126,10 +127,6 @@ class ArrayChannelROIData {
     {field} data : np.ndarray()
 }
 note bottom of ArrayChannelROIData
-    Should these ROI classes inherit from
-    ChannelData? In this case, the attributes
-    "positions" and "data" would not be necessary.
-
     Marker should be a two-element vector
     with positions on the x axis of the spectrum.
     Is "marker" the best name? Can we generalise
