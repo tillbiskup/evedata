@@ -37,6 +37,7 @@ enum DeviceType {
     ArrayChannel
     AreaChannel
     Axis
+    AxisWithEncoder
     Device
     Option
 }
@@ -77,15 +78,13 @@ class snapshot << (G,orchid) >> <<optional>> {}
 note left of snapshot
     The ""snapshot"" group contains only datasets
     with scalar "values" per individual Position.
-    "Data", however, can be 0D..2D per Position.
     This means that no average or interval channels
-    will appear here, but perhaps array or area channels.
+    will appear here, and additionally neither
+    array nor area channels.
 endnote
 
 snapshot *-- "<axisdata>"
 snapshot *-- "<singlepointdata>"
-snapshot *.. "<arraydata>_sm<#>"
-snapshot *.. "<areadata>_sm<#>"
 
 class meta << (G,orchid) >> {}
 
@@ -103,9 +102,15 @@ class "<axisdata>" << (D,orange) >> {
     - Unit : string
     --
     Positions : int32
-    Data : float64
-    RBV : float64 | vlen_float64
+    Data : float64 | vlen_float64
 }
+note bottom of "<axisdata>"
+    For axes with encoders, RBV will be saved
+    synchronised with each detector channel
+    readout, and in this case, for average channels
+    individual RBV per channel readout will be stored
+    for one and the same position.
+end note
 
 class "<singlepointdata>" << (D,orange) >> {
     PV : string
@@ -184,7 +189,12 @@ end note
 "<intervaldata>_sm<#>" .. sm_channel_note
 "<averagedata>_sm<#>" .. sm_channel_note
 
-class "<arraydata>_sm<#>" << (D,orange) >> {
+class "<arraydata>_sm<#>" << (G,orchid) >> {}
+
+"<arraydata>_sm<#>" *-- array_data
+"<arraydata>_sm<#>" *-- "0..n" "array_roi<#>"
+
+class "array_data" << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -192,12 +202,29 @@ class "<arraydata>_sm<#>" << (D,orange) >> {
     DeviceType : string
     DetectorType : string
     Unit : string
+    CalO : float64
+    CalS : float64
+    CalQ : float64
     --
     Positions : int32
     Data : array
+    LifeTime : float64
+    RealTime : float64
 }
 
-class "<areadata>_sm<#>" << (D,orange) >> {
+class "array_roi<#>" << (D,orange) >> {
+    Label : string
+    Marker : [int32, int32]
+    --
+    Counts : float64
+}
+
+class "<areadata>_sm<#>" << (G,orchid) >> {}
+
+"<areadata>_sm<#>" *-- area_data
+"<areadata>_sm<#>" *-- "0..n" "area_roi<#>"
+
+class area_data << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -205,19 +232,48 @@ class "<areadata>_sm<#>" << (D,orange) >> {
     DeviceType : string
     DetectorType : string
     Unit : string
+    Gain : float64
+    ReverseX : "boolean"
+    ReverseY : "boolean"
     - FileType : string
     --
     Positions : int32
     Data : array | string
+    AcquireTime : float64
+    Temperature : float64
+    Humidity : float64
 }
 
-note bottom of "<areadata>_sm<#>"
+note bottom of area_data
     The "FileType" attribute will contain the relevant
     information on the file type of external files, in case
     the actual data are stored external to the HDF5 file.
     The string needs to be a controlled vocabulary understood
     by the importing routines and is set in the defining XML.
 endnote
+
+class "area_roi<#>" << (D,orange) >> {
+    Label : String
+    Marker : [int32, int32, int32, int32]
+    BackgroundWidth : int32
+    CentroidThreshold : float64
+    --
+    MinValue : float64
+    MinX : float64
+    MinY : float64
+    MaxValue : float64
+    MaxX : float64
+    MaxY : float64
+    Mean : float64
+    Total : float64
+    Net : float64
+    Sigma : float64
+    CentroidX : float64
+    CentroidY : float64
+    CentroidSigmaX : float64
+    CentroidSigmaY : float64
+    CentroidSigmaXY : float64
+}
 
 class Setup << (D,orange) >> {
     Version : string
