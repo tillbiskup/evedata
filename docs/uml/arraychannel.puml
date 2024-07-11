@@ -3,6 +3,7 @@
 
 class Data {
     metadata : Metadata
+    options : dict
     _data : np.ndarray
     _importer : DataImporter
     data()
@@ -60,6 +61,7 @@ end note
 
 class Metadata {
     name : string
+    options : dict
 }
 
 class MeasureMetadata extends Metadata {

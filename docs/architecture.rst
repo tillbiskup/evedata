@@ -197,6 +197,8 @@ Some comments (not discussions any more, though):
 
   Options should generally be mapped to the respective classes the options belong to. For options, we additionally need to distinguish between "scalar" options that do not change within one scan module (and should in the future appear as attributes on the HDF5 level), and options whose values need to be saved for each individual position count (and should in the future appear as additional dataset columns on the HDF5 level).
 
+  As of now, scalar options appear as dictionary ``options`` in the ``Metadata`` class hierarchy, while variable options with individual values per position count appear as dictionary ``options`` in the ``Data`` class hierarchy.
+
 
 .. figure:: uml/arraychannel.*
     :align: center

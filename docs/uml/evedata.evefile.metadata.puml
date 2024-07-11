@@ -2,7 +2,13 @@
 
 class Metadata {
     name : string
+    options : dict
 }
+note right of Metadata::options
+    The difference between ""options"" here in Metadata and ""options"" in Data:
+    Options in Data vary potentially for each data point, hence are arrays,
+    while options in Metadata are scalar and don't change for a Data object.
+end note
 
 class Data {
 }

@@ -3,6 +3,7 @@
 
 class Data {
     metadata : Metadata
+    options : dict
     _data : np.ndarray
     _importer : DataImporter
     data()
