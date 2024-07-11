@@ -98,6 +98,7 @@ The logo depicts a synchrotron emitting radiation, and the data files emerging f
    contributing
    requirements-analysis
    architecture
+   eveh5
    changelog
    roadmap
    api/index
