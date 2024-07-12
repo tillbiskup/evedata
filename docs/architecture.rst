@@ -114,6 +114,10 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 
       If using dictionaries, what would be sensible names for the datasets? The content of the "Name" attribute of the corresponding HDF5 dataset? How is this currently handled for the (in)famous Pandas dataframe column names?
 
+    * Split "Scan" and "Setup", similarly to how they are stored in eveH5 in the future?
+
+      Currently, the facade of the scan subpackage is a scan, containing both, the scan description and the setup description. However, the setup part of the SCML file sent to the engine is not necessarily identical with the XML file with the setup description loaded by the engine. Hence, it may make sense to have both stored separately, or have a "Scan" facade that contains only the scan description, and a "Setup" facade containing the information on the relevant devices.
+
 
 data module
 ~~~~~~~~~~~
@@ -127,18 +131,12 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, some child classes seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, some child classes seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. For details on the ``ArrayChannelData`` and ``AreaChannelData`` classes, see :numref:`Fig. %s <fig-uml_arraychannel>` and :numref:`Fig. %s <fig-uml_areachannel>`, respectively.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Modelling ``ArrayChannelData`` and ``AreaChannelData``
-
-      Array and area channels are not yet properly modelled. Both result in several additional HDF5 datasets in the current eveH5 scheme (v7), particularly, but not limited to ROI settings and the corresponding statistics. For each of these datasets, we need to decide which data *can* actually change for individual PosCounts (within one scan module) and hence need to be saved in the data section of a dataset, and which do not change, hence can be served as attributes. Furthermore, we would need to decide for the eveH5 scheme whether to store all ROIs within the channel dataset or alternatively to introduce a group for each array/area detector (and suffixed with the scanmodule ID).
-
-    * How to deal with axes read-back values (RBV)?
-
-      With the advent of precise optical encoders, it turned out that axes do move after arriving at their set point. Hence, for some measurements, axes RBVs are read as pseudo-detector channels. Currently (eveH5 v7), these data end up as detector channels in distinct HDF5 datasets. However, logically they belong to the corresponding axes. Further complications may arise from the fact that there exists the use case for recording these axes RBVs during averaging of detector channel data.
+    Currently none... ;-)
 
 
 Some comments (not discussions any more, though):
@@ -199,6 +197,20 @@ Some comments (not discussions any more, though):
 
   As of now, scalar options appear as dictionary ``options`` in the ``Metadata`` class hierarchy, while variable options with individual values per position count appear as dictionary ``options`` in the ``Data`` class hierarchy.
 
+* Dealing with axes read-back values (RBV)
+
+  With the advent of precise optical encoders, it turned out that axes do move after arriving at their set point. Hence, for some measurements, axes RBVs are read as pseudo-detector channels. Currently (eveH5 v7), these data end up as detector channels in distinct HDF5 datasets. However, logically they belong to the corresponding axes. Further complications may arise from the fact that there exists the use case for recording these axes RBVs during averaging of detector channel data.
+
+  The data model distinguishes between axes with encoders and those without. In the future, for axes with encoders the RBV will be read synchronously to every detector channel readout. This makes filling for those axes unnecessary, as for every detector channel readout there exists a "true" axis value. For average channels, this further means that as many axes RBVs are present as maximum detector channel readouts for this position, resulting in general in a "ragged array".
+
+  As for axes without encoder, the RBV does not change after the axis has arrived at its position, additionally reading these axes RBVs would not make sense, as this would suggest real values.
+
+
+
+Array and area channels
+.......................
+
+.. _fig-uml_arraychannel:
 
 .. figure:: uml/arraychannel.*
     :align: center
@@ -207,11 +219,13 @@ Some comments (not discussions any more, though):
     Preliminary data model for the ArrayChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the ``ArrayChannelCalibration`` class from the ``ArrayChannelMetadata`` rests on the assumption that the calibration class will get added distinct behaviour at some point, *e.g.* creating calibration curves from the parameters.
 
 
+.. _fig-uml_areachannel:
+
 .. figure:: uml/areachannel.*
     :align: center
     :width: 750px
 
-    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (cameras) have somewhat different options, probably there will appear a basic ``AreaDetector`` class with more specific subclasses. Whether the simplest form of a camera (a standard digital camera for making pictures of samples) shall be a subclass of the ``AreaDetector`` class or a separate class is another question to be discussed and decided.
+    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (cameras) have somewhat different options, probably there will appear a basic ``AreaChannel`` class with more specific subclasses. Whether the simplest form of a camera (a standard digital camera for making pictures of samples) shall be a subclass of the ``AreaChannel`` class or a separate class is another question to be discussed and decided.
 
 
 metadata module
@@ -309,7 +323,7 @@ Special cases that need to be addressed either here or during import of the data
 
   Not clear whether this situation can actually occur, but if so, most probably in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
 
-Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new ``MeasureData`` object. Most probably, this is the case for additional ``OptionData`` and ``DeviceData`` classes as subclasses of ``MeasureData``. The next question: Where to place these new objects in the ``File`` class of the evefile.entities.file module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
+Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new ``MeasureData`` object. This is the case for the additional ``DeviceData`` class as subclass of ``MeasureData``. The next question: Where to place these new objects in the ``File`` class of the evefile.entities.file module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
 
 
 Converting MPSKIP scans into average detector channel
@@ -320,7 +334,7 @@ Given the data model to not correspond to the current eveH5 structure (v7), it m
 
 .. important::
 
-    At least one group uses MPSKIP not only for storing the individual data points for averaging, but for recording axis RBV for each individual detector channel readout as well, due to motor axes changing their position slightly. Hence, in this case MPSKIP cannot be mapped sensibly to an average detector channel if we do not expand the data model of the ``evefile`` subpackage.
+    At least one group uses MPSKIP not only for storing the individual data points for averaging, but for recording axes RBVs for each individual detector channel readout as well, due to motor axes changing their position slightly. The axes RBVs are recorded for using pseudodetectors are/should be equipped with encoders to ensure actual values being read. The data model now supports axes objects to have more than one value for a position to account for this situation. This means, however, to convert the MPSKIP scans with individual position counts for each detector readout to scans with multiple values available per individual position.
 
 
 Separating datasets for redefined channels
@@ -334,7 +348,16 @@ Sorting non-monotonic positions in eveH5 datasets
 
 Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, positions need to be sorted monotonically.
 
-Given that monitor datasets can contain several data points with identical time ``-1`` that shall not be changed in their sorting, use "stable" as "kind" parameter to choose the sorting algorithm in :func:`numpy.argsort`.
+
+.. note::
+
+    Given that monitor datasets can contain several data points with identical time ``-1`` that shall not be changed in their sorting, use "stable" as "kind" parameter to choose the sorting algorithm in :func:`numpy.argsort`.
+
+
+Extract set values for axes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The axes positions stored in the HDF5 file are the RBVs after positioning. If, however, an axis never reached the set value due to limit violation or other constraints, this is usually not visible from the HDF5 file, as the severity is typically not recorded. However, the set values for each axis can be inferred from the scan description. Having this information would be helpful for routine checks whether a scan ran as expected. Set values are stored in the ``set_values`` attribute of the ``AxisData`` class.
 
 
 Correct mapping of file numbers for external files

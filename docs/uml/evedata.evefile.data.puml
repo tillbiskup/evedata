@@ -119,32 +119,24 @@ class ArrayChannelData extends ChannelData {
     roi[] : ArrayChannelROIData
 }
 
-ArrayChannelData *-- "0..n" ArrayChannelROIData
-
 class ArrayChannelROIData {
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
     {field} positions : np.ndarray(dtype=int)
     {field} data : np.ndarray()
 }
-note bottom of ArrayChannelROIData
-    Marker should be a two-element vector
-    with positions on the x axis of the spectrum.
-    Is "marker" the best name? Can we generalise
-    to fit to AreaChannelROIData as well?
-
-    What other attributes are relevant for
-    Array Channel ROIs? What datasets exist
-    in an eveH5 file?
-endnote
 
 class AreaChannelData extends ChannelData {
     roi[] : AreaChannelROIData
 }
 
-AreaChannelData *-- "0..n" AreaChannelROIData
+note as array_area_channels_note
+    For ""ArrayChannelData"" and ""AreaChannelData""
+    see separate diagrams, as these classes are
+    slightly more complex compositions.
+end note
 
-class AreaChannelROIData {
-}
+AreaChannelData .. array_area_channels_note
+ArrayChannelData .. array_area_channels_note
 
 @enduml
