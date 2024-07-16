@@ -28,17 +28,6 @@ class ArrayChannelData extends ChannelData {
     preset_life_time : np.ndarray
     preset_real_time : np.ndarray
 }
-note bottom of ArrayChannelData
-    Can the "preset_" parameters
-    change for each position in
-    real measurements <i>within</i> one
-    scan module?
-
-    If not, they are "static" attributes
-    and should probably go to the
-    corresponding metadata class
-    ""ArrayChannelMetadata"".
-end note
 
 ArrayChannelData *- ArrayChannelMetadata
 
@@ -88,10 +77,9 @@ class ArrayChannelCalibration {
     quadratic : float
 }
 note bottom of ArrayChannelCalibration
-    Shall this class have methods
-    performing some operations on
-    the calibration parameters stored
-    in its attributes?
+    This class will have methods
+    performing operations on the
+    calibration parameters.
 end note
 
 @enduml

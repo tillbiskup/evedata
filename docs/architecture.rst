@@ -131,7 +131,7 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, some child classes seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. For details on the ``ArrayChannelData`` and ``AreaChannelData`` classes, see :numref:`Fig. %s <fig-uml_arraychannel>` and :numref:`Fig. %s <fig-uml_areachannel>`, respectively.
+    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, some child classes seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. For details on the ``ArrayChannelData`` and ``AreaChannelData`` classes, see :numref:`Fig. %s <fig-uml_arraychannel>` and :numref:`Fig. %s <fig-uml_areachannel>`, respectively. You may click on the image for a larger view.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -207,8 +207,14 @@ Some comments (not discussions any more, though):
 
 
 
-Array and area channels
-.......................
+Array channels
+..............
+
+.. important::
+    Array channels in their general form are channels collecting 1D data. Typical devices used here are MCAs, but oscilloscopes would be other typical array channels. Hence, probably we need to distinguish, hence make the ArrayChannelData class more generic and add additional derived classes for MCA (``MCAChannelData``) and scopes.
+
+
+Array channels generally collect 1D data and typically have separate regions of interest (ROI) defined, containing the sum of the counts for the given region. The devices behind the array channels are Multi-Channel Analysers (MCA). For the EPICS MCA record, see https://millenia.cars.aps.anl.gov/software/epics/mcaRecord.html.
 
 .. _fig-uml_arraychannel:
 
@@ -219,13 +225,29 @@ Array and area channels
     Preliminary data model for the ArrayChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the ``ArrayChannelCalibration`` class from the ``ArrayChannelMetadata`` rests on the assumption that the calibration class will get added distinct behaviour at some point, *e.g.* creating calibration curves from the parameters.
 
 
+Note: The scalar attributes for ArrayChannelROIs will currently be saved as snapshots regardless of whether the actual ROI has been defined/used. Hence, the evedata package needs to decide based on the existence of the actual data whether to create a ROI object and attach it to ``ArrayChannelData``.
+
+The calibration parameters are needed to convert the *x* axis of the MCA spectrum into a real energy axis. Hence, the ``ArrayChannelCalibration`` class will have methods for performing exactly this conversion. The relationship between calibrated units (cal) and channel number (chan) is defined as cal=CALO + chan\*CALS + chan^2\*CALQ. The first channel in the spectrum is defined as chan=0. However, not all MCAs/SDDs have these calibration values: Ketek SDDs seem to not have these values (internal calibration?).
+
+The real_time and life_time values can be used to get an idea of the amount of pile up occurring, *i.e.* having two photons with same energy within a short time interval reaching the detector being detected as one photon with twice the energy. Hence, latest in the radiometry package, distinct methods for this kind of analysis should be implemented.
+
+
+Area channels
+.............
+
 .. _fig-uml_areachannel:
 
 .. figure:: uml/areachannel.*
     :align: center
     :width: 750px
 
-    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (cameras) have somewhat different options, probably there will appear a basic ``AreaChannel`` class with more specific subclasses. Whether the simplest form of a camera (a standard digital camera for making pictures of samples) shall be a subclass of the ``AreaChannel`` class or a separate class is another question to be discussed and decided.
+    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (scientific cameras) have somewhat different options, probably there will appear a basic ``AreaChannel`` class with more specific subclasses.
+
+Note: Whether the simplest form of a camera (a standard digital camera for making pictures of samples) shall be a subclass of the ``AreaChannel`` class or a separate class is another question to be discussed and decided.
+
+Regarding file names/paths: Some of the scientific cameras are operated from Windows, hence there is usually no unique mapping of paths to actual places of the files, particularly given that Windows allows to map a drive letter to arbitrary network paths. It seems as if these paths are quite different for the different detectors, and therefore, some externally configurable mapping should be used.
+
+Note for Pilatus cameras: Those cameras seem to have three sensors each for temperature and humidity. Probably the simplest solution would be to store those values in an array rather than having three individual fields each. In case of temperature (and humidity) readings for each individual image, the array would become a 2D array.
 
 
 metadata module
@@ -245,7 +267,7 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.metadata module. Each concrete class in the evefile.data module has a corresponding metadata class in this module.
+    Class hierarchy of the evefile.metadata module. Each concrete class in the evefile.data module has a corresponding metadata class in this module. You may click on the image for a larger view.
 
 
 A note on the ``DeviceMetadata`` interface class: The eveH5 dataset corresponding to the TimestampMetadata class is special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
