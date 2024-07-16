@@ -1,85 +1,32 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Data {
-    metadata : Metadata
-    options : dict
-    _data : np.ndarray
-    _importer : DataImporter
-    data()
-}
+class ArrayChannelData extends ChannelData {}
 
-Data *- Metadata
+together {
+class ScopeChannelData extends ArrayChannelData
 
-class MeasureData extends Data {
-    {field} positions : np.ndarray(dtype=int)
-}
-
-MeasureData *- MeasureMetadata
-
-class ChannelData extends MeasureData
-
-ChannelData *- ChannelMetadata
-
-class ArrayChannelData extends ChannelData {
-    roi[] : ArrayChannelROIData
+class MCAChannelData extends ArrayChannelData {
+    roi[] : MCAChannelROIData
     life_time : np.ndarray
     real_time : np.ndarray
     preset_life_time : np.ndarray
     preset_real_time : np.ndarray
 }
 
-ArrayChannelData *- ArrayChannelMetadata
+MCAChannelROIData "0..n" -* MCAChannelData
 
-ArrayChannelROIData "0..n" -* ArrayChannelData
-
-class ArrayChannelROIData extends ChannelData{
+class MCAChannelROIData extends ChannelData {
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
 }
-note bottom of ArrayChannelROIData
-    Marker should be a two-element vector
-    with positions on the x axis of the spectrum.
-    Is "marker" the best name? Can we generalise
-    to fit to ""AreaChannelROIData"" as well?
 
-    What other attributes are relevant for
-    Array Channel ROIs?
-end note
-
-
-class Metadata {
-    name : string
-    options : dict
+class ScopeData {
+    channels[] : ScopeChannelData
 }
 
-class MeasureMetadata extends Metadata {
-    unit : string
+ScopeChannelData "0..n" -* ScopeData
+
 }
-
-interface DeviceMetadata {
-    id : string
-    pv : string
-    access_mode : string
-}
-
-class ChannelMetadata extends MeasureMetadata implements DeviceMetadata
-
-class ArrayChannelMetadata extends ChannelMetadata {
-    calibration : ArrayChannelCalibration
-}
-
-ArrayChannelMetadata *- ArrayChannelCalibration
-
-class ArrayChannelCalibration {
-    offset : float
-    slope : float
-    quadratic : float
-}
-note bottom of ArrayChannelCalibration
-    This class will have methods
-    performing operations on the
-    calibration parameters.
-end note
 
 @enduml

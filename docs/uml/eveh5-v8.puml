@@ -132,8 +132,9 @@ main *-- "<axisdata>"
 main *-- "<singlepointdata>"
 main *-- "<averagedata>_sm<#>"
 main *-- "<intervaldata>_sm<#>"
-main *-- "<arraydata>_sm<#>"
-main *-- "<areadata>_sm<#>"
+main *-- "<mcadata>_sm<#>"
+main *-- "<samplecameradata>"
+main *-- "<scientificcameradata>_sm<#>"
 
 class "<averagedata>_sm<#>" << (D,orange) >> {
     PV : string
@@ -189,12 +190,12 @@ end note
 "<intervaldata>_sm<#>" .. sm_channel_note
 "<averagedata>_sm<#>" .. sm_channel_note
 
-class "<arraydata>_sm<#>" << (G,orchid) >> {}
+class "<mcadata>_sm<#>" << (G,orchid) >> {}
 
-"<arraydata>_sm<#>" *-- array_data
-"<arraydata>_sm<#>" *-- "0..n" "array_roi<#>"
+"<mcadata>_sm<#>" *-- mca_data
+"<mcadata>_sm<#>" *-- "0..n" "mca_roi<#>"
 
-class "array_data" << (D,orange) >> {
+class "mca_data" << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -202,9 +203,9 @@ class "array_data" << (D,orange) >> {
     DeviceType : string
     DetectorType : string
     Unit : string
-    CalO : float64
-    CalS : float64
-    CalQ : float64
+    -CalO : float64
+    -CalS : float64
+    -CalQ : float64
     --
     Positions : int32
     Data : array
@@ -212,19 +213,35 @@ class "array_data" << (D,orange) >> {
     RealTime : float64
 }
 
-class "array_roi<#>" << (D,orange) >> {
+class "mca_roi<#>" << (D,orange) >> {
     Label : string
     Marker : [int32, int32]
     --
     Counts : float64
 }
 
-class "<areadata>_sm<#>" << (G,orchid) >> {}
+class "<samplecameradata>" << (D,orange) >> {
+    PV : string
+    AccessMode : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    DetectorType : string
+    Unit : string
+    BeamX : int32
+    BeamY : int32
+    - FileType : string
+    --
+    Positions : int32
+    Data : array | string
+}
 
-"<areadata>_sm<#>" *-- area_data
-"<areadata>_sm<#>" *-- "0..n" "area_roi<#>"
+class "<scientificcameradata>_sm<#>" << (G,orchid) >> {}
 
-class area_data << (D,orange) >> {
+"<scientificcameradata>_sm<#>" *-- scientificcamera_data
+"<scientificcameradata>_sm<#>" *-- "0..n" "scientificcamera_roi<#>"
+
+class scientificcamera_data << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -240,11 +257,11 @@ class area_data << (D,orange) >> {
     Positions : int32
     Data : array | string
     AcquireTime : float64
-    Temperature : float64
-    Humidity : float64
+    Temperature : float64 | array
+    Humidity : float64 | array
 }
 
-note bottom of area_data
+note bottom of scientificcamera_data
     The "FileType" attribute will contain the relevant
     information on the file type of external files, in case
     the actual data are stored external to the HDF5 file.
@@ -252,7 +269,7 @@ note bottom of area_data
     by the importing routines and is set in the defining XML.
 endnote
 
-class "area_roi<#>" << (D,orange) >> {
+class "scientificcamera_roi<#>" << (D,orange) >> {
     Label : String
     Marker : [int32, int32, int32, int32]
     BackgroundWidth : int32

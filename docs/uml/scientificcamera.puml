@@ -1,0 +1,110 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Data {
+    metadata : Metadata
+    options : dict
+    _data : np.ndarray
+    _importer : DataImporter
+    data()
+}
+
+Data *- Metadata
+
+class MeasureData extends Data {
+    {field} positions : np.ndarray(dtype=int)
+}
+
+MeasureData *- MeasureMetadata
+
+class ChannelData extends MeasureData
+
+ChannelData *- ChannelMetadata
+
+class AreaChannelData extends ChannelData
+
+AreaChannelData *- AreaChannelMetadata
+
+class ScientificCameraData extends AreaChannelData {
+    roi[] : ScientificCameraROIData
+    acquire_time : float | np.ndarray
+    {field} temperature : np.ndarray(dtype=float)
+    {field} humidity : np.ndarray(dtype=float)
+}
+note bottom of ScientificCameraData
+    acquire_time can be a static or dynamic parameter.
+
+    What about the different ""temperature"" parameters?
+    There is ""Temperature"", ""TemperatureActual"",
+    ""Temperature_RBV"" and sometimes ""XXX_Cooler"".
+
+    For Pilatus, there seem to be three temperatures and
+    three humidity detectors. Are all these values read
+    for each PositionCount/image?
+end note
+
+ScientificCameraData *- ScientificCameraMetadata
+
+ScientificCameraROIData -[hidden]> ScientificCameraData
+ScientificCameraROIData "0..n" -* ScientificCameraData
+ScientificCameraROIData -[hidden]> ScientificCameraData
+
+class ScientificCameraROIData extends ChannelData{
+    {field} label : string
+    {field} marker : np.ndarray(dtype=int)
+    background_width : int
+    {field} min_value : np.ndarray(dtype=float)
+    {field} min_x : np.ndarray(dtype=float)
+    {field} min_y : np.ndarray(dtype=float)
+    {field} max_value : np.ndarray(dtype=float)
+    {field} max_x : np.ndarray(dtype=float)
+    {field} max_y : np.ndarray(dtype=float)
+    {field} mean : np.ndarray(dtype=float)
+    {field} total : np.ndarray(dtype=float)
+    {field} net : np.ndarray(dtype=float)
+    {field} sigma : np.ndarray(dtype=float)
+    centroid_threshold : float
+    {field} centroid_x : np.ndarray(dtype=float)
+    {field} centroid_y : np.ndarray(dtype=float)
+    {field} centroid_sigma_x : np.ndarray(dtype=float)
+    {field} centroid_sigma_y : np.ndarray(dtype=float)
+    {field} centroid_sigma_xy : np.ndarray(dtype=float)
+}
+note bottom of ScientificCameraROIData
+    Marker should be a four-element vector
+    with coordinates of the image area.
+    Is "marker" the best name?
+
+    What other attributes are relevant for
+    Area Channel ROIs?
+    How about binning and reversing?
+end note
+
+
+class Metadata {
+    name : string
+    options : dict
+}
+
+class MeasureMetadata extends Metadata {
+    unit : string
+}
+
+interface DeviceMetadata {
+    id : string
+    pv : string
+    access_mode : string
+}
+
+class ChannelMetadata extends MeasureMetadata implements DeviceMetadata
+
+class AreaChannelMetadata extends ChannelMetadata
+
+class ScientificCameraMetadata extends AreaChannelMetadata {
+    gain : float
+    reverse_x : boolean
+    reverse_y : boolean
+    filetype : string
+}
+
+@enduml

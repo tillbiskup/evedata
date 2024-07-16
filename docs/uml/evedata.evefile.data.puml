@@ -28,7 +28,7 @@ class DataImporter {
 
 class Metadata {
 }
-note right: See diagram for\nmetadata module.
+note left: See diagram for\nmetadata module.
 
 Data *- DataImporter
 Data *-- Metadata
@@ -116,19 +116,18 @@ class IntervalNormalizedChannelData extends IntervalChannelData {
 }
 
 class ArrayChannelData extends ChannelData {
-    roi[] : ArrayChannelROIData
 }
 
-class ArrayChannelROIData {
-    {field} label : string
-    {field} marker : np.ndarray(dtype=int)
-    {field} positions : np.ndarray(dtype=int)
-    {field} data : np.ndarray()
-}
+class MCAChannelData extends ArrayChannelData
+
+class ScopeChannelData extends ArrayChannelData
 
 class AreaChannelData extends ChannelData {
-    roi[] : AreaChannelROIData
 }
+
+class SimpleCameraChannelData extends AreaChannelData
+
+class ScientificCameraChannelData extends AreaChannelData
 
 note as array_area_channels_note
     For ""ArrayChannelData"" and ""AreaChannelData""
@@ -136,7 +135,7 @@ note as array_area_channels_note
     slightly more complex compositions.
 end note
 
-AreaChannelData .. array_area_channels_note
-ArrayChannelData .. array_area_channels_note
+AreaChannelData .up. array_area_channels_note
+ArrayChannelData .up. array_area_channels_note
 
 @enduml

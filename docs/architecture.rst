@@ -210,11 +210,8 @@ Some comments (not discussions any more, though):
 Array channels
 ..............
 
-.. important::
-    Array channels in their general form are channels collecting 1D data. Typical devices used here are MCAs, but oscilloscopes would be other typical array channels. Hence, probably we need to distinguish, hence make the ArrayChannelData class more generic and add additional derived classes for MCA (``MCAChannelData``) and scopes.
+Array channels in their general form are channels collecting 1D data. Typical devices used here are MCAs, but oscilloscopes and vector signal analysers (VSA) would be other typical array channels. Hence, for these quite different types of array channels, distinct subclasses of the generic ``ArrayChannelData`` class exist, see :numref:`Fig. %s <fig-uml_arraychannel>`.
 
-
-Array channels generally collect 1D data and typically have separate regions of interest (ROI) defined, containing the sum of the counts for the given region. The devices behind the array channels are Multi-Channel Analysers (MCA). For the EPICS MCA record, see https://millenia.cars.aps.anl.gov/software/epics/mcaRecord.html.
 
 .. _fig-uml_arraychannel:
 
@@ -222,7 +219,19 @@ Array channels generally collect 1D data and typically have separate regions of 
     :align: center
     :width: 750px
 
-    Preliminary data model for the ArrayChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the ``ArrayChannelCalibration`` class from the ``ArrayChannelMetadata`` rests on the assumption that the calibration class will get added distinct behaviour at some point, *e.g.* creating calibration curves from the parameters.
+    Preliminary data model for the ArrayChannelData classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`. Details for the ``MCAChannelData`` class can be found in :numref:`Fig. %s <fig-uml_mcachannel>`. The ``ScopeData`` class is a container for scopes with several channels read simultaneously. Further array detector channels can be added by subclassing ``ArrayChannelData``. Probably the next class will be ``VSAChannelData`` for Vector Signal Analyser (VSA) data.
+
+
+Multi Channel Analysers (MCA) generally collect 1D data and typically have separate regions of interest (ROI) defined, containing the sum of the counts for the given region. For the EPICS MCA record, see https://millenia.cars.aps.anl.gov/software/epics/mcaRecord.html.
+
+
+.. _fig-uml_mcachannel:
+
+.. figure:: uml/mcachannel.*
+    :align: center
+    :width: 750px
+
+    Preliminary data model for the MCAChannelData classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the ``MCAChannelCalibration`` class from the ``ArrayChannelMetadata`` allows to add distinct behaviour, *e.g.* creating calibration curves from the parameters.
 
 
 Note: The scalar attributes for ArrayChannelROIs will currently be saved as snapshots regardless of whether the actual ROI has been defined/used. Hence, the evedata package needs to decide based on the existence of the actual data whether to create a ROI object and attach it to ``ArrayChannelData``.
@@ -235,15 +244,26 @@ The real_time and life_time values can be used to get an idea of the amount of p
 Area channels
 .............
 
+Area channels are basically 2D channels, *i.e.*, cameras. There are (at least) two distinct types of cameras in use, namely scientific cameras and standard consumer digital cameras for taking pictures (of sample positions in the setup). While scientific cameras usually record only greyscale images, but have additional parameters and can define regions of interest (ROI), consumer cameras are much simpler in terms of their data model and typically record RGB images. These different types of images need to be handled differently in the data processing and analysis pipeline.
+
+
 .. _fig-uml_areachannel:
 
 .. figure:: uml/areachannel.*
     :align: center
     :width: 750px
 
-    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (scientific cameras) have somewhat different options, probably there will appear a basic ``AreaChannel`` class with more specific subclasses.
+    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`. As scientific cameras are quite different from standard consumer digital cameras for taking pictures, but both are used from within the measurement program, distinct subclasses of the basic ``AreaDetector`` class exist. For details on the ``ScientificCamera`` classes, see :numref:`Fig. %s <fig-uml_scientificcamera>`.
 
-Note: Whether the simplest form of a camera (a standard digital camera for making pictures of samples) shall be a subclass of the ``AreaChannel`` class or a separate class is another question to be discussed and decided.
+
+.. _fig-uml_scientificcamera:
+
+.. figure:: uml/scientificcamera.*
+    :align: center
+    :width: 750px
+
+    Preliminary data model for the ScientificCameraChannel classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (scientific cameras) have somewhat different options, probably there will appear a basic ``AreaChannel`` class with more specific subclasses.
+
 
 Regarding file names/paths: Some of the scientific cameras are operated from Windows, hence there is usually no unique mapping of paths to actual places of the files, particularly given that Windows allows to map a drive letter to arbitrary network paths. It seems as if these paths are quite different for the different detectors, and therefore, some externally configurable mapping should be used.
 

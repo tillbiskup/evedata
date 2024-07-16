@@ -207,3 +207,6 @@ timestamp (section)
     Section with an artificial detector/device containing both, position counts and timestamps.
 
     All position counts appearing anywhere in a scan are contained. Hence, this section contains the complete set of all existing position counts in a scan (to be exact: for one chain). The corresponding timestamps are given in milliseconds since start of the scan.
+
+UVC
+    USB Video Class
