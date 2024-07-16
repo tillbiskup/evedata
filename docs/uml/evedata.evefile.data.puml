@@ -125,9 +125,9 @@ class ScopeChannelData extends ArrayChannelData
 class AreaChannelData extends ChannelData {
 }
 
-class SimpleCameraChannelData extends AreaChannelData
+class SampleCameraData extends AreaChannelData
 
-class ScientificCameraChannelData extends AreaChannelData
+class ScientificCameraData extends AreaChannelData
 
 note as array_area_channels_note
     For ""ArrayChannelData"" and ""AreaChannelData""
