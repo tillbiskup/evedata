@@ -31,6 +31,7 @@ Root *-- snapshot
 Root *-- meta
 
 enum DeviceType {
+    NonnumericChannel
     SinglePointChannel
     AverageChannel
     IntervalChannel

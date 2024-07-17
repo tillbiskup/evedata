@@ -68,6 +68,13 @@ class TimestampData extends MeasureData {
     get_position(timestamp, mode=last)
 }
 
+class NonnumericChannelData extends ChannelData {}
+
+'Help layout a bit
+NonnumericChannelData -[hidden]> SinglePointChannelData
+SinglePointChannelData -[hidden]> IntervalChannelData
+IntervalChannelData -[hidden]> AreaChannelData
+
 class SinglePointChannelData extends ChannelData {}
 
 class SinglePointNormalizedChannelData extends SinglePointChannelData {
