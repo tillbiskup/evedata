@@ -40,6 +40,12 @@ class ChannelMetadata extends MeasureMetadata implements AbstractDeviceMetadata 
 class TimestampMetadata extends MeasureMetadata {
 }
 
+NonnumericChannelMetadata -[hidden]>ArrayChannelMetadata
+ArrayChannelMetadata -[hidden]> AreaChannelMetadata
+
+class NonnumericChannelMetadata extends ChannelMetadata {
+}
+
 class SinglePointChannelMetadata extends ChannelMetadata {}
 
 class AverageChannelMetadata extends ChannelMetadata {
