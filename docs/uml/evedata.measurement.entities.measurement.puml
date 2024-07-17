@@ -1,0 +1,40 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Measurement {
+    detectors[] : Detector
+    motors[] : Motor
+    machine[] : Device
+    beamline[] : Device
+    metadata : Metadata
+    scan : Scan
+    setup : Setup
+    log_messages[] : LogMessage
+
+    import_from(Importer)
+}
+
+Measurement *-- Metadata
+Measurement *-- Detector
+Measurement *-- Motor
+Measurement *-- Device
+
+class Metadata {
+}
+
+class Detector {
+    channels[] : ChannelData
+    options[] : OptionData
+    metadata : DetectorMetadata
+}
+
+class Motor {
+    axes[] : AxisData
+    options[] : OptionData
+    metadata : MotorMetadata
+}
+
+class Device {
+}
+
+@enduml

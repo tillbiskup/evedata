@@ -290,7 +290,7 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     Class hierarchy of the evefile.metadata module. Each concrete class in the evefile.data module has a corresponding metadata class in this module. You may click on the image for a larger view.
 
 
-A note on the ``AbststractDeviceMetadata`` interface class: The eveH5 dataset corresponding to the TimestampMetadata class is special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
+A note on the ``AbstractDeviceMetadata`` interface class: The eveH5 dataset corresponding to the TimestampMetadata class is special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
 
 #. Moving these three attributes down the line and copying them multiple times (feels bad).
 #. Leaving the attributes blank for the "special" dataset (feels bad, too).
@@ -565,6 +565,16 @@ Entities
 
 measurement module
 ~~~~~~~~~~~~~~~~~~
+
+
+
+.. figure:: uml/evedata.measurement.entities.measurement.*
+    :align: center
+
+    Class hierarchy of the ``measurement.entities.measurement`` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage.
+
+
+
 
 Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step. Reproducibility and history are concerns of the ``radiometry`` package, the ``dataset.dataset`` module should nevertheless allow for a rather straight-forward mapping to the ASpecD-inspired dataset structure.
 
