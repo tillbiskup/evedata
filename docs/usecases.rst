@@ -16,7 +16,7 @@ For the time being, the following description of use cases is rather an idea how
 
 .. important::
 
-    Potential users and contributors to these use cases should be clear about the scope of the evedata package. It is *not* meant to do any data processing and analysis, but rather provide the main **interface** between the the information obtained from a measurement (data, measurement, setup) and the actual data display and data processing and analysis.
+    Potential users and contributors to these use cases should be clear about the scope of the evedata package. It is *not* meant to do any data processing and analysis, but rather provide the main **interface** between the the information obtained from a measurement (data, scan, setup) and the actual data display and data processing and analysis.
 
 
 Overview
@@ -42,7 +42,7 @@ A first overview of potential use cases, to be discussed with the users:
 
 * Provide powerful abstractions such as subscans, 2D/nD data structures, and detector types not yet available in the measurement program.
 
-  Users got used to a number of different abstractions, such as subscans and 2D/nD data structures (*e.g.* wavelength *vs.* AOI). Furthermore, some use cases are not yet covered directly by the measurement program, most prominently perhaps an adaptive average detector saving the individual data points. These concepts should be available as convenient abstractions and the data automatically be converted into these structures.
+  Users got used to a number of different abstractions, such as subscans and 2D/nD data structures (*e.g.* wavelength *vs.* AOI). Furthermore, some use cases are not yet covered directly by the measurement program, most prominently perhaps an adaptive average detector saving the individual data points (and corresponding axes readback values). These concepts should be available as convenient abstractions and the data automatically be converted into these structures.
 
 * Provide access to data stored separately from eveH5 files, such as spectra and images.
 

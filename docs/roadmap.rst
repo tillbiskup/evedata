@@ -18,9 +18,9 @@ Before starting implementation
 For version 0.1
 ===============
 
-* Data model for user-facing dataset and eveH5 file components
+* Data model for user-facing measurement and eveH5 file components
 
-  * data model for measurement and setup (both from SCML file) may come later
+  * data model for scan and setup (both from SCML file) may come later
 
 * basic interface for packages operating on data
 
