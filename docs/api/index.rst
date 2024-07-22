@@ -22,5 +22,6 @@ An alphabetic list of the subpackages available within the evedata package. The 
 .. toctree::
     :maxdepth: 2
 
-    io/index
+    evefile/index
+
 

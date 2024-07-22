@@ -5,7 +5,7 @@ import unittest
 import h5py
 import numpy as np
 
-from evedata.io import eveH5
+from evedata.evefile.boundaries import eveh5
 
 
 class DummyHDF5File:
@@ -26,7 +26,7 @@ class DummyHDF5File:
 
 class TestHDF5Item(unittest.TestCase):
     def setUp(self):
-        self.hdf5_item = eveH5.HDF5Item()
+        self.hdf5_item = eveh5.HDF5Item()
         self.filename = "test.h5"
 
     def tearDown(self):
@@ -44,12 +44,12 @@ class TestHDF5Item(unittest.TestCase):
 
     def test_set_filename_on_init(self):
         filename = "foo"
-        hdf5_item = eveH5.HDF5Item(filename=filename)
+        hdf5_item = eveh5.HDF5Item(filename=filename)
         self.assertEqual(filename, hdf5_item.filename)
 
     def test_set_name_on_init(self):
         name = "bar"
-        hdf5_item = eveH5.HDF5Item(name=name)
+        hdf5_item = eveh5.HDF5Item(name=name)
         self.assertEqual(name, hdf5_item.name)
 
     def test_get_attributes_without_filename_raises(self):
@@ -80,7 +80,7 @@ class TestHDF5Item(unittest.TestCase):
 
 class TestHDF5Dataset(unittest.TestCase):
     def setUp(self):
-        self.hdf5_dataset = eveH5.HDF5Dataset()
+        self.hdf5_dataset = eveh5.HDF5Dataset()
         self.filename = "test.h5"
 
     def tearDown(self):
@@ -91,11 +91,11 @@ class TestHDF5Dataset(unittest.TestCase):
         pass
 
     def test_implements_hdf5_item(self):
-        self.assertIsInstance(self.hdf5_dataset, eveH5.HDF5Item)
+        self.assertIsInstance(self.hdf5_dataset, eveh5.HDF5Item)
 
     def test_has_attributes_from_parent_class(self):
         attributes = [
-            x for x in dir(eveH5.HDF5Item()) if not x.startswith("_")
+            x for x in dir(eveh5.HDF5Item()) if not x.startswith("_")
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -109,12 +109,12 @@ class TestHDF5Dataset(unittest.TestCase):
 
     def test_set_filename_on_init(self):
         filename = "foo"
-        hdf5_dataset = eveH5.HDF5Dataset(filename=filename)
+        hdf5_dataset = eveh5.HDF5Dataset(filename=filename)
         self.assertEqual(filename, hdf5_dataset.filename)
 
     def test_set_name_on_init(self):
         name = "bar"
-        hdf5_dataset = eveH5.HDF5Dataset(name=name)
+        hdf5_dataset = eveh5.HDF5Dataset(name=name)
         self.assertEqual(name, hdf5_dataset.name)
 
     def test_data_attribute_is_empty_by_default(self):
@@ -145,18 +145,18 @@ class TestHDF5Dataset(unittest.TestCase):
 
 class TestHDF5Group(unittest.TestCase):
     def setUp(self):
-        self.hdf5_group = eveH5.HDF5Group()
-        self.item = eveH5.HDF5Item(filename="foo", name="bar")
+        self.hdf5_group = eveh5.HDF5Group()
+        self.item = eveh5.HDF5Item(filename="foo", name="bar")
 
     def test_instantiate_class(self):
         pass
 
     def test_implements_hdf5_item(self):
-        self.assertIsInstance(self.hdf5_group, eveH5.HDF5Item)
+        self.assertIsInstance(self.hdf5_group, eveh5.HDF5Item)
 
     def test_has_attributes_from_parent_class(self):
         attributes = [
-            x for x in dir(eveH5.HDF5Item()) if not x.startswith("_")
+            x for x in dir(eveh5.HDF5Item()) if not x.startswith("_")
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -164,12 +164,12 @@ class TestHDF5Group(unittest.TestCase):
 
     def test_set_filename_on_init(self):
         filename = "foo"
-        hdf5_group = eveH5.HDF5Group(filename=filename)
+        hdf5_group = eveh5.HDF5Group(filename=filename)
         self.assertEqual(filename, hdf5_group.filename)
 
     def test_set_name_on_init(self):
         name = "bar"
-        hdf5_group = eveH5.HDF5Group(name=name)
+        hdf5_group = eveh5.HDF5Group(name=name)
         self.assertEqual(name, hdf5_group.name)
 
     def test_add_item_sets_property_identical_to_item_name(self):
@@ -189,12 +189,12 @@ class TestHDF5Group(unittest.TestCase):
     def test_iterate_over_group_yields_hdf5item(self):
         self.hdf5_group.add_item(self.item)
         for element in self.hdf5_group:
-            self.assertIsInstance(element, eveH5.HDF5Item)
+            self.assertIsInstance(element, eveh5.HDF5Item)
 
 
 class TestHDF5File(unittest.TestCase):
     def setUp(self):
-        self.hdf5_file = eveH5.HDF5File()
+        self.hdf5_file = eveh5.HDF5File()
         self.filename = "test.h5"
         self.items = []
         self.items_with_type = {}
@@ -210,9 +210,9 @@ class TestHDF5File(unittest.TestCase):
     def get_items_with_type_from_hdf5_file(self):
         def inspect(name, item):
             if isinstance(item, h5py.Group):
-                node_type = eveH5.HDF5Group
+                node_type = eveh5.HDF5Group
             else:
-                node_type = eveH5.HDF5Dataset
+                node_type = eveh5.HDF5Dataset
             self.items_with_type[name] = node_type
 
         with h5py.File(self.filename, "r") as file:
@@ -222,11 +222,11 @@ class TestHDF5File(unittest.TestCase):
         pass
 
     def test_implements_hdf5_group(self):
-        self.assertIsInstance(self.hdf5_file, eveH5.HDF5Group)
+        self.assertIsInstance(self.hdf5_file, eveh5.HDF5Group)
 
     def test_has_attributes_from_parent_class(self):
         attributes = [
-            x for x in dir(eveH5.HDF5Group()) if not x.startswith("_")
+            x for x in dir(eveh5.HDF5Group()) if not x.startswith("_")
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
