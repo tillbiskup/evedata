@@ -6,6 +6,7 @@ package evedata {
         package evedata.scan.boundaries {
             package scan {}
             package scml {}
+            scan -> scml
         }
         package evedata.scan.controllers {
             package version_mapping {}
@@ -22,10 +23,10 @@ package evedata {
             package plot {
             }
 
-            setup <-- file
-            scan <-- file
-            event <-- scan
-            plot <-- scan
+            file -down-> setup
+            file -down-> scan
+            scan -down-> event
+            scan -down-> plot
         }
         evedata.scan.boundaries --> evedata.scan.controllers
         evedata.scan.controllers --> evedata.scan.entities
@@ -34,7 +35,8 @@ package evedata {
     package evedata.evefile {
         package evedata.evefile.boundaries {
             package evefile {}
-            package eveH5 {}
+            package eveh5 {}
+            evefile -> eveh5
         }
         package evedata.evefile.controllers {
             package version_mapping {}
@@ -47,9 +49,9 @@ package evedata {
             }
             package evedata.evefile.entities.metadata {
             }
+            file -down-> data
+            data -down-> metadata
 
-            evedata.evefile.entities.metadata <-- evedata.evefile.entities.data
-            evedata.evefile.entities.data <-- evedata.evefile.entities.file
         }
         evedata.evefile.boundaries --> evedata.evefile.controllers
         evedata.evefile.controllers --> evedata.evefile.entities
