@@ -20,7 +20,7 @@ pep257:
 
 pylint:
   options:
-    max-attributes: 12
+    max-attributes: 20
     max-module-lines: 1500
 
 pycodestyle:
