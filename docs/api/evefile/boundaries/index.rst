@@ -11,4 +11,6 @@ evedata.evefile.boundaries subpackage
     :maxdepth: 1
 
     evedata.evefile.boundaries.eveH5
+    evedata.evefile.boundaries.evefile
+
 
