@@ -147,7 +147,7 @@ Some comments (not discussions any more, though):
 
 * Values of MonitorData
 
-  MonitorData can have textual (non-numeric) values. This should not be too much of a problem given that numpy can handle string arrays (though <v2.0 only fixed-size string values, AFAIK, with v2.0 not yet released, as of 2024-04-04).
+  MonitorData can have textual (non-numeric) values. This should not be too much of a problem given that numpy can handle string arrays (though <v2.0 only fixed-size string values. Hence, evedata may need to depend on numpy>=2.0).
 
 * raw (*i.e.* individual) values of AverageChannelData and IntervalChannelData
 

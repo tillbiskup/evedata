@@ -46,6 +46,7 @@ setuptools.setup(
     ],
     install_requires=[
         "h5py",
+        "numpy",
     ],
     extras_require={
         "dev": [
