@@ -10,3 +10,5 @@ evedata.evefile.entities subpackage
 .. toctree::
     :maxdepth: 1
 
+    evedata.evefile.entities.file
+
