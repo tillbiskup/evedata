@@ -93,6 +93,9 @@ meta *-- Positions2Milliseconds
 meta *-- Scan
 meta *-- Setup
 meta *-- LogMessages
+Setup -[hidden]> Scan
+
+'main -[hidden]> snapshot
 
 class "<axisdata>" << (D,orange) >> {
     PV : string
@@ -136,6 +139,13 @@ main *-- "<intervaldata>_sm<#>"
 main *-- "<mcadata>_sm<#>"
 main *-- "<samplecameradata>"
 main *-- "<scientificcameradata>_sm<#>"
+
+"<axisdata>" -[hidden]> "<singlepointdata>"
+"<singlepointdata>" -[hidden]> "<averagedata>_sm<#>"
+"<averagedata>_sm<#>" -[hidden]> "<intervaldata>_sm<#>"
+"<intervaldata>_sm<#>" -[hidden]> "<mcadata>_sm<#>"
+"<mcadata>_sm<#>" -[hidden]> "<samplecameradata>"
+"<samplecameradata>" -[hidden]> "<scientificcameradata>_sm<#>"
 
 class "<averagedata>_sm<#>" << (D,orange) >> {
     PV : string

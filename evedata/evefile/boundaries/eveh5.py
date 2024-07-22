@@ -32,14 +32,14 @@ A first overview of the classes implemented in this module and their
 hierarchy is given in the UML diagram below.
 
 
-.. figure:: /uml/evedata.io.eveH5.*
+.. figure:: /uml/evedata.evefile.boundaries.eveh5.*
     :align: center
 
-    Class hierarchy of the io.eveH5 module. The :class:`HDF5Item` class and
-    children represent the individual HDF5 items on a Python level,
-    similarly to the classes provided in the h5py package, but *without*
-    requiring an open HDF5 file. Furthermore, reading actual data (dataset
-    values) is deferred by default.
+    Class hierarchy of the :mod:`evedata.evefile.boundaries.eveh5` module.
+    The :class:`HDF5Item` class and children represent the individual HDF5
+    items on a Python level, similarly to the classes provided in the h5py
+    package, but *without* requiring an open HDF5 file. Furthermore, reading
+    actual data (dataset values) is deferred by default.
 
 
 As such, the :class:`HDF5Item` class hierarchy shown above is pretty generic
@@ -60,9 +60,9 @@ Reading an HDF5 (eveH5) file is as simple as:
 
 .. code-block::
 
-    from evedata.io import eveH5
+    from evedata.evefile.boundaries import eveh5
 
-    file = eveH5.HDF5File(filename="test.h5")
+    file = eveh5.HDF5File(filename="test.h5")
     file.read()
 
 Each HDF5 item present in the root group (``/``) will appear as attribute by

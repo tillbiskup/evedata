@@ -457,16 +457,16 @@ Some comments (not discussions any more, though):
   Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, the sorting logic should be implemented in  the controller layer and called by the facade.
 
 
-eveH5 module (resource)
+eveh5 module (resource)
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The aim of this module is to provide a Python representation (in form of a hierarchy of objects) of the contents of an eveH5 file that can be mapped to both, the evefile and measurement interfaces. While the Python h5py package already provides the low-level access and gets used, the eveH5 module contains Python objects that are independent of an open HDF5 file, represent the hierarchy of HDF5 items (groups and datasets), and contain the attributes of each HDF5 item in form of a Python dictionary. Furthermore, each object contains a reference to both, the original HDF5 file and the HDF5 item, thus making reading dataset data on demand as simple as possible.
+The aim of this module is to provide a Python representation (in form of a hierarchy of objects) of the contents of an eveH5 file that can be mapped to both, the evefile and measurement interfaces. While the Python h5py package already provides the low-level access and gets used, the eveh5 module contains Python objects that are independent of an open HDF5 file, represent the hierarchy of HDF5 items (groups and datasets), and contain the attributes of each HDF5 item in form of a Python dictionary. Furthermore, each object contains a reference to both, the original HDF5 file and the HDF5 item, thus making reading dataset data on demand as simple as possible.
 
 
-.. figure:: uml/evedata.io.eveH5.*
+.. figure:: uml/evedata.evefile.boundaries.eveh5.*
     :align: center
 
-    Class hierarchy of the io.eveH5 module. The ``HDF5Item`` class and children represent the individual HDF5 items on a Python level, similarly to the classes provided in the h5py package, but *without* requiring an open HDF5 file. Furthermore, reading actual data (dataset values) is deferred by default.
+    Class hierarchy of the :mod:`evedata.evefile.boundaries.eveh5` module. The :class:`HDF5Item` class and children represent the individual HDF5 items on a Python level, similarly to the classes provided in the h5py package, but *without* requiring an open HDF5 file. Furthermore, reading actual data (dataset values) is deferred by default.
 
 
 As such, the ``HDF5Item`` class hierarchy shown above is pretty generic and should work with all eveH5 versions. However, it is *not* meant as a generic HDF5 interface, as it does make some assumptions based on the eveH5 file structure and format.
