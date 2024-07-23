@@ -201,6 +201,9 @@ class HDF5Item:
     attributes : :class:`dict`
         Attributes of the HDF5 item
 
+        Attributes are *not* loaded by default, but need to be set calling
+        :meth:`get_attributes` once.
+
         The attribute values are converted to (unicode) strings.
 
 
@@ -358,6 +361,32 @@ class HDF5Dataset(HDF5Item):
     def __init__(self, filename="", name=""):
         super().__init__(filename=filename, name=name)
         self.data = np.ndarray([0])
+        self._dtype = None
+
+    @property
+    def dtype(self):
+        """
+        Data type (NumPy dtype) of the dataset.
+
+        The dtype of a given dataset can be read without reading the data,
+        should hence be a cheap operation. Knowing the dtype, however,
+        is sometimes important to know how to further process the given
+        HDF5 dataset.
+
+        Returns
+        -------
+        dtype : :class:`numpy.dtype`
+            NumPy dtype object of the dataset
+
+        """
+        if not self._dtype:
+            if not self.filename:
+                raise ValueError("Missing attribute filename")
+            if not self.name:
+                raise ValueError("Missing attribute name")
+            with h5py.File(self.filename, "r") as file:
+                self._dtype = file[self.name].dtype
+        return self._dtype
 
     def get_data(self):
         """
@@ -541,6 +570,16 @@ class HDF5File(HDF5Group):
     provides convenience methods for reading an HDF5 file and converting it
     into a hierarchical structure of :obj:`HDF5Item` objects.
 
+    Attributes
+    ----------
+    read_attributes : :class:`bool`
+        Whether to automatically read the attributes.
+
+        Sometimes, it is convenient to automatically load the attributes
+        of each HDF5 item when importing an HDF5 file.
+
+        Default: False
+
     Raises
     ------
     ValueError
@@ -583,11 +622,24 @@ class HDF5File(HDF5Group):
     Note that the :attr:`name` attribute of the :obj:`HDF5File` object will
     automatically be set to ``/`` to reflect the root node.
 
+    If you would like to read the attributes for each HDF5 item along with
+    the item itself, tell the :obj:`HDF5File` object to do so:
+
+    .. code-block::
+
+        file = HDF5File(filename="test.h5")
+        file.read_attributes = True
+        file.read()
+
+    This will not only add the items to the :obj:`HDF5File` object, but at
+    the same time read and add their attributes.
+
     """
 
     def __init__(self):
         super().__init__()
         self.name = "/"
+        self.read_attributes = False
         self._hdf5_items = {}
 
     def read(self, filename=""):
@@ -662,6 +714,8 @@ class HDF5File(HDF5Group):
         """
         for name, node_type in self._hdf5_items.items():
             item = node_type(filename=self.filename, name=f"/{name}")
+            if self.read_attributes:
+                item.get_attributes()
             if "/" not in name:
                 self.add_item(item)
             else:

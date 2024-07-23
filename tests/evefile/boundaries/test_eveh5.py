@@ -17,11 +17,17 @@ class DummyHDF5File:
             file.attrs["Version"] = np.bytes_(["0.1.0"])
             file.attrs["Location"] = np.bytes_(["Unittest"])
             c1 = file.create_group("c1")
+            c1.attrs["start"] = np.bytes_(["2024-01-01"])
             main = c1.create_group("main")
+            main.attrs["name"] = np.bytes_(["foo"])
             meta = c1.create_group("meta")
-            main.create_dataset("test", data=np.ones([5, 2]))
-            meta.create_dataset("PosCountTimer", (1, 1))
-            file.create_dataset("SCML", (1, 1))
+            meta.attrs["name"] = np.bytes_(["foo"])
+            test = main.create_dataset("test", data=np.ones([5, 2]))
+            test.attrs["name"] = np.bytes_(["foo"])
+            poscounttimer = meta.create_dataset("PosCountTimer", (1, 1))
+            poscounttimer.attrs["foo"] = np.bytes_(["bar"])
+            scml = file.create_dataset("SCML", (1, 1))
+            scml.attrs["foo"] = np.bytes_(["bar"])
 
 
 class TestHDF5Item(unittest.TestCase):
@@ -141,6 +147,28 @@ class TestHDF5Dataset(unittest.TestCase):
         self.hdf5_dataset.data = array
         self.hdf5_dataset.get_data()
         np.testing.assert_array_equal(array, self.hdf5_dataset.data)
+
+    def test_dtype_without_filename_raises(self):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+            self.hdf5_dataset.dtype
+
+    def test_dtype_without_name_raises(self):
+        self.hdf5_dataset.filename = "foo"
+        with self.assertRaisesRegex(ValueError, "Missing attribute name"):
+            self.hdf5_dataset.dtype
+
+    def test_dtype_returns_dtype(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_dataset.filename = self.filename
+        self.hdf5_dataset.name = "/c1/main/test"
+        self.assertIsInstance(self.hdf5_dataset.dtype, np.dtype)
+
+    def test_dtype_returns_existing_dtype(self):
+        self.hdf5_dataset._dtype = "foo"
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_dataset.filename = self.filename
+        self.hdf5_dataset.name = "/c1/main/test"
+        self.assertEqual(self.hdf5_dataset.dtype, "foo")
 
 
 class TestHDF5Group(unittest.TestCase):
@@ -298,3 +326,16 @@ class TestHDF5File(unittest.TestCase):
         for item in self.items:
             with self.subTest(item=item):
                 functools.reduce(getattr, item.split("/"), self.hdf5_file)
+
+    def test_read_with_read_attributes_sets_item_attributes(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.get_items_from_hdf5_file()
+        self.hdf5_file.read_attributes = True
+        self.hdf5_file.read(self.filename)
+        for item in self.items:
+            with self.subTest(item=item):
+                self.assertTrue(
+                    functools.reduce(
+                        getattr, item.split("/"), self.hdf5_file
+                    ).attributes
+                )
