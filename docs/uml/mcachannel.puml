@@ -37,7 +37,7 @@ MCAChannelROIData "0..n" -* MCAChannelData
 
 MCAChannelROIData -[hidden]> MCAChannelData
 
-class MCAChannelROIData extends ChannelData {
+class MCAChannelROIData extends MeasureData {
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
 }
@@ -66,6 +66,8 @@ interface DeviceMetadata {
     pv : string
     access_mode : string
 }
+
+MeasureMetadata -[hidden]> DeviceMetadata
 
 class ChannelMetadata extends MeasureMetadata implements DeviceMetadata
 

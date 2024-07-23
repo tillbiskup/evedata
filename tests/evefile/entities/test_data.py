@@ -466,6 +466,10 @@ class TestMCAChannelROIData(unittest.TestCase):
 
     def test_has_attributes(self):
         attributes = [
+            "metadata",
+            "options",
+            "data",
+            "positions",
             "label",
             "marker",
         ]
@@ -511,6 +515,10 @@ class TestScientificCameraROIData(unittest.TestCase):
 
     def test_has_attributes(self):
         attributes = [
+            "metadata",
+            "options",
+            "data",
+            "positions",
             "label",
             "marker",
             "background_width",

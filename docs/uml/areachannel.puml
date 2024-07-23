@@ -1,6 +1,8 @@
 @startuml
 'https://plantuml.com/class-diagram
 
+class ChannelData extends MeasureData
+
 class AreaChannelData extends ChannelData
 
 class SampleCameraData extends AreaChannelData {
@@ -24,7 +26,7 @@ ScientificCameraROIData -[hidden]> ScientificCameraData
 ScientificCameraROIData "0..n" -* ScientificCameraData
 ScientificCameraROIData -[hidden]> ScientificCameraData
 
-class ScientificCameraROIData extends ChannelData{
+class ScientificCameraROIData extends MeasureData {
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
     background_width : int

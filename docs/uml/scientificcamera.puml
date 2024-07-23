@@ -49,7 +49,7 @@ ScientificCameraROIData -[hidden]> ScientificCameraData
 ScientificCameraROIData "0..n" -* ScientificCameraData
 ScientificCameraROIData -[hidden]> ScientificCameraData
 
-class ScientificCameraROIData extends ChannelData{
+class ScientificCameraROIData extends MeasureData{
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
     background_width : int
@@ -95,6 +95,8 @@ interface DeviceMetadata {
     pv : string
     access_mode : string
 }
+
+MeasureMetadata -[hidden]> DeviceMetadata
 
 class ChannelMetadata extends MeasureMetadata implements DeviceMetadata
 

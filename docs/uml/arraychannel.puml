@@ -1,6 +1,8 @@
 @startuml
 'https://plantuml.com/class-diagram
 
+class ChannelData extends MeasureData
+
 class ArrayChannelData extends ChannelData {}
 
 together {
@@ -16,7 +18,7 @@ class MCAChannelData extends ArrayChannelData {
 
 MCAChannelROIData "0..n" -* MCAChannelData
 
-class MCAChannelROIData extends ChannelData {
+class MCAChannelROIData extends MeasureData {
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
 }
