@@ -21,6 +21,10 @@ hierarchy is given in the UML diagram below.
     facade of the scan functional layer and contains the full information
     of the SCML file.
 
+
+Module documentation
+====================
+
 """
 
 import datetime

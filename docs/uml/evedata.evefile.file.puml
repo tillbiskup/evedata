@@ -14,7 +14,7 @@ note bottom: See diagram for\ndata module.
 
 class Metadata{
     filename : string
-    h5_version : string
+    eveh5_version : string
     eve_version : string
     xml_version: string
     measurement_station : string

@@ -19,6 +19,9 @@ Subpackages
 
 An alphabetic list of the subpackages available within the evedata package. The actual documentation is split in pages for each module of each subpackage, respectively.
 
+There are **two layers of organisation: functional layers and** within those **technical layers**. For each functional layer, typically three technical layers (boundaries, controllers, entities -- BCE) are present. See :numref:`Fig. %s <fig-architecture_layers_technical_functional>` in the :doc:`architecture <../architecture>` section of the documentation for an overview.
+
+
 .. toctree::
     :maxdepth: 2
 

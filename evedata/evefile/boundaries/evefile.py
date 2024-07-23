@@ -58,6 +58,9 @@ class File(FileEntity):
     snapshots : :class:`list`
         Device data recorded as snapshot during a measurement.
 
+        Only those device data that are not options belonging to any of
+        the devices in the :attr:`data` attribute are stored here.
+
         Each item in the list is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
