@@ -77,4 +77,12 @@ class AverageNormalizedChannelMetadata extends AverageChannelMetadata implements
 
 class IntervalNormalizedChannelMetadata extends IntervalChannelMetadata implements NormalizedMetadata {}
 
+class MCAChannelMetadata extends ArrayChannelMetadata
+
+class ScopeChannelMetadata extends ArrayChannelMetadata
+
+class SampleCameraMetadata extends AreaChannelMetadata
+
+class ScientificCameraMetadata extends AreaChannelMetadata
+
 @enduml

@@ -41,6 +41,9 @@ class MonitorData extends Data {
     {field} milliseconds : np.ndarray(dtype=int)
 }
 
+Metadata -[hidden]> MonitorData
+MonitorData -[hidden]> MeasureData
+
 class DeviceData extends MeasureData
 
 class AxisData extends MeasureData {
@@ -72,14 +75,19 @@ class NonnumericChannelData extends ChannelData {}
 
 'Help layout a bit
 NonnumericChannelData -[hidden]> SinglePointChannelData
-SinglePointChannelData -[hidden]> IntervalChannelData
-IntervalChannelData -[hidden]> AreaChannelData
+SinglePointChannelData -[hidden]> AverageChannelData
+AverageChannelData -[hidden]> IntervalChannelData
+IntervalChannelData -[hidden]> ArrayChannelData
+ArrayChannelData -[hidden]> AreaChannelData
 
 class SinglePointChannelData extends ChannelData {}
 
-class SinglePointNormalizedChannelData extends SinglePointChannelData {
+interface NormalizedData {
     normalized_data : np.ndarray
     normalizing_data : np.ndarray
+}
+
+class SinglePointNormalizedChannelData extends SinglePointChannelData implements NormalizedData {
 }
 
 class AverageChannelData extends ChannelData {
@@ -92,7 +100,7 @@ class AverageChannelData extends ChannelData {
     averaged_data()
     has_raw_data()
 }
-note bottom of AverageChannelData
+note top of AverageChannelData
     averaged_values() returns only
     those values used to average over.
 
@@ -101,9 +109,7 @@ note bottom of AverageChannelData
     averaged data - <i>i.e.</i>, mean().
 end note
 
-class AverageNormalizedChannelData extends AverageChannelData {
-    normalized_data : raggedarray
-    normalizing_data : raggedarray
+class AverageNormalizedChannelData extends AverageChannelData implements NormalizedData {
 }
 
 
@@ -117,9 +123,7 @@ class IntervalChannelData extends ChannelData {
     has_raw_data()
 }
 
-class IntervalNormalizedChannelData extends IntervalChannelData {
-    normalized_data : raggedarray
-    normalizing_data : raggedarray
+class IntervalNormalizedChannelData extends IntervalChannelData implements NormalizedData {
 }
 
 class ArrayChannelData extends ChannelData {
