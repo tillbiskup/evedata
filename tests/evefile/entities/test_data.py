@@ -557,3 +557,29 @@ class TestSampleCameraData(unittest.TestCase):
         self.assertIsInstance(
             self.data.metadata, metadata.SampleCameraMetadata
         )
+
+
+class TestNonencodedAxisData(unittest.TestCase):
+    def setUp(self):
+        self.data = data.NonencodedAxisData()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "metadata",
+            "options",
+            "data",
+            "positions",
+            "set_values",
+            "filled_data",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.data, attribute))
+
+    def test_metadata_are_of_corresponding_type(self):
+        self.assertIsInstance(
+            self.data.metadata, metadata.NonencodedAxisMetadata
+        )

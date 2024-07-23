@@ -42,6 +42,10 @@ clearly distinguishes actual devices from datasets not containing data
 read from some instrument.
 
 
+
+Module documentation
+====================
+
 """
 
 import logging
@@ -651,5 +655,25 @@ class SampleCameraMetadata(AreaChannelMetadata):
     :mod:`evedata.evefile` subpackage. Hence, for the time being,
     there are no dedicated examples how to use this class. Of course,
     you can instantiate an object as usual.
+
+    """
+
+
+class NonencodedAxisMetadata(AxisMetadata):
+    """
+    Metadata for data of axes without encoders.
+
+    This class complements the class
+    :class:`evedata.evefile.entities.data.NonencodedAxisData`.
+
+
+    Examples
+    --------
+    The :class:`NonencodedAxisMetadata` class is not meant to be used
+    directly, as any entities, but rather indirectly by means of the
+    respective facades in the boundaries technical layer of the
+    :mod:`evedata.evefile` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
 
     """

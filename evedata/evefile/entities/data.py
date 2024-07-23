@@ -36,6 +36,9 @@ hierarchy is given in the UML diagram below.
     You may click on the image for a larger view.
 
 
+Module documentation
+====================
+
 """
 
 import logging
@@ -1023,3 +1026,61 @@ class SampleCameraData(AreaChannelData):
     def __init__(self):
         super().__init__()
         self.metadata = metadata.SampleCameraMetadata()
+
+
+class NonencodedAxisData(AxisData):
+    """
+    Data from motor axes without encoders.
+
+    Three types of devices are distinguished by the eve measurement
+    program: (dumb) devices, motor axes, and detector channels.
+
+    Motor axes can have encoders that allow to read the real values back,
+    while axes without encoders only report the value they should be
+    arrived at.
+
+    Attributes
+    ----------
+    metadata : :class:`evedata.evefile.entities.metadata.AxisMetadata`
+        Relevant metadata for the individual device.
+
+    set_values : None
+        Values the axis should have been set to.
+
+        While the :attr:`Data.data` attribute contains the actual
+        positions of the axis, here, the originally intended positions are
+        stored. This allows for easily checking whether the axis has been
+        positioned within a scan as intended.
+
+
+    Examples
+    --------
+    The :class:`NonencodedAxisData` class is not meant to be used directly,
+    as any entities, but rather indirectly by means of the respective
+    facades in the boundaries technical layer of the
+    :mod:`evedata.evefile` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.metadata = metadata.NonencodedAxisMetadata()
+        self._filled_data = None
+
+    @property
+    def filled_data(self):
+        """
+        Filled axis values.
+
+        Depending on the detector channel the axis values should be
+        plotted against, filling may change.
+
+        Returns
+        -------
+        data : any
+            Filled axis values.
+
+        """
+        return self._filled_data

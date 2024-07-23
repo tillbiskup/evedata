@@ -40,6 +40,8 @@ class ChannelMetadata extends MeasureMetadata implements AbstractDeviceMetadata 
 class TimestampMetadata extends MeasureMetadata {
 }
 
+class NonnumericAxisMetadata extends AxisMetadata
+
 NonnumericChannelMetadata -[hidden]>ArrayChannelMetadata
 ArrayChannelMetadata -[hidden]> AreaChannelMetadata
 
@@ -65,7 +67,7 @@ class ArrayChannelMetadata extends ChannelMetadata {
 class AreaChannelMetadata extends ChannelMetadata {
 }
 
-Data *- Metadata
+Metadata --* Data
 
 interface NormalizedMetadata {
     normalize_id : string

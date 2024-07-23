@@ -476,3 +476,25 @@ class TestSampleCameraMetadata(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.metadata, attribute))
+
+
+class TestNonencodedAxisMetadata(unittest.TestCase):
+    def setUp(self):
+        self.metadata = metadata.NonencodedAxisMetadata()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "name",
+            "options",
+            "unit",
+            "id",
+            "pv",
+            "access_mode",
+            "deadband",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.metadata, attribute))
