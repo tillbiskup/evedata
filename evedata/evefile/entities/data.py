@@ -1,4 +1,4 @@
-"""
+r"""
 
 *Entities representing an eveH5 file on the data level.*
 
