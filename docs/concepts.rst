@@ -2,6 +2,9 @@
 Concepts
 ========
 
+*Describe the concepts, as soon as they emerge more clearly.*
+
+
 .. sidebar:: Contents
 
     .. contents::
@@ -9,7 +12,8 @@ Concepts
         :depth: 1
 
 
-*Describe the concepts, as soon as they emerge more clearly.*
+The `evedata` package, while primarily a Python interface to the measured data stored in HDF5 format and according to a given schema (termed eveH5 and evolved over time), does a lot more than existing interfaces. Its main focus is to provide **viable abstractions** and **familiar concepts** for radiometry people, *i.e.*, a **shared language**. As a very rough example: regardless of the way devices are controlled by the engine of the measurement program, they are distinct devices each serving a clearly defined function, not a list of "process variables".
+
 
 A first incomplete list:
 
