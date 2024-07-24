@@ -24,7 +24,15 @@ class Interval extends "Point (0D)" {
     counts
 }
 
-class "Array (1D)" #FFCCCC extends Channel {}
+class "Array (1D)" extends Channel {}
 
-class "Area (2D)" #FFCCCC extends Channel {}
+class MCA extends "Array (1D)"
+
+class Scope extends "Array (1D)"
+
+class "Area (2D)" extends Channel {}
+
+class ScientificCamera extends "Area (2D)"
+
+class SampleCamera extends "Area (2D)"
 @enduml

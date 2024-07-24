@@ -210,7 +210,7 @@ Some comments (not discussions any more, though):
 Array channels
 ..............
 
-Array channels in their general form are channels collecting 1D data. Typical devices used here are MCAs, but oscilloscopes and vector signal analysers (VSA) would be other typical array channels. Hence, for these quite different types of array channels, distinct subclasses of the generic ``ArrayChannelData`` class exist, see :numref:`Fig. %s <fig-uml_arraychannel>`.
+Array channels in their general form are channels collecting 1D data. Typical devices used here are MCAs, but oscilloscopes and vector signal analysers (VSA) would be other typical array channels. Hence, for these quite different types of array channels, distinct subclasses of the generic :class:`ArrayChannelData <evedata.evefile.entities.data.ArrayChannelData>` class exist, see :numref:`Fig. %s <fig-uml_arraychannel>`.
 
 
 .. _fig-uml_arraychannel:
@@ -219,7 +219,7 @@ Array channels in their general form are channels collecting 1D data. Typical de
     :align: center
     :width: 750px
 
-    Preliminary data model for the ArrayChannelData classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`. Details for the ``MCAChannelData`` class can be found in :numref:`Fig. %s <fig-uml_mcachannel>`. The ``ScopeData`` class is a container for scopes with several channels read simultaneously. Further array detector channels can be added by subclassing ``ArrayChannelData``. Probably the next class will be ``VSAChannelData`` for Vector Signal Analyser (VSA) data.
+    Preliminary data model for the :class:`ArrayChannelData <evedata.evefile.entities.data.ArrayChannelData>` classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`. Details for the :class:`MCAChannelData <evedata.evefile.entities.data.MCAChannelData>` class can be found in :numref:`Fig. %s <fig-uml_mcachannel>`. The :class:`ScopeChannelData <evedata.evefile.entities.data.ScopeChannelData>` class is a container for scopes with several channels read simultaneously. Further array detector channels can be added by subclassing :class:`ArrayChannelData <evedata.evefile.entities.data.ArrayChannelData>`. Probably the next class will be :class:`VSAChannelData <evedata.evefile.entities.data.VSAChannelData>` for Vector Signal Analyser (VSA) data.
 
 
 Multi Channel Analysers (MCA) generally collect 1D data and typically have separate regions of interest (ROI) defined, containing the sum of the counts for the given region. For the EPICS MCA record, see https://millenia.cars.aps.anl.gov/software/epics/mcaRecord.html.
@@ -231,12 +231,12 @@ Multi Channel Analysers (MCA) generally collect 1D data and typically have separ
     :align: center
     :width: 750px
 
-    Preliminary data model for the MCAChannelData classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the ``MCAChannelCalibration`` class from the ``ArrayChannelMetadata`` allows to add distinct behaviour, *e.g.* creating calibration curves from the parameters.
+    Preliminary data model for the :class:`MCAChannelData <evedata.evefile.entities.data.MCAChannelData>` classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the :class:`MCAChannelCalibration <evedata.evefile.entities.metadata.MCAChannelCalibration>` class from the :class:`ArrayChannelMetadata <evedata.evefile.entities.metadata.ArrayChannelMetadata>` allows to add distinct behaviour, *e.g.* creating calibration curves from the parameters.
 
 
-Note: The scalar attributes for ArrayChannelROIs will currently be saved as snapshots regardless of whether the actual ROI has been defined/used. Hence, the evedata package needs to decide based on the existence of the actual data whether to create a ROI object and attach it to ``ArrayChannelData``.
+Note: The scalar attributes for ArrayChannelROIs will currently be saved as snapshots regardless of whether the actual ROI has been defined/used. Hence, the evedata package needs to decide based on the existence of the actual data whether to create a ROI object and attach it to :class:`ArrayChannelData <evedata.evefile.entities.data.ArrayChannelData>`.
 
-The calibration parameters are needed to convert the *x* axis of the MCA spectrum into a real energy axis. Hence, the ``ArrayChannelCalibration`` class will have methods for performing exactly this conversion. The relationship between calibrated units (cal) and channel number (chan) is defined as cal=CALO + chan\*CALS + chan^2\*CALQ. The first channel in the spectrum is defined as chan=0. However, not all MCAs/SDDs have these calibration values: Ketek SDDs seem to not have these values (internal calibration?).
+The calibration parameters are needed to convert the *x* axis of the MCA spectrum into a real energy axis. Hence, the :class:`MCAChannelCalibration <evedata.evefile.entities.metadata.MCAChannelCalibration>` class will have methods for performing exactly this conversion. The relationship between calibrated units (cal) and channel number (chan) is defined as cal=CALO + chan\*CALS + chan^2\*CALQ. The first channel in the spectrum is defined as chan=0. However, not all MCAs/SDDs have these calibration values: Ketek SDDs seem to not have these values (internal calibration?).
 
 The real_time and life_time values can be used to get an idea of the amount of pile up occurring, *i.e.* having two photons with same energy within a short time interval reaching the detector being detected as one photon with twice the energy. Hence, latest in the radiometry package, distinct methods for this kind of analysis should be implemented.
 
@@ -253,7 +253,7 @@ Area channels are basically 2D channels, *i.e.*, cameras. There are (at least) t
     :align: center
     :width: 750px
 
-    Preliminary data model for the AreaChannel class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`. As scientific cameras are quite different from standard consumer digital cameras for taking pictures, but both are used from within the measurement program, distinct subclasses of the basic ``AreaDetector`` class exist. For details on the ``ScientificCamera`` classes, see :numref:`Fig. %s <fig-uml_scientificcamera>`.
+    Preliminary data model for the :class:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>` class. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`. As scientific cameras are quite different from standard consumer digital cameras for taking pictures, but both are used from within the measurement program, distinct subclasses of the basic :class:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>` class exist. For details on the :class:`ScientificCameraData <evedata.evefile.entities.data.ScientificCameraData>` classes, see :numref:`Fig. %s <fig-uml_scientificcamera>`.
 
 
 .. _fig-uml_scientificcamera:
@@ -262,7 +262,14 @@ Area channels are basically 2D channels, *i.e.*, cameras. There are (at least) t
     :align: center
     :width: 750px
 
-    Preliminary data model for the ScientificCameraChannel classes. The basic hierarchy is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data>`, and here, the relevant part of the metadata class hierarchy from :numref:`Fig. %s <fig-uml_evedata-evefile.metadata>` is shown as well. As different area detectors (scientific cameras) have somewhat different options, probably there will appear a basic ``AreaChannel`` class with more specific subclasses.
+    Preliminary data model for the :class:`ScientificCameraData <evedata.evefile.entities.data.ScientificCameraData>` classes. The
+    basic hierarchy is identical to :numref:`Fig. %s
+    <fig-uml_evedata-evefile.data>`, and here, the relevant part of the
+    metadata class hierarchy from :numref:`Fig. %s
+    <fig-uml_evedata-evefile.metadata>` is shown as well. As different
+    area detectors (scientific cameras) have somewhat different options,
+    probably there will appear a basic :class:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>` class with
+    more specific subclasses.
 
 
 Regarding file names/paths: Some of the scientific cameras are operated from Windows, hence there is usually no unique mapping of paths to actual places of the files, particularly given that Windows allows to map a drive letter to arbitrary network paths. It seems as if these paths are quite different for the different detectors, and therefore, some externally configurable mapping should be used.

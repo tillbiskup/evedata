@@ -2,9 +2,15 @@
 
 *Entities representing an eveH5 file on the data level.*
 
+.. sidebar:: Contents
+
+    .. contents::
+        :local:
+        :depth: 1
+
 Data are organised in "datasets" within HDF5, and the
 :mod:`evedata.evefile.entities.data` module provides the relevant entities
-to describe these datasets. Although currently (as of 06/2024, eve version
+to describe these datasets. Although currently (as of 07/2024, eve version
 2.1) neither average nor interval detector channels save the individual
 data points, at least the former is a clear need of the
 engineers/scientists. Hence, the data model already respects this use
@@ -19,7 +25,18 @@ Overview
 ========
 
 A first overview of the classes implemented in this module and their
-hierarchy is given in the UML diagram below.
+hierarchy is given in the UML diagram below, :numref:`Fig. %s
+<fig-uml_evedata-evefile.data_api>`. The first distinction is made
+between :class:`MonitorData` and :class:`MeasureData`, with the former
+having timestamps (in milliseconds) as their quantisation axis, and the
+latter individual positions (integer values). :class:`MeasureData` can
+further be separated into :class:`AxisData`, :class:`ChannelData`,
+and :class:`DeviceData`. The :class:`TimestampData` class is somewhat
+special, as it (only) gets used to map timestamps to positions and does
+not correspond to any physical device or option of such device. Generally,
+each data class comes with its corresponding metadata class implemented in
+the :mod:`evedata.evefile.entities.metadata` module.
+
 
 .. _fig-uml_evedata-evefile.data_api:
 
@@ -37,6 +54,29 @@ hierarchy is given in the UML diagram below.
     detector channels and motor axes.
     You may click on the image for a larger view.
 
+
+While the UML diagram in :numref:`Fig. %s <fig-uml_evedata-evefile.data_api>`
+represents the actually implemented classes in the module, it might
+sometimes be easier to have a more high-level and abstract overview of the
+different data classes. This is provided in  :numref:`Fig. %s
+<fig-uml_measuredata-types_api>`. below.
+
+
+.. _fig-uml_measuredata-types_api:
+
+.. figure:: /uml/measuredata-types.*
+    :align: center
+    :width: 750px
+
+    A more abstract view of the :class:`MeasureData` class hierarchy. The
+    class names here generally do *not* reflect actual class names,
+    but are rather meant as a quick overview. Detector channels can
+    generally be distinguished according to the dimensionality of the recorded
+    data (0D...2D, potentially 3D in the future).
+
+
+Array and area channels are currently best modelled with respect to their
+data model and are hence described in more detail below.
 
 
 Array channels
@@ -56,14 +96,15 @@ generic ``ArrayChannelData`` class exist, see
     :align: center
     :width: 750px
 
-    Preliminary data model for the ArrayChannelData classes. The basic
-    hierarchy is identical to :numref:`Fig. %s
-    <fig-uml_evedata-evefile.data_api>`. Details for the ``MCAChannelData``
-    class can be found in :numref:`Fig. %s <fig-uml_mcachannel_api>`. The
-    ``ScopeData`` class is a container for scopes with several channels
-    read simultaneously. Further array detector channels can be added by
-    subclassing ``ArrayChannelData``. Probably the next class will be
-    ``VSAChannelData`` for Vector Signal Analyser (VSA) data.
+    Preliminary data model for the :class:`ArrayChannelData` classes. The
+    basic hierarchy is identical to :numref:`Fig. %s
+    <fig-uml_evedata-evefile.data_api>`. Details for the
+    :class:`MCAChannelData` class can be found in :numref:`Fig. %s
+    <fig-uml_mcachannel_api>`. The :class:`ScopeChannelData` class is a
+    container for scopes with several channels read simultaneously.
+    Further array detector channels can be added by subclassing
+    :class:`ArrayChannelData`. Probably the next class will be
+    :class:`VSAChannelData` for Vector Signal Analyser (VSA) data.
 
 
 Multi Channel Analysers (MCA) generally collect 1D data and typically have
@@ -78,14 +119,17 @@ see https://millenia.cars.aps.anl.gov/software/epics/mcaRecord.html.
     :align: center
     :width: 750px
 
-    Preliminary data model for the MCAChannelData classes. The basic
+    Preliminary data model for the :class:`MCAChannelData` classes. The basic
     hierarchy is identical to :numref:`Fig. %s
     <fig-uml_evedata-evefile.data_api>`, and here, the relevant part of the
     metadata class hierarchy from :numref:`Fig. %s
     <fig-uml_evedata-evefile.metadata>` is shown as well. Separating the
-    ``MCAChannelCalibration`` class from the ``ArrayChannelMetadata``
-    allows to add distinct behaviour, *e.g.* creating calibration curves
-    from the parameters.
+    :class:`MCAChannelCalibration
+    <evedata.evefile.entities.metadata.MCAChannelCalibration>` class from the
+    :class:`ArrayChannelMetadata
+    <evedata.evefile.entities.metadata.ArrayChannelMetadata>` allows to
+    add distinct behaviour, *e.g.* creating calibration curves from the
+    parameters.
 
 
 Note: The scalar attributes for ArrayChannelROIs will currently be saved
@@ -95,7 +139,9 @@ actual data whether to create a ROI object and attach it to
 ``ArrayChannelData``.
 
 The calibration parameters are needed to convert the *x* axis of the MCA
-spectrum into a real energy axis. Hence, the ``ArrayChannelCalibration``
+spectrum into a real energy axis. Hence,
+the :class:`MCAChannelCalibration
+<evedata.evefile.entities.metadata.MCAChannelCalibration>`
 class will have methods for performing exactly this conversion. The
 relationship between calibrated units (cal) and channel number (chan) is
 defined as cal=CALO + chan\*CALS + chan^2\*CALQ. The first channel in the
@@ -129,13 +175,15 @@ handled differently in the data processing and analysis pipeline.
     :align: center
     :width: 750px
 
-    Preliminary data model for the AreaChannel class. The basic hierarchy
-    is identical to :numref:`Fig. %s <fig-uml_evedata-evefile.data_api>`. As
+    Preliminary data model for the :class:`AreaChannelData` class. The basic
+    hierarchy is identical to :numref:`Fig. %s
+    <fig-uml_evedata-evefile.data_api>`. As
     scientific cameras are quite different from standard consumer digital
     cameras for taking pictures, but both are used from within the
-    measurement program, distinct subclasses of the basic ``AreaDetector``
-    class exist. For details on the ``ScientificCamera`` classes,
-    see :numref:`Fig. %s <fig-uml_scientificcamera_api>`.
+    measurement program, distinct subclasses of the basic
+    :class:`AreaChannelData` class exist. For details on the
+    :class:`ScientificCameraData` classes, see :numref:`Fig. %s
+    <fig-uml_scientificcamera_api>`.
 
 
 .. _fig-uml_scientificcamera_api:
@@ -144,14 +192,14 @@ handled differently in the data processing and analysis pipeline.
     :align: center
     :width: 750px
 
-    Preliminary data model for the ScientificCameraChannel classes. The
+    Preliminary data model for the :class:`ScientificCameraData` classes. The
     basic hierarchy is identical to :numref:`Fig. %s
     <fig-uml_evedata-evefile.data_api>`, and here, the relevant part of the
     metadata class hierarchy from :numref:`Fig. %s
     <fig-uml_evedata-evefile.metadata>` is shown as well. As different
     area detectors (scientific cameras) have somewhat different options,
-    probably there will appear a basic ``AreaChannel`` class with more
-    specific subclasses.
+    probably there will appear a basic :class:`AreaChannelData` class with
+    more specific subclasses.
 
 
 Regarding file names/paths: Some of the scientific cameras are operated
