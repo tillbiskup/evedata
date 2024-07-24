@@ -7,6 +7,145 @@ Hence, mapping the contents of an eveH5 file to the data model of the
 evedata package requires to get the correct mapper for the specific
 version. This is the typical use case for the factory pattern.
 
+Users of the module hence will typically only obtain a
+:obj:`VersionMapperFactory` object to get the correct mappers for individual
+files. Furthermore, "users" basically boils down to the :class:`EveFile
+<evedata.evefile.boundaries.evefile.EveFile>` class. Therefore, users of
+the `evedata` package usually do not interact directly with any of the
+classes provided by this module.
+
+
+Overview
+========
+
+Being version agnostic with respect to eveH5 and SCML schema versions is a
+central aspect of the evedata package. This requires facilities mapping
+the actual eveH5 files to the data model provided by the entities
+technical layer of the evefile subpackage. The :class:`File
+<evedata.evefile.boundaries.evefile.File>` facade obtains
+the correct :obj:`VersionMapper` object via the
+:class:`VersionMapperFactory`, providing an :class:`HDF5File
+<evedata.evefile.boundaries.eveh5.HDF5File>` resource object to the
+factory. It is the duty of the factory to obtain the "version" attribute
+from the :obj:`HDF5File <evedata.evefile.boundaries.eveh5.HDF5File>`
+object (explicitly getting the attributes of the root group of the
+:obj:`HDF5File <evedata.evefile.boundaries.eveh5.HDF5File>` object).
+
+
+.. figure:: /uml/evedata.evefile.controllers.version_mapping.*
+    :align: center
+
+    Class hierarchy of the :mod:`evedata.evefile.controllers.version_mapping`
+    module, providing the functionality to map different eveH5 file
+    schemas to the data structure provided by the :class:`EveFile
+    <evedata.evefile.boundaries.evefile.EveFile>` class. The factory
+    will be used to get the correct mapper for a given eveH5 file.
+    For each eveH5 schema version, there exists an individual
+    ``VersionMapperVx`` class dealing with the version-specific mapping.
+    The idea behind the ``Mapping`` class is to provide simple mappings for
+    attributes and alike that need not be hard-coded and can be stored
+    externally, *e.g.* in YAML files. This would make it easier to account
+    for (simple) changes.
+
+
+For each eveH5 schema version, there exists an individual
+``VersionMapperVx`` class dealing with the version-specific mapping. That
+part of the mapping common to all versions of the eveH5 schema takes place
+in the :class:`VersionMapper` parent class, *e.g.* removing the chain. The
+idea behind the ``Mapping`` class is to provide simple mappings for
+attributes and alike that can be stored externally, *e.g.* in YAML files.
+This would make it easier to account for (simple) changes.
+
+
+Mapping tasks for eveH5 schema up to v7
+=======================================
+
+Given the quite different overall philosophy of the current eveH5 file
+schema (up to version v7) and the data model provided by the `evedata`
+package, there is a lot of tasks for the mappers to be done.
+
+What follows is a summary of the different aspects, for the time being
+*not* divided for the different formats (up to v7):
+
+* Map attributes of ``/`` and ``c1`` to the file metadata.
+* Convert monitor datasets from the ``device`` group to :obj:`MonitorData
+  <evedata.evefile.entities.data.MonitorData>` objects.
+
+    * We probably need to create subclasses for the different monitor
+      datasets, at least distinguishing between numeric and and
+      non-numeric values.
+
+* Filter all datasets from the ``main`` section, with different goals:
+
+    * Map array data to :obj:`ArrayChannelData
+      <evedata.evefile.entities.data.ArrayChannelData>` objects.
+    * Map average and interval channel data (and the data provided in the
+      respective HDF5 groups) to :obj:`AverageChannelData
+      <evedata.evefile.entities.data.AverageChannelData>` and
+      :obj:`IntervalChannelData
+      <evedata.evefile.entities.data.IntervalChannelData>` objects,
+      respectively.
+    * Distinguish between single point and area data, and map to
+      :obj:`SinglePointChannelData
+      <evedata.evefile.entities.data.SinglePointChannelData>` and
+      :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
+      objects, respectively.
+    * Map all remaining HDF5 datasets that belong to one of the already
+      mapped data objects to their respective attributes.
+    * Map all HDF5 datasets remaining (if any) to data objects
+      corresponding to their respective data type.
+    * Add all data objects to the :attr:`data` attribute of the
+      :obj:`EveFile` object.
+
+* Filter all datasets from the ``snapshot`` section, with different goals:
+
+    * Map all HDF5 datasets that belong to one of the data objects in the
+      :attr:`data` attribute of the :obj:`EveFile` object to their respective
+      attributes.
+    * Map all HDF5 datasets remaining (if any) to data objects
+      corresponding to their respective data type.
+    * Add all data objects to the :attr:`snapshot` attribute of the
+      :obj:`EveFile` object.
+
+
+Most probably, not all these tasks can be inferred from the contents of an
+eveH5 file alone. In this case, additional mapping tables, eventually
+perhaps even on a per-measurement-station level, are necessary.
+
+Other tasks not in the realm of the version mappers, but part of the
+:mod:`evedata.evefile.controllers` subpackage, are:
+
+* Separating 0D data that have been redefined within a scan (single point,
+  average, interval)
+* Mapping scans using the EPICS MPSKIP feature to record individual values
+  for actual average detectors to :obj:`AverageChannelData
+  <evedata.evefile.entities.data.AverageChannelData>` objects.
+
+
+Fundamental change of eveH5 schema with v8
+==========================================
+
+It is anticipated that based on the experience with the data model
+implemented within the `evedata` package, the schema of the eveH5 files
+will change dramatically with the new version v8. Overarching design
+principles of the schema overhaul include:
+
+* Much more explicit markup of the device types represented by the
+  individual HDF5 datasets.
+* Parameters/options of devices are part of the HDF5 dataset of the
+  respective device.
+
+    * Parameters/options static within a scan module appear as attributes of
+      the HDF5 datasets.
+    * Parameters/options that potentially change with ech individual recorded
+      data point are represented as additional columns in the HDF5 dataset.
+
+* Removing of the chain ``c1`` that was never and will never be used.
+
+Taken together, this restructuring of the eveH5 schema most probably means
+that the mapper for v8 does not have much in common with the mappers for
+the previous versions, as this is a major change.
+
 
 Module documentation
 ====================
@@ -200,28 +339,49 @@ class VersionMapperV5(VersionMapper):
 
     More description comes here...
 
+    .. important::
+        EveH5 files of version v5 and earlier do *not* contain a date and
+        time for the end of the measurement. Hence, the corresponding
+        attribute :attr:`File.metadata.end
+        <evedata.evefile.entities.file.Metadata.end>` is set to the UNIX
+        start date (1970-01-01T00:00:00). Thus, with these files,
+        it is *not* possible to autamatically calculate the duration of
+        the measurement.
+
 
     Attributes
     ----------
-    attr : :class:`None`
-        Short description
+    source : :class:`evedata.evefile.boundaries.eveh5.HDF5File`
+        Python object representation of an eveH5 file
+
+    destination : :class:`evedata.evefile.boundaries.evefile.File`
+        High(er)-level evedata structure representing an eveH5 file
 
     Raises
     ------
-    exception
-        Short description when and why raised
+    ValueError
+        Raised if either source or destination are not provided
 
 
     Examples
     --------
-    It is always nice to give some examples how to use the class. Best to do
-    that with code examples:
+    Mapping a given eveH5 file to the evedata structures is the same for
+    each of the mappers:
 
     .. code-block::
 
-        obj = VersionMapperV5()
-        ...
+        mapper = VersionMapperV5()
+        mapper.map(source=eveh5, destination=evefile)
 
+    Usually, you will obtain the correct mapper from the
+    :class:`VersionMapperFactory`. In this case, the returned mapper has
+    its :attr:`source` attribute already set for convenience:
+
+    .. code-block::
+
+        factory = VersionMapperFactory()
+        mapper = factory.get_mapper(eveh5=eveh5)
+        mapper.map(destination=evefile)
 
     """
 
@@ -254,37 +414,59 @@ class VersionMapperV5(VersionMapper):
             f"{self.source.attributes['StartTime']}",
             "%d.%m.%Y %H:%M:%S",
         )
+        self.destination.metadata.end = datetime.datetime(1970, 1, 1)
 
 
 class VersionMapperV6(VersionMapperV5):
     """
     Mapper for mapping eveH5 v6 file contents to evedata structures.
 
-    More description comes here...
+    The only difference to the previous version v5: Times for start *and
+    now even end* of a measurement are available and are mapped
+    as :obj:`datetime.datetime` objects onto the
+    :attr:`File.metadata.start
+    <evedata.evefile.entities.file.Metadata.start>` and
+    :attr:`File.metadata.end <evedata.evefile.entities.file.Metadata.end>`
+    attributes, respectively.
 
+    .. note::
+        Previous to v6 eveH5 files, no end date/time of the measurement
+        was available, hence no duration of the measurement can be
+        calculated.
 
     Attributes
     ----------
-    attr : :class:`None`
-        Short description
+    source : :class:`evedata.evefile.boundaries.eveh5.HDF5File`
+        Python object representation of an eveH5 file
+
+    destination : :class:`evedata.evefile.boundaries.evefile.File`
+        High(er)-level evedata structure representing an eveH5 file
 
     Raises
     ------
-    exception
-        Short description when and why raised
+    ValueError
+        Raised if either source or destination are not provided
 
 
     Examples
     --------
-    It is always nice to give some examples how to use the class. Best to do
-    that with code examples:
+    Mapping a given eveH5 file to the evedata structures is the same for
+    each of the mappers:
 
     .. code-block::
 
-        obj = VersionMapperV6()
-        ...
+        mapper = VersionMapperV6()
+        mapper.map(source=eveh5, destination=evefile)
 
+    Usually, you will obtain the correct mapper from the
+    :class:`VersionMapperFactory`. In this case, the returned mapper has
+    its :attr:`source` attribute already set for convenience:
 
+    .. code-block::
+
+        factory = VersionMapperFactory()
+        mapper = factory.get_mapper(eveh5=eveh5)
+        mapper.map(destination=evefile)
 
     """
 
@@ -308,31 +490,44 @@ class VersionMapperV7(VersionMapperV6):
     """
     Mapper for mapping eveH5 v7 file contents to evedata structures.
 
-    More description comes here...
-
+    The only difference to the previous version v6: the attribute
+    ``Simulation`` has beem added on the file root level and is mapped
+    as a Boolean value onto the :attr:`File.metadata.simulation
+    <evedata.evefile.entities.file.Metadata.simulation>` attribute.
 
     Attributes
     ----------
-    attr : :class:`None`
-        Short description
+    source : :class:`evedata.evefile.boundaries.eveh5.HDF5File`
+        Python object representation of an eveH5 file
+
+    destination : :class:`evedata.evefile.boundaries.evefile.File`
+        High(er)-level evedata structure representing an eveH5 file
 
     Raises
     ------
-    exception
-        Short description when and why raised
+    ValueError
+        Raised if either source or destination are not provided
 
 
     Examples
     --------
-    It is always nice to give some examples how to use the class. Best to do
-    that with code examples:
+    Mapping a given eveH5 file to the evedata structures is the same for
+    each of the mappers:
 
     .. code-block::
 
-        obj = VersionMapperV7()
-        ...
+        mapper = VersionMapperV7()
+        mapper.map(source=eveh5, destination=evefile)
 
+    Usually, you will obtain the correct mapper from the
+    :class:`VersionMapperFactory`. In this case, the returned mapper has
+    its :attr:`source` attribute already set for convenience:
 
+    .. code-block::
+
+        factory = VersionMapperFactory()
+        mapper = factory.get_mapper(eveh5=eveh5)
+        mapper.map(destination=evefile)
 
     """
 

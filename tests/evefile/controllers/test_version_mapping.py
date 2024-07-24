@@ -183,6 +183,12 @@ class TestVersionMapperV5(unittest.TestCase):
             ),
         )
 
+    def test_map_sets_end_date_to_unix_start_time(self):
+        self.mapper.source = MockEveH5()
+        evefile = evedata.evefile.boundaries.evefile.File()
+        self.mapper.map(destination=evefile)
+        self.assertEqual(evefile.metadata.end, datetime.datetime(1970, 1, 1))
+
 
 class TestVersionMapperV6(unittest.TestCase):
     def setUp(self):
