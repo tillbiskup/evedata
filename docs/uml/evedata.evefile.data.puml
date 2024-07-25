@@ -5,7 +5,7 @@ class Data {
     metadata : Metadata
     options : dict
     _data : np.ndarray
-    _importer : DataImporter
+    _importer{} : DataImporter
     data()
 }
 note left of Data::_data
@@ -23,14 +23,27 @@ end note
 
 class DataImporter {
     source
-    import()
+    load()
 }
+
+class HDF5DataImporter extends DataImporter {
+    item
+}
+
+class ImageDataImporter extends DataImporter
+
+note right of ImageDataImporter
+    Needs to handle a list of image filenames,
+    as per position one image needs to be loaded.
+end note
+
+HDF5DataImporter -[hidden]> ImageDataImporter
 
 class Metadata {
 }
 note left: See diagram for\nmetadata module.
 
-Data *- DataImporter
+Data *- "n" DataImporter
 Data *-- Metadata
 
 class MeasureData extends Data {

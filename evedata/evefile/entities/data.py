@@ -223,6 +223,7 @@ Module documentation
 
 import logging
 
+import h5py
 import numpy as np
 
 from evedata.evefile.entities import metadata
@@ -1266,3 +1267,199 @@ class NonencodedAxisData(AxisData):
 
         """
         return self._filled_data
+
+
+class DataImporter:
+    """
+    Base class for data importer.
+
+    Data need to be imported from somewhere. And usually, data should only
+    be imported once they are requested, to save time and resources.
+
+    Actual importer classes inherit from this base class and implement the
+    private method :meth:`_load`. This method simply returns the loaded data.
+
+
+    Attributes
+    ----------
+    source : :class:`str`
+        Source the data should be loaded from.
+
+        Typically, a file name.
+
+    Raises
+    ------
+    ValueError
+        Raised upon load if no source is provided.
+
+
+    Examples
+    --------
+    While this base class is not intended to be used directly, the general
+    usage is the same for all descendants:
+
+    .. code-block::
+
+        importer = DataImporter()
+        data = importer.import(source="myfilename")
+
+    For convenience, you can set the source when instantiating the object.
+    This makes actually importing simpler, not having to worry any more
+    about the source:
+
+    .. code-block::
+
+        importer = DataImporter(source="myfilename")
+        data = importer.import()
+
+    """
+
+    def __init__(self, source=""):
+        self.source = source
+
+    def load(self, source=""):
+        """
+        Load data from source.
+
+        The method first checks for the source to be present, and afterwards
+        calls out to the private method :meth:`_load` that does the actual
+        business. Child classes hence need to implement this private method.
+        Make sure to return the loaded data from this method.
+
+        Parameters
+        ----------
+        source : :class:`str`
+            Source the data should be loaded from.
+
+            Typically, a file name.
+
+        Raises
+        ------
+        ValueError
+            Raised if no source is provided.
+
+        Returns
+        -------
+        data : any
+            Data loaded from the source.
+
+            The actual type of data depends on the source and importer type.
+
+        """
+        if source:
+            self.source = source
+        if not self.source:
+            raise ValueError("No source provided to load data from.")
+        return self._load()
+
+    def _load(self):
+        pass
+
+
+class HDF5DataImporter(DataImporter):
+    """
+    Load data from HDF5 dataset.
+
+    HDF5 files are organised hierarchically, with groups as nodes and
+    datasets as leafs. Data can (only) be contained in datasets, and this is
+    what this importer is concerned about.
+
+    .. note::
+        Perhaps it is possible to move this class to the boundary technical
+        layer, by means of creating an (abstract) DataImporterFactory in the
+        entities layer and a concrete factory in the boundary layer. The
+        only complication currently: the controller technical layer needs to
+        access the concrete DataImporterFactory.
+
+
+    Attributes
+    ----------
+    source : :class:`str`
+        Source the data should be loaded from.
+
+        Name of an HDF5 file.
+
+    item : :class:`str`
+        The dataset within the HDF5 file.
+
+        Datasets are addressed by a path-like string, with slashes
+        separating the hierarchy levels in the file.
+
+    Raises
+    ------
+    ValueError
+        Raised upon load if either source or item are not provided.
+
+
+    Examples
+    --------
+    To import data from an HDF5 dataset located in an HDF5 file, you need to
+    provide both, file name (source) and dataset name (item):
+
+    .. code-block::
+
+        importer = HDF5DataImporter()
+        importer.source = "test.h5"
+        importer.item = "/c1/main/test"
+        data = importer.load()
+
+    You can, for convenience, provide both, source and item upon
+    instantiating the importer object:
+
+    .. code-block::
+
+        importer = HDF5DataImporter(source="test.h5", item="/c1/main/test")
+        data = importer.load()
+
+    """
+
+    def __init__(self, source=""):
+        super().__init__(source=source)
+        self.item = ""
+
+    def load(self, source="", item=""):
+        """
+        Load data from source.
+
+        The method first checks for the source to be present, and afterwards
+        calls out to the private method :meth:`_load` that does the actual
+        business. Child classes hence need to implement this private method.
+        Make sure to return the loaded data from this method.
+
+        Parameters
+        ----------
+        source : :class:`str`
+            Source the data should be loaded from.
+
+            Name of an HDF5 file.
+
+        item : :class:`str`
+            The dataset within the HDF5 file.
+
+            Datasets are addressed by a path-like string, with slashes
+            separating the hierarchy levels in the file.
+
+        Raises
+        ------
+        ValueError
+            Raised if either source or item are not provided.
+
+        Returns
+        -------
+        data : :class:`numpy.ndarray`
+            Data loaded from the HDF5 dataset.
+
+            The actual data type (:class:`numpy.dtype`) depends on the
+            specific dataset loaded.
+
+        """
+        if item:
+            self.item = item
+        if not self.item:
+            raise ValueError("No item to load data from.")
+        return super().load(source=source)
+
+    def _load(self):
+        with h5py.File(self.source, "r") as file:
+            data = file[self.item][...]
+        return data

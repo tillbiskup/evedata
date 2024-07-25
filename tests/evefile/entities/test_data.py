@@ -1,4 +1,8 @@
+import os
 import unittest
+
+import h5py
+import numpy as np
 
 from evedata.evefile.entities import data, metadata
 
@@ -591,3 +595,88 @@ class TestNonencodedAxisData(unittest.TestCase):
         self.assertIsInstance(
             self.data.metadata, metadata.NonencodedAxisMetadata
         )
+
+
+class TestDataImporter(unittest.TestCase):
+    def setUp(self):
+        self.importer = data.DataImporter()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "source",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.importer, attribute))
+
+    def test_load_without_source_raises(self):
+        self.importer.source = ""
+        with self.assertRaises(ValueError):
+            self.importer.load()
+
+    def test_load_with_source_as_parameter(self):
+        self.importer.source = ""
+        self.importer.load(source="foo")
+
+    def test_load_returns_data(self):
+
+        class MockDataImporter(data.DataImporter):
+            def _load(self):
+                return "foo"
+
+        importer = MockDataImporter()
+        importer.source = "baz"
+        self.assertTrue(importer.load())
+
+    def test_instantiate_with_source_sets_source(self):
+        source = "baz"
+        importer = data.DataImporter(source=source)
+        self.assertEqual(source, importer.source)
+
+
+class TestHDF5DataImporter(unittest.TestCase):
+    def setUp(self):
+        self.importer = data.HDF5DataImporter()
+        self.filename = "test.h5"
+        self.item = "/c1/main/test"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+
+    def create_hdf5_file(self):
+        with h5py.File(self.filename, "w") as file:
+            c1 = file.create_group("c1")
+            main = c1.create_group("main")
+            main.create_dataset("test", data=np.ones([5, 2]))
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "source",
+            "item",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.importer, attribute))
+
+    def test_load_without_item_raises(self):
+        self.importer.source = "foo"
+        with self.assertRaises(ValueError):
+            self.importer.load()
+
+    def test_load_with_item_as_parameter(self):
+        self.create_hdf5_file()
+        self.importer.source = self.filename
+        self.importer.load(item=self.item)
+
+    def test_load_returns_HDF5_dataset_data(self):
+        self.create_hdf5_file()
+        self.importer.source = self.filename
+        self.importer.item = self.item
+        np.testing.assert_array_equal(np.ones([5, 2]), self.importer.load())

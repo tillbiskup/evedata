@@ -219,6 +219,14 @@ class TestHDF5Group(unittest.TestCase):
         for element in self.hdf5_group:
             self.assertIsInstance(element, eveh5.HDF5Item)
 
+    def test_item_names_returns_names_of_items(self):
+        item_names = ["foo", "bar", "baz"]
+        for name in item_names:
+            self.hdf5_group.add_item(
+                eveh5.HDF5Item(filename="foo", name=name)
+            )
+        self.assertListEqual(item_names, self.hdf5_group.item_names())
+
 
 class TestHDF5File(unittest.TestCase):
     def setUp(self):

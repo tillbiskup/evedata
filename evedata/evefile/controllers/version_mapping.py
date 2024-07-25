@@ -70,7 +70,7 @@ What follows is a summary of the different aspects, for the time being
 
 * Map attributes of ``/`` and ``/c1`` to the file metadata. |check|
 * Convert monitor datasets from the ``device`` group to :obj:`MonitorData
-  <evedata.evefile.entities.data.MonitorData>` objects.
+  <evedata.evefile.entities.data.MonitorData>` objects. (|check|)
 
     * We probably need to create subclasses for the different monitor
       datasets, at least distinguishing between numeric and and
@@ -446,6 +446,7 @@ class VersionMapperV5(VersionMapper):
             return
         for monitor in self.source.device:
             dataset = evedata.evefile.entities.data.MonitorData()
+            dataset.metadata.id = monitor.name.split("/")[-1]  # noqa
             dataset.metadata.name = monitor.attributes["Name"]
             dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
                 monitor.attributes

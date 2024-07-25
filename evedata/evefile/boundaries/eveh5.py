@@ -101,6 +101,16 @@ items of the ``c1`` group translates to:
     for item in file.c1:
         print(item.name)
 
+In both cases, the item names contain the full path within the HDF5 file,
+with hierarchy levels separated by ``/``. If you are only interested in the
+plain names without path or any leading slashes, use the dedicated method:
+
+.. code-block::
+
+    item_names = file.item_names()
+
+This returns a list of the item names without path or any slahes.
+
 Note that upon reading the file, neither attributes nor dataset values are
 loaded from the HDF5 file. Reading attributes, here for the root group of
 the file -- but identical for each HDF5 item --, is as simple as:
@@ -425,7 +435,7 @@ class HDF5Group(HDF5Item):
     consisting of groups as nodes and datasets as leafs. Datasets are
     represented by the :class:`HDF5Dataset` class, groups by this class.
     Groups can contain other groups as well as datasets, and groups can
-    have attributes, as any other HDF5 item. A HDF5 file is basically a
+    have attributes, as any other HDF5 item. An HDF5 file is basically a
     group, and at the same time the root node. For representing entire HDF5
     files, there is a special class :class:`HDF5File` providing
     convenience methods to read files and convert them into a hierarchy of
@@ -523,6 +533,17 @@ class HDF5Group(HDF5Item):
 
         [item for item in group]
 
+    Note, however, that in both cases, you get the names with the full path
+    within the HDF5 file. If you were interested in just the names, there is
+    a convenience method for you:
+
+    .. code-block::
+
+        group.item_names()
+
+    In the same scenario as above, this would return a list with the names
+    ``foo`` and ``bar``, without path and leading slash.
+
     """
 
     def __init__(self, filename="", name=""):
@@ -559,6 +580,26 @@ class HDF5Group(HDF5Item):
         name = item.name.split("/")[-1]
         setattr(self, name, item)
         self._items[name] = item
+
+    def item_names(self):
+        """
+        Names of the items in the group.
+
+        Of course, you could simply iterate over the object and access the
+        ``name`` attribute of each item in a list comprehension and get the
+        same. However, due to the internal implementation of the iterator,
+        this convenience method should be much faster, besides being
+        convenient. Furthermore, the ``name`` attribute always contains the
+        entire path within the HDF5 file, while the names returned here are
+        just the names, without path and leading ``/``.
+
+        Returns
+        -------
+        item_names : :class:`list`
+            Names of the items in the group
+
+        """
+        return list(self._items.keys())
 
 
 class HDF5File(HDF5Group):

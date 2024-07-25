@@ -242,24 +242,29 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_adds_monitor_datasets(self):
         self.mapper.source = MockEveH5()
-        monitor = MockHDF5Dataset(name="monitor")
+        monitor = MockHDF5Dataset(name="/device/monitor")
         monitor.attributes = {"Name": "mymonitor", "Access": "ca:foobar"}
-        self.mapper.source.add_item(MockHDF5Group(name="device"))
+        self.mapper.source.add_item(MockHDF5Group(name="/device"))
+        # noinspection PyUnresolvedReferences
         self.mapper.source.device.add_item(monitor)
         evefile = evedata.evefile.boundaries.evefile.File()
         self.mapper.map(destination=evefile)
         self.assertTrue(evefile.monitors)
         self.assertEqual(
-            evefile.monitors[0].metadata.name,
+            "monitor",
+            evefile.monitors[0].metadata.id,
+        )
+        self.assertEqual(
             monitor.attributes["Name"],
+            evefile.monitors[0].metadata.name,
         )
         self.assertEqual(
-            evefile.monitors[0].metadata.pv,
             monitor.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.monitors[0].metadata.pv,
         )
         self.assertEqual(
-            evefile.monitors[0].metadata.access_mode,
             monitor.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.monitors[0].metadata.access_mode,
         )
 
 
