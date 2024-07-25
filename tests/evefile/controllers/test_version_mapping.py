@@ -1,18 +1,47 @@
 import datetime
 import unittest
 
+import numpy as np
+
 import evedata.evefile.boundaries.evefile
+import evedata.evefile.entities.file
 from evedata.evefile.controllers import version_mapping
 
 
 class MockHDF5Item:
-    def __init__(self):
+    def __init__(self, name=""):
+        self.name = name
         self.attributes = {}
 
 
-class MockEveH5:
+class MockHDF5Dataset(MockHDF5Item):
+    def __init__(self, name=""):
+        super().__init__(name=name)
+        self.get_data_called = False
+
+    def get_data(self):
+        self.get_data_called = True
+
+
+class MockHDF5Group(MockHDF5Item):
+    def __init__(self, name=""):
+        super().__init__(name=name)
+        self._items = {}
+
+    def __iter__(self):
+        for item in self._items.values():
+            yield item
+
+    def add_item(self, item):
+        name = item.name.split("/")[-1]
+        setattr(self, name, item)
+        self._items[name] = item
+
+
+class MockEveH5(MockHDF5Group):
 
     def __init__(self):
+        super().__init__()
         self.attributes = {
             "EVEH5Version": "7",
             "Location": "TEST",
@@ -188,6 +217,50 @@ class TestVersionMapperV5(unittest.TestCase):
         evefile = evedata.evefile.boundaries.evefile.File()
         self.mapper.map(destination=evefile)
         self.assertEqual(evefile.metadata.end, datetime.datetime(1970, 1, 1))
+
+    def test_map_adds_log_messages(self):
+        log_messages = [
+            "2024-07-25T10:04:03: Lorem ipsum",
+            "2024-07-25T10:05:23: dolor sit amet",
+        ]
+        self.mapper.source = MockEveH5()
+        self.mapper.source.LiveComment = MockHDF5Dataset()
+        self.mapper.source.LiveComment.data = np.asarray(log_messages)
+        evefile = evedata.evefile.boundaries.evefile.File()
+        self.mapper.map(destination=evefile)
+        self.assertTrue(self.mapper.source.LiveComment.get_data_called)
+        self.assertTrue(evefile.log_messages)
+        self.assertIsInstance(
+            evefile.log_messages[0], evedata.evefile.entities.file.LogMessage
+        )
+        timestamp, message = log_messages[0].split(": ", maxsplit=1)
+        self.assertEqual(
+            datetime.datetime.fromisoformat(timestamp),
+            evefile.log_messages[0].timestamp,
+        )
+        self.assertEqual(message, evefile.log_messages[0].message)
+
+    def test_map_adds_monitor_datasets(self):
+        self.mapper.source = MockEveH5()
+        monitor = MockHDF5Dataset(name="monitor")
+        monitor.attributes = {"Name": "mymonitor", "Access": "ca:foobar"}
+        self.mapper.source.add_item(MockHDF5Group(name="device"))
+        self.mapper.source.device.add_item(monitor)
+        evefile = evedata.evefile.boundaries.evefile.File()
+        self.mapper.map(destination=evefile)
+        self.assertTrue(evefile.monitors)
+        self.assertEqual(
+            evefile.monitors[0].metadata.name,
+            monitor.attributes["Name"],
+        )
+        self.assertEqual(
+            evefile.monitors[0].metadata.pv,
+            monitor.attributes["Access"].split(":", maxsplit=1)[1],
+        )
+        self.assertEqual(
+            evefile.monitors[0].metadata.access_mode,
+            monitor.attributes["Access"].split(":", maxsplit=1)[0],
+        )
 
 
 class TestVersionMapperV6(unittest.TestCase):

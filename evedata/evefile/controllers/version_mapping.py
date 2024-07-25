@@ -1,4 +1,5 @@
 """
+.. include:: <isopub.txt>
 
 *Mapping eveH5 contents to the data structures of the evedata package.*
 
@@ -67,13 +68,19 @@ package, there is a lot of tasks for the mappers to be done.
 What follows is a summary of the different aspects, for the time being
 *not* divided for the different formats (up to v7):
 
-* Map attributes of ``/`` and ``c1`` to the file metadata.
+* Map attributes of ``/`` and ``/c1`` to the file metadata. |check|
 * Convert monitor datasets from the ``device`` group to :obj:`MonitorData
   <evedata.evefile.entities.data.MonitorData>` objects.
 
     * We probably need to create subclasses for the different monitor
       datasets, at least distinguishing between numeric and and
       non-numeric values.
+
+* Map ``/c1/meta/PosCountTimer`` to :obj:`TimestampData
+  <evedata.evefile.entities.data.TimestampData>` object.
+
+* Starting with eveH5 v5: Map ``/LiveComment`` to :obj:`LogMessage
+  <evedata.evefile.entities.file.LogMessage>` objects. |check|
 
 * Filter all datasets from the ``main`` section, with different goals:
 
@@ -155,6 +162,9 @@ Module documentation
 import datetime
 import logging
 import sys
+
+import evedata.evefile.entities.data
+import evedata.evefile.entities.file
 
 logger = logging.getLogger(__name__)
 
@@ -321,7 +331,12 @@ class VersionMapper:
         if destination:
             self.destination = destination
         self._check_prerequisites()
+        self._map()
+
+    def _map(self):
         self._map_file_metadata()
+        self._map_monitor_datasets()
+        self._map_timestamp_dataset()
 
     def _check_prerequisites(self):
         if not self.source:
@@ -330,6 +345,12 @@ class VersionMapper:
             raise ValueError("Missing destination to map to.")
 
     def _map_file_metadata(self):
+        pass
+
+    def _map_monitor_datasets(self):
+        pass
+
+    def _map_timestamp_dataset(self):
         pass
 
 
@@ -385,6 +406,10 @@ class VersionMapperV5(VersionMapper):
 
     """
 
+    def _map(self):
+        super()._map()
+        self._map_log_messages()
+
     def _map_file_metadata(self):
         root_mappings = {
             "eveh5_version": "EVEH5Version",
@@ -415,6 +440,26 @@ class VersionMapperV5(VersionMapper):
             "%d.%m.%Y %H:%M:%S",
         )
         self.destination.metadata.end = datetime.datetime(1970, 1, 1)
+
+    def _map_monitor_datasets(self):
+        if not hasattr(self.source, "device"):
+            return
+        for monitor in self.source.device:
+            dataset = evedata.evefile.entities.data.MonitorData()
+            dataset.metadata.name = monitor.attributes["Name"]
+            dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
+                monitor.attributes
+            )["Access"].split(":", maxsplit=1)
+            self.destination.monitors.append(dataset)
+
+    def _map_log_messages(self):
+        if not hasattr(self.source, "LiveComment"):
+            return
+        self.source.LiveComment.get_data()
+        for message in self.source.LiveComment.data:
+            log_message = evedata.evefile.entities.file.LogMessage()
+            log_message.from_string(message)
+            self.destination.log_messages.append(log_message)
 
 
 class VersionMapperV6(VersionMapperV5):

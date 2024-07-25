@@ -1,3 +1,4 @@
+import datetime
 import unittest
 
 from evedata.evefile.entities import file
@@ -75,7 +76,17 @@ class TestLogMessage(unittest.TestCase):
         pass
 
     def test_has_attributes(self):
-        attributes = ["timestamp", "comment"]
+        attributes = ["timestamp", "message"]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.log_message, attribute))
+
+    def test_from_string_sets_timestamp_and_message(self):
+        string = "2024-07-25T10:04:03: Lorem ipsum"
+        self.log_message.from_string(string)
+        timestamp, message = string.split(": ", maxsplit=1)
+        self.assertEqual(
+            datetime.datetime.fromisoformat(timestamp),
+            self.log_message.timestamp,
+        )
+        self.assertEqual(message, self.log_message.message)

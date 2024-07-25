@@ -218,7 +218,7 @@ class LogMessage:
     timestamp : :class:`datetime.datetime`
         Timestamp of the log message
 
-    comment : :class:`str`
+    message : :class:`str`
         Actual content of the log message.
 
 
@@ -234,4 +234,26 @@ class LogMessage:
 
     def __init__(self):
         self.timestamp = datetime.datetime.now()
-        self.comment = ""
+        self.message = ""
+
+    def from_string(self, string=""):
+        """
+        Set attributes from string.
+
+        In eveH5 files up to v7, the log messages are single strings with
+        the ISO timestamp at the beginning, followed by the actual message.
+        Timestamp and message are separated by ": ".
+
+        This method separates both parts and converts the timestamp into an
+        actual :obj:`datetime.datetime` object, consistent with the
+        :attr:`timestamp` attribute.
+
+        Parameters
+        ----------
+        string : :class:`str`
+            Log message consisting of timestamp and actual message.
+
+        """
+        timestamp, message = string.split(": ", maxsplit=1)
+        self.timestamp = datetime.datetime.fromisoformat(timestamp)
+        self.message = message
