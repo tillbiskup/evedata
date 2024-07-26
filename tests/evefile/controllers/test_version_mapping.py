@@ -381,7 +381,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             self.mapper.source.c1.meta.PosCountTimer.dtype.names[
                 0
-            ]: "milliseconds",
+            ]: "positions",
             self.mapper.source.c1.meta.PosCountTimer.dtype.names[1]: "data",
         }
         self.assertDictEqual(

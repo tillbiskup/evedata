@@ -36,7 +36,7 @@ class DummyHDF5File:
             poscounttimer.attrs["Unit"] = np.bytes_(["msecs"])
 
 
-class TestFile(unittest.TestCase):
+class TestEveFile(unittest.TestCase):
     def setUp(self):
         self.evefile = evefile.EveFile()
         self.filename = "file.h5"

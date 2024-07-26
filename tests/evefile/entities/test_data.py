@@ -7,6 +7,26 @@ import numpy as np
 from evedata.evefile.entities import data, metadata
 
 
+class DummyHDF5File:
+    def __init__(self, filename=""):
+        self.filename = filename
+
+    def create(self):
+        with h5py.File(self.filename, "w") as file:
+            c1 = file.create_group("c1")
+            meta = c1.create_group("meta")
+            data_ = np.ndarray(
+                [4],
+                dtype=np.dtype(
+                    [("PosCounter", "<i4"), ("PosCountTimer", "<i4")]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([1, 2, 3, 4])
+            data_["PosCountTimer"] = np.asarray([2, 4, 6, 8])
+            poscounttimer = meta.create_dataset("PosCountTimer", data=data_)
+            poscounttimer.attrs["Unit"] = np.bytes_(["msecs"])
+
+
 class TestData(unittest.TestCase):
     def setUp(self):
         self.data = data.Data()
@@ -22,6 +42,11 @@ class TestData(unittest.TestCase):
                 self.get_data_called = True
 
         self.mock_data = MockData()
+        self.filename = "test.h5"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
 
     def test_instantiate_class(self):
         pass
@@ -49,6 +74,19 @@ class TestData(unittest.TestCase):
         self.mock_data.data = np.random.random(5)
         _ = self.mock_data.data
         self.assertFalse(self.mock_data.get_data_called)
+
+    def test_get_data_loads_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        importer = data.HDF5DataImporter(source=self.filename)
+        importer.item = "/c1/meta/PosCountTimer"
+        importer.mapping = {
+            "PosCounter": "positions",
+            "PosCountTimer": "data",
+        }
+        self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertTrue(self.data.data.any())
 
 
 class TestMonitorData(unittest.TestCase):

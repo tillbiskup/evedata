@@ -549,7 +549,7 @@ class VersionMapperV5(VersionMapper):
         timestampdata = self.source.c1.meta.PosCountTimer
         dataset = evedata.evefile.entities.data.TimestampData()
         importer_mapping = {
-            0: "milliseconds",
+            0: "positions",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(

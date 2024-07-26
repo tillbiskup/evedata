@@ -331,7 +331,32 @@ class Data:
         accessing the :attr:`data` property, you can either once access the
         :attr:`data` property or call this method.
 
+        Data may be spread over several HDF5 datasets, depending on the
+        version of the eveH5 file read. Hence, there may be several
+        importers, and they are dealt with sequentially.
+
+        Furthermore, for each importer type, there is a special private
+        method ``_import_from_<importer-type>``, with ``<importer-type>``
+        being the lowercase class name. Those classes using additional
+        importers beyond :class:`HDF5DataImporter` need to implement
+        additional private methods to handle the special importer classes. A
+        typical use case is the :class:`AreaChannelData` class dealing with
+        image data stored mostly in separate files.
+
+        .. todo::
+            * Decide whether all data need to be ordered according to their
+              first axis (monitor data and measure data), and if only the
+              latter, implement the sorting in the :meth:`MeasureData.get_data`
+              method. Otherwise, implement it here.
+
         """
+        for importer in self.importer:
+            self._import_from_hdf5dataimporter(importer=importer)
+
+    def _import_from_hdf5dataimporter(self, importer=None):
+        importer.load()
+        for column_name, attribute in importer.mapping.items():
+            setattr(self, attribute, importer.data[column_name])
 
 
 class MonitorData(Data):
