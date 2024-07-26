@@ -85,34 +85,44 @@ What follows is a summary of the different aspects, for the time being
 * Filter all datasets from the ``main`` section, with different goals:
 
     * Map array data to :obj:`ArrayChannelData
-      <evedata.evefile.entities.data.ArrayChannelData>` objects.
+      <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
+      that are *not* named ``normalized``, ``averagemeta``,
+      or ``standarddev``).
+    * Distinguish between single point and area data, and map to
+      :obj:`SinglePointChannelData
+      <evedata.evefile.entities.data.SinglePointChannelData>` and
+      :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
+      objects, respectively.
     * Map average and interval channel data (and the data provided in the
       respective HDF5 groups) to :obj:`AverageChannelData
       <evedata.evefile.entities.data.AverageChannelData>` and
       :obj:`IntervalChannelData
       <evedata.evefile.entities.data.IntervalChannelData>` objects,
       respectively.
-    * Distinguish between single point and area data, and map to
-      :obj:`SinglePointChannelData
-      <evedata.evefile.entities.data.SinglePointChannelData>` and
-      :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
-      objects, respectively.
+    * Map normalized channel data (and the data provided in the
+      respective HDF5 groups) to :obj:`NormalizedChannelData
+      <evedata.evefile.entities.data.NormalizedChannelData>`.
     * Map all remaining HDF5 datasets that belong to one of the already
-      mapped data objects to their respective attributes.
+      mapped data objects (*i.e.*, variable options) to their respective
+      attributes.
     * Map all HDF5 datasets remaining (if any) to data objects
       corresponding to their respective data type.
-    * Add all data objects to the :attr:`data` attribute of the
-      :obj:`EveFile` object.
+    * Add all data objects to the :attr:`data
+      <evedata.evefile.boundaries.evefile.EveFile.data>` attribute of the
+      :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object.
 
 * Filter all datasets from the ``snapshot`` section, with different goals:
 
     * Map all HDF5 datasets that belong to one of the data objects in the
-      :attr:`data` attribute of the :obj:`EveFile` object to their respective
+      :attr:`data <evedata.evefile.boundaries.evefile.EveFile.data>`
+      attribute of the :obj:`EveFile
+      <evedata.evefile.boundaries.evefile.EveFile>` object to their respective
       attributes.
     * Map all HDF5 datasets remaining (if any) to data objects
       corresponding to their respective data type.
-    * Add all data objects to the :attr:`snapshot` attribute of the
-      :obj:`EveFile` object.
+    * Add all data objects to the :attr:`snapshots
+      <evedata.evefile.boundaries.evefile.EveFile.snapshots>` attribute of the
+      :obj:`EveFile  <evedata.evefile.boundaries.evefile.EveFile>` object.
 
 
 Most probably, not all these tasks can be inferred from the contents of an

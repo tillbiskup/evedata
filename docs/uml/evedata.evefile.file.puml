@@ -35,6 +35,7 @@ class LogMessage {
 
 class Scan extends scan.boundaries.Scan {
     author : string
+    filename : string
 }
 note left: See diagrams for\nscan subpackage.
 

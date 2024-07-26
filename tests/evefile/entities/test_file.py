@@ -63,6 +63,7 @@ class TestScan(unittest.TestCase):
     def test_has_attributes(self):
         attributes = [
             "author",
+            "filename",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):

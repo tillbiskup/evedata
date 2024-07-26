@@ -99,7 +99,7 @@ class File:
     def __init__(self):
         self.metadata = Metadata()
         self.log_messages = []
-        self.scan = Scan
+        self.scan = Scan()
         self.data = []
         self.snapshots = []
         self.monitors = []
@@ -198,6 +198,9 @@ class Scan:
     author : :class:`str`
         Author of a given scan description, as set in the SCML file.
 
+    filename : :class:`str`
+        Name of the SCML file containing the scan description.
+
 
     Examples
     --------
@@ -211,6 +214,7 @@ class Scan:
 
     def __init__(self):
         self.author = ""
+        self.filename = ""
 
 
 class LogMessage:

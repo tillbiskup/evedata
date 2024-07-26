@@ -8,13 +8,18 @@
         :local:
         :depth: 1
 
-The aim of this module is to provide a Python representation (in form of a
-hierarchy of objects) of the HDF5 contents of an eveH5 file that can be
-mapped to both, the evefile and dataset interfaces. While the Python h5py
-package already provides the low-level access and gets used, the eveH5
-module contains Python objects that are independent of an open HDF5 file,
-represent the hierarchy of HDF5 items (groups and datasets), and contain
-the attributes of each HDF5 item in form of a Python dictionary.
+This module provides a Python representation (in form of a hierarchy of
+objects) of the HDF5 contents of an eveH5 file that can be mapped to both,
+the :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` and
+measurement interfaces. Being a low-level object representation, technically
+speaking this module is a resource. The corresponding facade (user-facing
+interface) would be the :mod:`evefile <evedata.evefile.boundaries.evefile>`
+module.
+
+While the Python h5py package already provides the low-level access and gets
+used, the eveH5 module contains Python objects that are independent of an
+open HDF5 file, represent the hierarchy of HDF5 items (groups and datasets),
+and contain the attributes of each HDF5 item in form of a Python dictionary.
 Furthermore, each object contains a reference to both, the original HDF5
 file and the HDF5 item, thus making reading dataset data (and attributes) on
 demand as simple as possible.

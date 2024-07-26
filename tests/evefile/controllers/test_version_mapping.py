@@ -208,7 +208,7 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_sets_file_metadata_from_root_group(self):
         self.mapper.source = MockEveH5()
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         # destination: source
         root_mappings = {
@@ -227,7 +227,7 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_sets_file_metadata_from_c1_group(self):
         self.mapper.source = MockEveH5()
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         # destination: source
         c1_mappings = {
@@ -245,7 +245,7 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_converts_date_to_datetime(self):
         self.mapper.source = MockEveH5()
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertEqual(
             evefile.metadata.start,
@@ -258,7 +258,7 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_sets_end_date_to_unix_start_time(self):
         self.mapper.source = MockEveH5()
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertEqual(evefile.metadata.end, datetime.datetime(1970, 1, 1))
 
@@ -270,7 +270,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.source = MockEveH5()
         self.mapper.source.LiveComment = MockHDF5Dataset()
         self.mapper.source.LiveComment.data = np.asarray(log_messages)
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertTrue(self.mapper.source.LiveComment.get_data_called)
         self.assertTrue(evefile.log_messages)
@@ -295,7 +295,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.source.device.add_item(monitor1)
         # noinspection PyUnresolvedReferences
         self.mapper.source.device.add_item(monitor2)
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         for monitor in evefile.monitors:
             self.assertIsInstance(
@@ -327,7 +327,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.source.add_item(MockHDF5Group(name="/device"))
         # noinspection PyUnresolvedReferences
         self.mapper.source.device.add_item(monitor)
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertEqual(
             "/device/monitor", evefile.monitors[0].importer[0].item
@@ -346,7 +346,7 @@ class TestVersionMapperV5(unittest.TestCase):
     # noinspection PyUnresolvedReferences
     def test_map_adds_timestampdata_dataset(self):
         self.mapper.source = MockEveH5()
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertIsInstance(
             evefile.position_timestamps,
@@ -384,7 +384,7 @@ class TestVersionMapperV6(unittest.TestCase):
 
     def test_map_converts_date_to_datetime(self):
         self.mapper.source = MockEveH5()
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         date_mappings = {
             "start": "StartTimeISO",
@@ -409,7 +409,7 @@ class TestVersionMapperV7(unittest.TestCase):
 
     def test_map_converts_simulation_flag_to_boolean(self):
         self.mapper.source = MockEveH5()
-        evefile = evedata.evefile.boundaries.evefile.File()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.source.attributes["Simulation"] = "no"
         self.mapper.map(destination=evefile)
         self.assertIsInstance(evefile.metadata.simulation, bool)
