@@ -112,7 +112,7 @@ steps are necessary:
 
 * Check whether the eveH5 file contains the scan description (SCML) file.
 
-    * If so, import the scan description.
+    * If so, extract (up to eveH5 v7) and import the scan description.
     * If not, we're probably doomed, as some of the mappings are hard to do
       otherwise.
 
@@ -131,6 +131,8 @@ Module documentation
 import logging
 
 from evedata.evefile.entities.file import File
+from evedata.evefile.boundaries.eveh5 import HDF5File
+from evedata.evefile.controllers import version_mapping
 
 
 logger = logging.getLogger(__name__)
@@ -251,3 +253,16 @@ class EveFile(File):
         """
         if filename:
             self.metadata.filename = filename
+        self._load_scml()
+        self._read_and_map_eveh5_file()
+
+    def _load_scml(self):
+        pass
+
+    def _read_and_map_eveh5_file(self):
+        eveh5 = HDF5File()
+        eveh5.read_attributes = True
+        eveh5.read(filename=self.metadata.filename)
+        mapper_factory = version_mapping.VersionMapperFactory()
+        mapper = mapper_factory.get_mapper(eveh5)
+        mapper.map(source=eveh5, destination=self)

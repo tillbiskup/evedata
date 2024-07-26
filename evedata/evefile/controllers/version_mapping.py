@@ -517,12 +517,13 @@ class VersionMapperV5(VersionMapper):
                     key,
                     self.source.c1.attributes[value],
                 )
-        self.destination.metadata.start = datetime.datetime.strptime(
-            f"{self.source.attributes['StartDate']} "
-            f"{self.source.attributes['StartTime']}",
-            "%d.%m.%Y %H:%M:%S",
-        )
-        self.destination.metadata.end = datetime.datetime(1970, 1, 1)
+        if "StartTimeISO" not in self.source.attributes:
+            self.destination.metadata.start = datetime.datetime.strptime(
+                f"{self.source.attributes['StartDate']} "
+                f"{self.source.attributes['StartTime']}",
+                "%d.%m.%Y %H:%M:%S",
+            )
+            self.destination.metadata.end = datetime.datetime(1970, 1, 1)
 
     def _map_monitor_datasets(self):
         if not hasattr(self.source, "device"):
@@ -632,7 +633,7 @@ class VersionMapperV6(VersionMapperV5):
                 self.destination.metadata,
                 key,
                 datetime.datetime.fromisoformat(
-                    self.source.c1.attributes[value]
+                    self.source.attributes[value]
                 ),
             )
 

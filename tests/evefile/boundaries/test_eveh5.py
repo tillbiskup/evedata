@@ -347,3 +347,9 @@ class TestHDF5File(unittest.TestCase):
                         getattr, item.split("/"), self.hdf5_file
                     ).attributes
                 )
+
+    def test_read_with_read_attributes_sets_file_attributes(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_file.read_attributes = True
+        self.hdf5_file.read(self.filename)
+        self.assertTrue(self.hdf5_file.attributes)

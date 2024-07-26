@@ -245,6 +245,13 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_converts_date_to_datetime(self):
         self.mapper.source = MockEveH5()
+        keys_to_drop = [
+            key
+            for key in self.mapper.source.attributes.keys()
+            if "ISO" in key
+        ]
+        for key in keys_to_drop:
+            self.mapper.source.attributes.pop(key)
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertEqual(
@@ -258,6 +265,13 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_sets_end_date_to_unix_start_time(self):
         self.mapper.source = MockEveH5()
+        keys_to_drop = [
+            key
+            for key in self.mapper.source.attributes.keys()
+            if "ISO" in key
+        ]
+        for key in keys_to_drop:
+            self.mapper.source.attributes.pop(key)
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertEqual(evefile.metadata.end, datetime.datetime(1970, 1, 1))

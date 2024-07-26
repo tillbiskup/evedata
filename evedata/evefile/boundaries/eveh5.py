@@ -722,6 +722,9 @@ class HDF5File(HDF5Group):
         if not self.filename:
             raise ValueError("Missing attribute filename")
 
+        if self.read_attributes:
+            self.get_attributes()
+
         self._get_hdf5_items()
         self._set_hdf5_items()
 
