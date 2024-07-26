@@ -88,13 +88,20 @@ What follows is a summary of the different aspects, for the time being
       <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
       that are *not* named ``normalized``, ``averagemeta``,
       or ``standarddev``).
-    * Distinguish between single point and area data, and map to
-      :obj:`SinglePointChannelData
-      <evedata.evefile.entities.data.SinglePointChannelData>` and
+    * Distinguish between single point and area data, and map area data to
       :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
-      objects, respectively.
-    * Map average and interval channel data (and the data provided in the
-      respective HDF5 groups) to :obj:`AverageChannelData
+      objects.
+    * Figure out which single point data have been redefined between scan
+      modules, and split data accordingly. Map the data to
+      :obj:`SinglePointChannelData
+      <evedata.evefile.entities.data.SinglePointChannelData>`,
+      :obj:`AverageChannelData
+      <evedata.evefile.entities.data.AverageChannelData>`,
+      and :obj:`IntervalChannelData
+      <evedata.evefile.entities.data.IntervalChannelData>`, respectively.
+      Take care of normalized channel data and treat them accordingly.
+    * Map the additional data for average and interval channel data provided
+      in the respective HDF5 groups to :obj:`AverageChannelData
       <evedata.evefile.entities.data.AverageChannelData>` and
       :obj:`IntervalChannelData
       <evedata.evefile.entities.data.IntervalChannelData>` objects,
@@ -133,7 +140,7 @@ Other tasks not in the realm of the version mappers, but part of the
 :mod:`evedata.evefile.controllers` subpackage, are:
 
 * Separating 0D data that have been redefined within a scan (single point,
-  average, interval)
+  average, interval) -- **sure about this one? see above**
 * Mapping scans using the EPICS MPSKIP feature to record individual values
   for actual average detectors to :obj:`AverageChannelData
   <evedata.evefile.entities.data.AverageChannelData>` objects.
