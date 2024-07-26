@@ -11,6 +11,18 @@ class TestData(unittest.TestCase):
     def setUp(self):
         self.data = data.Data()
 
+        class MockData(data.Data):
+
+            def __init__(self):
+                super().__init__()
+                self.get_data_called = False
+
+            def get_data(self):
+                super().get_data()
+                self.get_data_called = True
+
+        self.mock_data = MockData()
+
     def test_instantiate_class(self):
         pass
 
@@ -19,10 +31,24 @@ class TestData(unittest.TestCase):
             "metadata",
             "options",
             "data",
+            "importer",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.data, attribute))
+
+    def test_setting_data_sets_data(self):
+        self.data.data = np.random.random(5)
+        self.assertTrue(self.data)
+
+    def test_accessing_data_calls_get_data_if_data_not_loaded(self):
+        _ = self.mock_data.data
+        self.assertTrue(self.mock_data.get_data_called)
+
+    def test_accessing_data_with_data_does_not_call_get_data(self):
+        self.mock_data.data = np.random.random(5)
+        _ = self.mock_data.data
+        self.assertFalse(self.mock_data.get_data_called)
 
 
 class TestMonitorData(unittest.TestCase):
@@ -660,6 +686,8 @@ class TestHDF5DataImporter(unittest.TestCase):
         attributes = [
             "source",
             "item",
+            "mapping",
+            "data",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -680,3 +708,10 @@ class TestHDF5DataImporter(unittest.TestCase):
         self.importer.source = self.filename
         self.importer.item = self.item
         np.testing.assert_array_equal(np.ones([5, 2]), self.importer.load())
+
+    def test_load_sets_data_attribute(self):
+        self.create_hdf5_file()
+        self.importer.source = self.filename
+        self.importer.item = self.item
+        self.importer.load()
+        np.testing.assert_array_equal(np.ones([5, 2]), self.importer.data)

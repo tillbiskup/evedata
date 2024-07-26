@@ -261,6 +261,20 @@ class Data:
         The former are stored in the
         :attr:`evedata.evefile.entities.metadata.Metadata.options` attribute.
 
+    importer : :class:`list`
+        Importer objects for the data and possibly (variable) options.
+
+        Each item is a :obj:`DataImporter` object.
+
+        Data are loaded on demand, not already when initially loading the
+        eveH5 file. Hence, the need for a mechanism to provide the relevant
+        information where to get the relevant data from and how. Different
+        versions of the underlying eveH5 schema differ even in whether all
+        data belonging to one :obj:`Data` object are located in one HDF5
+        dataset or spread over multiple HDF5 datasets. In the latter case,
+        individual importers are necessary for the separate HDF5 datasets.
+        Hence, the list of importers.
+
     Examples
     --------
     The :class:`Data` class is not meant to be used directly, as any
@@ -275,6 +289,7 @@ class Data:
         super().__init__()
         self.metadata = metadata.Metadata()
         self.options = {}
+        self.importer = []
         self._data = None
 
     @property
@@ -282,13 +297,41 @@ class Data:
         """
         Actual data recorded from the device.
 
+        Data are loaded only on demand. Hence, upon the first access of the
+        :attr:`data` property, the :meth:`get_data` method will be called,
+        calling out to the respective importers.
+
         Returns
         -------
-        data : any
+        data : np.ndarray
             Actual data recorded from the device.
 
+            The actual data type (:class:`numpy.dtype`) depends on the
+            specific dataset loaded.
+
         """
+        if self._data is None:
+            self.get_data()
         return self._data
+
+    @data.setter
+    def data(self, data=None):
+        self._data = data
+
+    def get_data(self):
+        """
+        Load data (and variable option data) using the respective importer.
+
+        Data are loaded only on demand. Hence, upon the first access of the
+        :attr:`data` property, this method will be called, calling out to
+        the respective importers.
+
+        As :obj:`Data` objects may contain (variable) options that are
+        themselves data, but loading these data is only triggered when
+        accessing the :attr:`data` property, you can either once access the
+        :attr:`data` property or call this method.
+
+        """
 
 
 class MonitorData(Data):
@@ -1385,6 +1428,28 @@ class HDF5DataImporter(DataImporter):
         Datasets are addressed by a path-like string, with slashes
         separating the hierarchy levels in the file.
 
+    mapping : :class:`dict`
+        Mapping table for table columns to :obj:`Data` object attributes.
+
+        HDF5 datasets in eveH5 files usually consist of at least two columns
+        for their data, the first either the position or the time since
+        start of the measurement in milliseconds. Besides this, there can be
+        more than one additional column for the actual data. As the
+        structure of the datasets changed and will change, there is a need
+        for a mapping table that gets filled properly by the
+        :class:`VersionMapper
+        <evedata.evefile.controllers.version_mapping.VersionMapper>` class.
+
+        Furthermore, storing this mapping information is relevant as data
+        are usually only loaded upon request, not preliminary, to save time
+        and resources.
+
+    data : :class:`numpy.ndarray`
+        Data loaded from the HDF5 dataset.
+
+        The actual data type (:class:`numpy.dtype`) depends on the
+        specific dataset loaded.
+
     Raises
     ------
     ValueError
@@ -1416,6 +1481,8 @@ class HDF5DataImporter(DataImporter):
     def __init__(self, source=""):
         super().__init__(source=source)
         self.item = ""
+        self.mapping = {}
+        self.data = None
 
     def load(self, source="", item=""):
         """
@@ -1425,6 +1492,9 @@ class HDF5DataImporter(DataImporter):
         calls out to the private method :meth:`_load` that does the actual
         business. Child classes hence need to implement this private method.
         Make sure to return the loaded data from this method.
+
+        Besides returning the data (for convenience), they are set to the
+        :attr:`data` attribute for later access.
 
         Parameters
         ----------
@@ -1461,5 +1531,5 @@ class HDF5DataImporter(DataImporter):
 
     def _load(self):
         with h5py.File(self.source, "r") as file:
-            data = file[self.item][...]
-        return data
+            self.data = file[self.item][...]
+        return self.data

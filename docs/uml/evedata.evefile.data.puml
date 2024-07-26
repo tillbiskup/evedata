@@ -4,9 +4,10 @@
 class Data {
     metadata : Metadata
     options : dict
+    importer[] : DataImporter
     _data : np.ndarray
-    _importer{} : DataImporter
     data()
+    get_data()
 }
 note left of Data::_data
     "_data" usually contains a 1D array and is accessed
@@ -22,12 +23,13 @@ note left of Data::_data
 end note
 
 class DataImporter {
-    source
+    source : string
     load()
 }
 
 class HDF5DataImporter extends DataImporter {
-    item
+    item : string
+    mapping : dict
 }
 
 class ImageDataImporter extends DataImporter
@@ -60,11 +62,11 @@ MonitorData -[hidden]> MeasureData
 class DeviceData extends MeasureData
 
 class AxisData extends MeasureData {
-    set_values
+    set_values : np.ndarray
 }
 
 class NonencodedAxisData extends AxisData {
-    _filled_data
+    _filled_data : np.ndarray
     filled_data()
 }
 note bottom of NonencodedAxisData
