@@ -19,6 +19,7 @@ class TestFile(unittest.TestCase):
             "data",
             "snapshots",
             "monitors",
+            "position_timestamps",
             "filename",
         ]
         for attribute in attributes:

@@ -19,6 +19,7 @@ class TestFile(unittest.TestCase):
             "data",
             "snapshots",
             "monitors",
+            "position_timestamps",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):

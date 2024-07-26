@@ -5,27 +5,32 @@ import numpy as np
 
 import evedata.evefile.boundaries.evefile
 import evedata.evefile.entities.file
+import evedata.evefile.entities.data
 from evedata.evefile.controllers import version_mapping
 
 
 class MockHDF5Item:
-    def __init__(self, name=""):
+    def __init__(self, name="", filename=""):
+        self.filename = filename
         self.name = name
         self.attributes = {}
 
 
 class MockHDF5Dataset(MockHDF5Item):
-    def __init__(self, name=""):
-        super().__init__(name=name)
+    def __init__(self, name="", filename=""):
+        super().__init__(name=name, filename=filename)
         self.get_data_called = False
+        self.dtype = np.dtype(
+            [("PosCounter", "<i4"), ("A2980:23303chan1", "<f8")]
+        )
 
     def get_data(self):
         self.get_data_called = True
 
 
 class MockHDF5Group(MockHDF5Item):
-    def __init__(self, name=""):
-        super().__init__(name=name)
+    def __init__(self, name="", filename=""):
+        super().__init__(name=name, filename=filename)
         self._items = {}
 
     def __iter__(self):
@@ -40,8 +45,11 @@ class MockHDF5Group(MockHDF5Item):
 
 class MockEveH5(MockHDF5Group):
 
+    # noinspection PyUnresolvedReferences
     def __init__(self):
         super().__init__()
+        self.filename = "test.h5"
+        self.name = "/"
         self.attributes = {
             "EVEH5Version": "7",
             "Location": "TEST",
@@ -56,7 +64,7 @@ class MockEveH5(MockHDF5Group):
             "StartTimeISO": "2024-06-03T12:01:32",
             "EndTimeISO": "2024-06-03T12:01:37",
         }
-        self.c1 = MockHDF5Item()
+        self.add_item(MockHDF5Group(name="/c1", filename=self.filename))
         self.c1.attributes = {
             "EndTimeISO": "2024-06-03T12:01:37",
             "StartDate": "03.06.2024",
@@ -66,6 +74,17 @@ class MockEveH5(MockHDF5Group):
             "preferredChannel": "A2980:22704chan1",
             "preferredNormalizationChannel": "A2980:22704chan1",
         }
+        self.c1.add_item(
+            MockHDF5Group(name="/c1/meta", filename=self.filename)
+        )
+        poscounttimer = MockHDF5Dataset(
+            name="/c1/meta/PosCountTimer", filename=self.filename
+        )
+        poscounttimer.dtype = np.dtype(
+            [("PosCounter", "<i4"), ("PosCountTimer", "<i4")]
+        )
+        poscounttimer.attributes = {"Unit": "msecs"}
+        self.c1.meta.add_item(poscounttimer)
 
 
 class MockFile:
@@ -107,7 +126,7 @@ class TestVersionMapperFactory(unittest.TestCase):
         mapper = self.factory.get_mapper()
         self.assertIsInstance(mapper, version_mapping.VersionMapperV5)
 
-    def test_get_mapper_with_fractoinal_version_returns_correct_mapper(self):
+    def test_get_mapper_with_fractional_version_returns_correct_mapper(self):
         self.eveh5.attributes["EVEH5Version"] = "5.0"
         self.factory.eveh5 = self.eveh5
         mapper = self.factory.get_mapper()
@@ -155,6 +174,30 @@ class TestVersionMapper(unittest.TestCase):
         self.mapper.source = None
         self.mapper.map(source=MockEveH5(), destination=MockFile())
 
+    def test_get_hdf5_dataset_importer_returns_importer(self):
+        self.assertIsInstance(
+            self.mapper.get_hdf5_dataset_importer(dataset=MockHDF5Dataset()),
+            evedata.evefile.entities.data.HDF5DataImporter,
+        )
+
+    def test_get_hdf5_dataset_importer_sets_source_and_item(self):
+        dataset = MockHDF5Dataset(filename="test.h5", name="/c1/main/foobar")
+        importer = self.mapper.get_hdf5_dataset_importer(dataset=dataset)
+        self.assertEqual(dataset.filename, importer.source)
+        self.assertEqual(dataset.name, importer.item)
+
+    def test_get_hdf5_dataset_importer_sets_mapping(self):
+        dataset = MockHDF5Dataset(filename="test.h5", name="/c1/main/foobar")
+        mapping = {0: "foobar", 1: "barbaz"}
+        importer = self.mapper.get_hdf5_dataset_importer(
+            dataset=dataset, mapping=mapping
+        )
+        mapping_dict = {
+            dataset.dtype.names[0]: mapping[0],
+            dataset.dtype.names[1]: mapping[1],
+        }
+        self.assertDictEqual(mapping_dict, importer.mapping)
+
 
 class TestVersionMapperV5(unittest.TestCase):
     def setUp(self):
@@ -194,6 +237,7 @@ class TestVersionMapperV5(unittest.TestCase):
         }
         for key, value in c1_mappings.items():
             with self.subTest(key=key, val=value):
+                # noinspection PyUnresolvedReferences
                 self.assertEqual(
                     getattr(evefile.metadata, key),
                     self.mapper.source.c1.attributes[value],
@@ -242,29 +286,92 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_adds_monitor_datasets(self):
         self.mapper.source = MockEveH5()
+        monitor1 = MockHDF5Dataset(name="/device/monitor")
+        monitor1.attributes = {"Name": "mymonitor", "Access": "ca:foobar"}
+        monitor2 = MockHDF5Dataset(name="/device/monitor2")
+        monitor2.attributes = {"Name": "mymonitor2", "Access": "ca:barbaz"}
+        self.mapper.source.add_item(MockHDF5Group(name="/device"))
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.device.add_item(monitor1)
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.device.add_item(monitor2)
+        evefile = evedata.evefile.boundaries.evefile.File()
+        self.mapper.map(destination=evefile)
+        for monitor in evefile.monitors:
+            self.assertIsInstance(
+                monitor,
+                evedata.evefile.entities.data.MonitorData,
+            )
+        self.assertEqual(
+            "monitor",
+            evefile.monitors[0].metadata.id,
+        )
+        self.assertEqual(
+            monitor1.attributes["Name"],
+            evefile.monitors[0].metadata.name,
+        )
+        self.assertEqual(
+            monitor1.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.monitors[0].metadata.pv,
+        )
+        self.assertEqual(
+            monitor1.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.monitors[0].metadata.access_mode,
+        )
+
+    def test_monitor_datasets_contain_importer(self):
+        self.mapper.source = MockEveH5()
         monitor = MockHDF5Dataset(name="/device/monitor")
+        monitor.filename = "test.h5"
         monitor.attributes = {"Name": "mymonitor", "Access": "ca:foobar"}
         self.mapper.source.add_item(MockHDF5Group(name="/device"))
         # noinspection PyUnresolvedReferences
         self.mapper.source.device.add_item(monitor)
         evefile = evedata.evefile.boundaries.evefile.File()
         self.mapper.map(destination=evefile)
-        self.assertTrue(evefile.monitors)
         self.assertEqual(
-            "monitor",
-            evefile.monitors[0].metadata.id,
+            "/device/monitor", evefile.monitors[0].importer[0].item
         )
         self.assertEqual(
-            monitor.attributes["Name"],
-            evefile.monitors[0].metadata.name,
+            monitor.filename, evefile.monitors[0].importer[0].source
+        )
+        mapping_dict = {
+            monitor.dtype.names[0]: "milliseconds",
+            monitor.dtype.names[1]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.monitors[0].importer[0].mapping
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_adds_timestampdata_dataset(self):
+        self.mapper.source = MockEveH5()
+        evefile = evedata.evefile.boundaries.evefile.File()
+        self.mapper.map(destination=evefile)
+        self.assertIsInstance(
+            evefile.position_timestamps,
+            evedata.evefile.entities.data.TimestampData,
         )
         self.assertEqual(
-            monitor.attributes["Access"].split(":", maxsplit=1)[1],
-            evefile.monitors[0].metadata.pv,
+            self.mapper.source.c1.meta.PosCountTimer.attributes["Unit"],
+            evefile.position_timestamps.metadata.unit,
         )
         self.assertEqual(
-            monitor.attributes["Access"].split(":", maxsplit=1)[0],
-            evefile.monitors[0].metadata.access_mode,
+            self.mapper.source.c1.meta.PosCountTimer.name,
+            evefile.position_timestamps.importer[0].item,
+        )
+        self.assertEqual(
+            self.mapper.source.c1.meta.PosCountTimer.filename,
+            evefile.position_timestamps.importer[0].source,
+        )
+        mapping_dict = {
+            self.mapper.source.c1.meta.PosCountTimer.dtype.names[
+                0
+            ]: "milliseconds",
+            self.mapper.source.c1.meta.PosCountTimer.dtype.names[1]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.position_timestamps.importer[0].mapping
         )
 
 

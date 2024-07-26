@@ -70,14 +70,14 @@ What follows is a summary of the different aspects, for the time being
 
 * Map attributes of ``/`` and ``/c1`` to the file metadata. |check|
 * Convert monitor datasets from the ``device`` group to :obj:`MonitorData
-  <evedata.evefile.entities.data.MonitorData>` objects. (|check|)
+  <evedata.evefile.entities.data.MonitorData>` objects. |check|
 
     * We probably need to create subclasses for the different monitor
       datasets, at least distinguishing between numeric and and
       non-numeric values.
 
 * Map ``/c1/meta/PosCountTimer`` to :obj:`TimestampData
-  <evedata.evefile.entities.data.TimestampData>` object.
+  <evedata.evefile.entities.data.TimestampData>` object. |check|
 
 * Starting with eveH5 v5: Map ``/LiveComment`` to :obj:`LogMessage
   <evedata.evefile.entities.file.LogMessage>` objects. |check|
@@ -333,6 +333,79 @@ class VersionMapper:
         self._check_prerequisites()
         self._map()
 
+    @staticmethod
+    def get_hdf5_dataset_importer(dataset=None, mapping=None):
+        """
+        Get an importer object for HDF5 datasets with properties set.
+
+        Data are loaded on demand, not already when initially loading the
+        eveH5 file. Hence, the need for a mechanism to provide the relevant
+        information where to get the relevant data from and how. Different
+        versions of the underlying eveH5 schema differ even in whether all
+        data belonging to one :obj:`Data` object are located in one HDF5
+        dataset or spread over multiple HDF5 datasets. In the latter case,
+        individual importers are necessary for the separate HDF5 datasets.
+
+        As the :class:`VersionMapper` class deals with each HDF5 dataset
+        individually, some fundamental settings for the
+        :class:`HDF5DataImporter
+        <evedata.evefile.entities.data.HDF5DataImporter>` are readily
+        available. Additionally, the ``mapping`` parameter provides the
+        information necessary to create the correct information in the
+        :attr:`HDF5DataImporter.mapping
+        <evedata.evefile.entities.data.HDF5DataImporter.mapping>` attribute.
+
+        .. important::
+            The keys in the dictionary provided via the ``mapping``
+            parameter are **integers, not strings**, as usual for dictionaries.
+            This allows to directly use the keys for indexing the tuple
+            returned by ``numpy.dtype.names``. To be explicit, here is an
+            example:
+
+            .. code-block::
+
+                dataset = HDF5Dataset()
+                importer_mapping = {
+                    0: "milliseconds",
+                    1: "data",
+                }
+                importer = self.get_hdf5_dataset_importer(
+                    dataset=dataset, mapping=importer_mapping
+                )
+
+            Of course, in reality you will not just instantiate an empty
+            :obj:`HDF5Dataset <evedata.evefile.boundaries.eveh5.HDF5Dataset>`
+            object, but have one available within your mapper.
+
+
+        Parameters
+        ----------
+        dataset : :class:`evedata.evefile.boundaries.eveh5.HDF5Dataset`
+            Representation of an HDF5 dataset.
+
+        mapping : :class:`dict`
+            Table for mapping HDF5 dataset columns to data class attributes.
+
+            **Note**: The keys in this dictionary are *integers*,
+            not strings, as usual for dictionaries. This allows to directly
+            use the keys for indexing the tuple returned by
+            ``numpy.dtype.names``.
+
+        Returns
+        -------
+        importer : :class:`evedata.evefile.entities.data.HDF5DataImporter`
+            HDF5 dataset importer
+
+        """
+        if mapping is None:
+            mapping = {}
+        importer = evedata.evefile.entities.data.HDF5DataImporter()
+        importer.source = dataset.filename
+        importer.item = dataset.name
+        for key, value in mapping.items():
+            importer.mapping[dataset.dtype.names[key]] = value
+        return importer
+
     def _map(self):
         self._map_file_metadata()
         self._map_monitor_datasets()
@@ -446,12 +519,34 @@ class VersionMapperV5(VersionMapper):
             return
         for monitor in self.source.device:
             dataset = evedata.evefile.entities.data.MonitorData()
+            importer_mapping = {
+                0: "milliseconds",
+                1: "data",
+            }
+            importer = self.get_hdf5_dataset_importer(
+                dataset=monitor, mapping=importer_mapping
+            )
+            dataset.importer.append(importer)
             dataset.metadata.id = monitor.name.split("/")[-1]  # noqa
             dataset.metadata.name = monitor.attributes["Name"]
             dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
                 monitor.attributes
             )["Access"].split(":", maxsplit=1)
             self.destination.monitors.append(dataset)
+
+    def _map_timestamp_dataset(self):
+        timestampdata = self.source.c1.meta.PosCountTimer
+        dataset = evedata.evefile.entities.data.TimestampData()
+        importer_mapping = {
+            0: "milliseconds",
+            1: "data",
+        }
+        importer = self.get_hdf5_dataset_importer(
+            dataset=timestampdata, mapping=importer_mapping
+        )
+        dataset.importer.append(importer)
+        dataset.metadata.unit = timestampdata.attributes["Unit"]
+        self.destination.position_timestamps = dataset
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

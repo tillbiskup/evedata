@@ -77,6 +77,14 @@ class File:
         Each item in the list is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
+    position_timestamps : :class:`evedata.evefile.entities.data.TimestampData`
+        Timestamps for each individual position.
+
+        Monitors have timestamps (milliseconds since start of the scan)
+        rather than positions as primary quantisation axis. This object
+        provides a mapping between timestamps and positions and can be used
+        to map monitor data to positions.
+
 
     Examples
     --------
@@ -95,6 +103,7 @@ class File:
         self.data = []
         self.snapshots = []
         self.monitors = []
+        self.position_timestamps = None
 
 
 class Metadata:
