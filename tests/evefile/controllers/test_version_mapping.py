@@ -42,6 +42,9 @@ class MockHDF5Group(MockHDF5Item):
         setattr(self, name, item)
         self._items[name] = item
 
+    def item_names(self):
+        return list(self._items.keys())
+
 
 class MockEveH5(MockHDF5Group):
 
@@ -85,6 +88,44 @@ class MockEveH5(MockHDF5Group):
         )
         poscounttimer.attributes = {"Unit": "msecs"}
         self.c1.meta.add_item(poscounttimer)
+
+
+class MockEveH5v4(MockEveH5):
+
+    # noinspection PyUnresolvedReferences
+    def __init__(self):
+        super().__init__()
+        # Only starting with v4
+        self.c1.add_item(
+            MockHDF5Group(name="/c1/main", filename=self.filename)
+        )
+        # Fake array channel
+        self.c1.main.add_item(
+            MockHDF5Group(name="/c1/main/array", filename=self.filename)
+        )
+        self.c1.main.array.attributes = {
+            "DeviceType": "Channel",
+            "DetectorType": "Standard",
+            "Access": "ca:BRQM1:mca08.VAL",
+            "Name": "bsdd6_spectrum",
+            "XML-ID": "BRQM1:mca08chan1",
+        }
+        for position in range(5, 20):
+            self.c1.main.array.add_item(
+                MockHDF5Dataset(
+                    name=f"/c1/main/array/{position}", filename=self.filename
+                )
+            )
+            getattr(self.c1.main.array, str(position)).dtype = np.dtype(
+                [("0", "<i4")]
+            )
+            getattr(self.c1.main.array, str(position)).data = (
+                np.random.randint(low=0, high=1024, size=4096)
+            )
+
+
+class MockEveH5v5(MockEveH5v4):
+    pass
 
 
 class MockFile:
@@ -202,12 +243,13 @@ class TestVersionMapper(unittest.TestCase):
 class TestVersionMapperV5(unittest.TestCase):
     def setUp(self):
         self.mapper = version_mapping.VersionMapperV5()
+        self.h5file = MockEveH5v5()
 
     def test_instantiate_class(self):
         pass
 
     def test_map_sets_file_metadata_from_root_group(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         # destination: source
@@ -226,7 +268,7 @@ class TestVersionMapperV5(unittest.TestCase):
                 )
 
     def test_map_sets_file_metadata_from_c1_group(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         # destination: source
@@ -244,7 +286,7 @@ class TestVersionMapperV5(unittest.TestCase):
                 )
 
     def test_map_converts_date_to_datetime(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         keys_to_drop = [
             key
             for key in self.mapper.source.attributes.keys()
@@ -264,7 +306,7 @@ class TestVersionMapperV5(unittest.TestCase):
         )
 
     def test_map_sets_end_date_to_unix_start_time(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         keys_to_drop = [
             key
             for key in self.mapper.source.attributes.keys()
@@ -281,7 +323,7 @@ class TestVersionMapperV5(unittest.TestCase):
             "2024-07-25T10:04:03: Lorem ipsum",
             "2024-07-25T10:05:23: dolor sit amet",
         ]
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         self.mapper.source.LiveComment = MockHDF5Dataset()
         self.mapper.source.LiveComment.data = np.asarray(log_messages)
         evefile = evedata.evefile.boundaries.evefile.EveFile()
@@ -299,7 +341,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertEqual(message, evefile.log_messages[0].message)
 
     def test_map_adds_monitor_datasets(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         monitor1 = MockHDF5Dataset(name="/device/monitor")
         monitor1.attributes = {"Name": "mymonitor", "Access": "ca:foobar"}
         monitor2 = MockHDF5Dataset(name="/device/monitor2")
@@ -334,7 +376,7 @@ class TestVersionMapperV5(unittest.TestCase):
         )
 
     def test_monitor_datasets_contain_importer(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         monitor = MockHDF5Dataset(name="/device/monitor")
         monitor.filename = "test.h5"
         monitor.attributes = {"Name": "mymonitor", "Access": "ca:foobar"}
@@ -359,7 +401,7 @@ class TestVersionMapperV5(unittest.TestCase):
 
     # noinspection PyUnresolvedReferences
     def test_map_adds_timestampdata_dataset(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = self.h5file
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertIsInstance(
@@ -387,6 +429,41 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertDictEqual(
             mapping_dict, evefile.position_timestamps.importer[0].mapping
         )
+
+    def test_map_adds_array_dataset(self):
+        self.mapper.source = self.h5file
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertIsInstance(
+            evefile.data[0],
+            evedata.evefile.entities.data.ArrayChannelData,
+        )
+        self.assertEqual(
+            "array",
+            evefile.data[0].metadata.id,
+        )
+        self.assertEqual(
+            self.h5file.c1.main.array.attributes["Name"],
+            evefile.data[0].metadata.name,
+        )
+        self.assertEqual(
+            self.h5file.c1.main.array.attributes["Access"].split(
+                ":", maxsplit=1
+            )[1],
+            evefile.data[0].metadata.pv,
+        )
+        self.assertEqual(
+            self.h5file.c1.main.array.attributes["Access"].split(
+                ":", maxsplit=1
+            )[0],
+            evefile.data[0].metadata.access_mode,
+        )
+        positions = [int(i) for i in self.h5file.c1.main.array.item_names()]
+        self.assertListEqual(positions, list(evefile.data[0].positions))
+        for idx, pos in enumerate(self.h5file.c1.main.array.item_names()):
+            self.assertEqual(
+                f"/c1/main/array/{pos}", evefile.data[0].importer[idx].item
+            )
 
 
 class TestVersionMapperV6(unittest.TestCase):

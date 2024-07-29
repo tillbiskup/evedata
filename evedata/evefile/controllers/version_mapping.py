@@ -73,8 +73,8 @@ What follows is a summary of the different aspects, for the time being
   <evedata.evefile.entities.data.MonitorData>` objects. |check|
 
     * We probably need to create subclasses for the different monitor
-      datasets, at least distinguishing between numeric and and
-      non-numeric values.
+      datasets, at least distinguishing between numeric and non-numeric
+      values.
 
 * Map ``/c1/meta/PosCountTimer`` to :obj:`TimestampData
   <evedata.evefile.entities.data.TimestampData>` object. |check|
@@ -87,7 +87,8 @@ What follows is a summary of the different aspects, for the time being
     * Map array data to :obj:`ArrayChannelData
       <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
       that are *not* named ``normalized``, ``averagemeta``,
-      or ``standarddev``).
+      or ``standarddev``, and furthermore that have an attribute
+      ``DeviceType`` set to ``Channel``). (|check|)
     * Distinguish between single point and area data, and map area data to
       :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
       objects.
@@ -146,6 +147,11 @@ Other tasks not in the realm of the version mappers, but part of the
   <evedata.evefile.entities.data.AverageChannelData>` objects.
 
 
+.. admonition:: Questions to address
+
+    * How were the log messages/live comments saved before v5?
+
+
 Fundamental change of eveH5 schema with v8
 ==========================================
 
@@ -156,13 +162,13 @@ principles of the schema overhaul include:
 
 * Much more explicit markup of the device types represented by the
   individual HDF5 datasets.
-* Parameters/options of devices are part of the HDF5 dataset of the
+* Parameters/options of devices are part of the HDF5 hdf5_group of the
   respective device.
 
     * Parameters/options static within a scan module appear as attributes of
       the HDF5 datasets.
     * Parameters/options that potentially change with ech individual recorded
-      data point are represented as additional columns in the HDF5 dataset.
+      data point are represented as additional columns in the HDF5 hdf5_group.
 
 * Removing of the chain ``c1`` that was never and will never be used.
 
@@ -176,9 +182,12 @@ Module documentation
 
 """
 
+from collections.abc import Iterable
 import datetime
 import logging
 import sys
+
+import numpy as np
 
 import evedata.evefile.entities.data
 import evedata.evefile.entities.file
@@ -360,10 +369,10 @@ class VersionMapper:
         information where to get the relevant data from and how. Different
         versions of the underlying eveH5 schema differ even in whether all
         data belonging to one :obj:`Data` object are located in one HDF5
-        dataset or spread over multiple HDF5 datasets. In the latter case,
+        hdf5_group or spread over multiple HDF5 datasets. In the latter case,
         individual importers are necessary for the separate HDF5 datasets.
 
-        As the :class:`VersionMapper` class deals with each HDF5 dataset
+        As the :class:`VersionMapper` class deals with each HDF5 hdf5_group
         individually, some fundamental settings for the
         :class:`HDF5DataImporter
         <evedata.evefile.entities.data.HDF5DataImporter>` are readily
@@ -374,20 +383,20 @@ class VersionMapper:
 
         .. important::
             The keys in the dictionary provided via the ``mapping``
-            parameter are **integers, not strings**, as usual for dictionaries.
-            This allows to directly use the keys for indexing the tuple
-            returned by ``numpy.dtype.names``. To be explicit, here is an
-            example:
+            parameter are **integers, not strings**, as usual for
+            dictionaries. This allows to directly use the keys for
+            indexing the tuple returned by ``numpy.dtype.names``. To be
+            explicit, here is an example:
 
             .. code-block::
 
-                dataset = HDF5Dataset()
+                hdf5_group = HDF5Dataset()
                 importer_mapping = {
                     0: "milliseconds",
                     1: "data",
                 }
                 importer = self.get_hdf5_dataset_importer(
-                    dataset=dataset, mapping=importer_mapping
+                    hdf5_group=hdf5_group, mapping=importer_mapping
                 )
 
             Of course, in reality you will not just instantiate an empty
@@ -398,10 +407,10 @@ class VersionMapper:
         Parameters
         ----------
         dataset : :class:`evedata.evefile.boundaries.eveh5.HDF5Dataset`
-            Representation of an HDF5 dataset.
+            Representation of an HDF5 hdf5_group.
 
         mapping : :class:`dict`
-            Table for mapping HDF5 dataset columns to data class attributes.
+            Table mapping HDF5 hdf5_group columns to data class attributes.
 
             **Note**: The keys in this dictionary are *integers*,
             not strings, as usual for dictionaries. This allows to directly
@@ -411,7 +420,7 @@ class VersionMapper:
         Returns
         -------
         importer : :class:`evedata.evefile.entities.data.HDF5DataImporter`
-            HDF5 dataset importer
+            HDF5 hdf5_group importer
 
         """
         if mapping is None:
@@ -427,6 +436,7 @@ class VersionMapper:
         self._map_file_metadata()
         self._map_monitor_datasets()
         self._map_timestamp_dataset()
+        self._map_array_datasets()
 
     def _check_prerequisites(self):
         if not self.source:
@@ -443,6 +453,12 @@ class VersionMapper:
     def _map_timestamp_dataset(self):
         pass
 
+    def _map_array_datasets(self):
+        pass
+
+    def _map_array_dataset(self):
+        pass
+
 
 class VersionMapperV5(VersionMapper):
     """
@@ -456,7 +472,7 @@ class VersionMapperV5(VersionMapper):
         attribute :attr:`File.metadata.end
         <evedata.evefile.entities.file.Metadata.end>` is set to the UNIX
         start date (1970-01-01T00:00:00). Thus, with these files,
-        it is *not* possible to autamatically calculate the duration of
+        it is *not* possible to automatically calculate the duration of
         the measurement.
 
 
@@ -565,6 +581,38 @@ class VersionMapperV5(VersionMapper):
         dataset.importer.append(importer)
         dataset.metadata.unit = timestampdata.attributes["Unit"]
         self.destination.position_timestamps = dataset
+
+    def _map_array_datasets(self):
+        # TODO: Move up to VersionMapperV4
+        if not hasattr(self.source.c1, "main"):
+            return
+        for item in self.source.c1.main:
+            # noinspection PyUnresolvedReferences
+            if isinstance(item, Iterable) and "DeviceType" in item.attributes:
+                # noinspection PyTypeChecker
+                self._map_array_dataset(hdf5_group=item)
+
+    def _map_array_dataset(self, hdf5_group=None):
+        # TODO: Move up to VersionMapperV2 (at least the earliest one)
+        dataset = evedata.evefile.entities.data.ArrayChannelData()
+        dataset.metadata.id = hdf5_group.name.split("/")[-1]  # noqa
+        dataset.metadata.name = hdf5_group.attributes["Name"]
+        dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
+            hdf5_group.attributes
+        )["Access"].split(":", maxsplit=1)
+        # Create positions vector and add it (needs to be done here)
+        positions = [int(i) for i in hdf5_group.item_names()]
+        dataset.positions = np.asarray(positions, dtype="i4")
+        # Create and add importers for each individual array
+        for position in hdf5_group:
+            importer_mapping = {
+                0: "data",
+            }
+            importer = self.get_hdf5_dataset_importer(
+                dataset=position, mapping=importer_mapping
+            )
+            dataset.importer.append(importer)
+        self.destination.data.append(dataset)
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):
