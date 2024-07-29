@@ -88,7 +88,7 @@ What follows is a summary of the different aspects, for the time being
       <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
       that are *not* named ``normalized``, ``averagemeta``,
       or ``standarddev``, and furthermore that have an attribute
-      ``DeviceType`` set to ``Channel``). (|check|)
+      ``DeviceType`` set to ``Channel``). |check|
     * Distinguish between single point and area data, and map area data to
       :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
       objects.

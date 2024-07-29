@@ -14,6 +14,8 @@ class DummyHDF5File:
     def create(self):
         with h5py.File(self.filename, "w") as file:
             c1 = file.create_group("c1")
+            c1.create_group("main")
+            c1.create_group("snapshot")
             meta = c1.create_group("meta")
             data_ = np.ndarray(
                 [4],
@@ -25,6 +27,16 @@ class DummyHDF5File:
             data_["PosCountTimer"] = np.asarray([2, 4, 6, 8])
             poscounttimer = meta.create_dataset("PosCountTimer", data=data_)
             poscounttimer.attrs["Unit"] = np.bytes_(["msecs"])
+
+    def add_array_data(self):
+        with h5py.File(self.filename, "r+") as file:
+            file["c1"]["main"].create_group("array")
+            for position in range(5, 20):
+                data_ = np.ndarray([4096], dtype=np.dtype([("0", "<i4")]))
+                data_["0"] = np.random.randint(low=0, high=1024, size=4096)
+                file["c1"]["main"]["array"].create_dataset(
+                    str(position), data=data_
+                )
 
 
 class TestData(unittest.TestCase):
@@ -325,6 +337,11 @@ class TestIntervalChannelData(unittest.TestCase):
 class TestArrayChannelData(unittest.TestCase):
     def setUp(self):
         self.data = data.ArrayChannelData()
+        self.filename = "test.h5"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
 
     def test_instantiate_class(self):
         pass
@@ -344,6 +361,20 @@ class TestArrayChannelData(unittest.TestCase):
         self.assertIsInstance(
             self.data.metadata, metadata.ArrayChannelMetadata
         )
+
+    def test_get_data_loads_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        h5file.add_array_data()
+        for position in range(5, 20):
+            importer = data.HDF5DataImporter(source=self.filename)
+            importer.item = f"/c1/main/array/{position}"
+            importer.mapping = {
+                "0": "data",
+            }
+            self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertEqual(2, self.data.data.ndim)
 
 
 class TestAreaChannelData(unittest.TestCase):
