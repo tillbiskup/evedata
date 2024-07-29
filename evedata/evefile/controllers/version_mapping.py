@@ -432,6 +432,10 @@ class VersionMapper:
             importer.mapping[dataset.dtype.names[key]] = value
         return importer
 
+    @staticmethod
+    def get_dataset_name(dataset=None):
+        return dataset.name.rsplit("/", maxsplit=1)[1]
+
     def _map(self):
         self._map_file_metadata()
         self._map_monitor_datasets()
@@ -566,7 +570,9 @@ class VersionMapperV5(VersionMapper):
             dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
                 monitor.attributes
             )["Access"].split(":", maxsplit=1)
-            self.destination.monitors.append(dataset)
+            self.destination.monitors[self.get_dataset_name(monitor)] = (
+                dataset
+            )
 
     def _map_timestamp_dataset(self):
         timestampdata = self.source.c1.meta.PosCountTimer
@@ -612,7 +618,7 @@ class VersionMapperV5(VersionMapper):
                 dataset=position, mapping=importer_mapping
             )
             dataset.importer.append(importer)
-        self.destination.data.append(dataset)
+        self.destination.data[self.get_dataset_name(hdf5_group)] = dataset
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

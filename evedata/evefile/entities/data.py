@@ -40,7 +40,7 @@ the :mod:`evedata.evefile.entities.metadata` module.
 
 .. _fig-uml_evedata-evefile.data_api:
 
-.. figure:: /uml/evedata.evefile.data.*
+.. figure:: /uml/evedata.evefile.entities.data.*
     :align: center
     :width: 750px
 

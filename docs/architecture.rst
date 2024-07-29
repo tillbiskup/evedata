@@ -100,7 +100,7 @@ file module
 Despite the opposite chain of dependencies, starting with the ``file`` module seems sensible, as its ``File`` class represents a single eveH5 file and provides kind of an entry point.
 
 
-.. figure:: uml/evedata.evefile.file.*
+.. figure:: uml/evedata.evefile.entities.file.*
     :align: center
 
     Class hierarchy of the evefile.file module. The File class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage. Furthermore, "Scan" inherits from the identically named facade of the scan functional layer and contains the full information of the SCML file.
@@ -108,15 +108,16 @@ Despite the opposite chain of dependencies, starting with the ``file`` module se
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * "data", "snapshots", "monitors": lists or dicts?
-
-      Currently, the three attributes are modelled as plain lists. How about modelling them as dictionaries, with the keys being the names of the corresponding datasets?
-
-      If using dictionaries, what would be sensible names for the datasets? The content of the "Name" attribute of the corresponding HDF5 dataset? How is this currently handled for the (in)famous Pandas dataframe column names?
-
     * Split "Scan" and "Setup", similarly to how they are stored in eveH5 in the future?
 
       Currently, the facade of the scan subpackage is a scan, containing both, the scan description and the setup description. However, the setup part of the SCML file sent to the engine is not necessarily identical with the XML file with the setup description loaded by the engine. Hence, it may make sense to have both stored separately, or have a "Scan" facade that contains only the scan description, and a "Setup" facade containing the information on the relevant devices.
+
+
+Some comments (not discussions any more):
+
+* "data", "snapshots", "monitors": lists or dicts?
+
+  In the meantime, the three attributes are modelled as dictionaries. How about modelling them as dictionaries, with the keys being the names of the corresponding datasets (*i.e.*, the last part of the path within the HDF5 file).
 
 
 data module
@@ -127,7 +128,7 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
 
 .. _fig-uml_evedata-evefile.data:
 
-.. figure:: uml/evedata.evefile.data.*
+.. figure:: uml/evedata.evefile.entities.data.*
     :align: center
     :width: 750px
 

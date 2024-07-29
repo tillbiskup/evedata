@@ -9,7 +9,7 @@ A first overview of the classes implemented in this module and their
 hierarchy is given in the UML diagram below.
 
 
-.. figure:: /uml/evedata.evefile.file.*
+.. figure:: /uml/evedata.evefile.entities.file.*
     :align: center
 
     Class hierarchy of the :mod:`evedata.evefile.entities.file` module. The
@@ -59,22 +59,22 @@ class File:
     scan : :class:`Scan`
         Description of the actual scan.
 
-    data : :class:`list`
+    data : :class:`dict`
         Data recorded from the devices involved in a measurement.
 
-        Each item in the list is an instance of
+        Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
-    snapshots : :class:`list`
+    snapshots : :class:`dict`
         Device data recorded as snapshot during a measurement.
 
-        Each item in the list is an instance of
+        Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
-    monitors : :class:`list`
+    monitors : :class:`dict`
         Device data monitored during a measurement.
 
-        Each item in the list is an instance of
+        Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
     position_timestamps : :class:`evedata.evefile.entities.data.TimestampData`
@@ -100,9 +100,9 @@ class File:
         self.metadata = Metadata()
         self.log_messages = []
         self.scan = Scan()
-        self.data = []
-        self.snapshots = []
-        self.monitors = []
+        self.data = {}
+        self.snapshots = {}
+        self.monitors = {}
         self.position_timestamps = None
 
 

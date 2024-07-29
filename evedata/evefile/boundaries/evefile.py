@@ -168,25 +168,25 @@ class EveFile(File):
     scan : :class:`Scan`
         Description of the actual scan.
 
-    data : :class:`list`
+    data : :class:`dict`
         Data recorded from the devices involved in a measurement.
 
-        Each item in the list is an instance of
+        Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
-    snapshots : :class:`list`
+    snapshots : :class:`dict`
         Device data recorded as snapshot during a measurement.
 
         Only those device data that are not options belonging to any of
         the devices in the :attr:`data` attribute are stored here.
 
-        Each item in the list is an instance of
+        Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
-    monitors : :class:`list`
+    monitors : :class:`dict`
         Device data monitored during a measurement.
 
-        Each item in the list is an instance of
+        Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
     position_timestamps : :class:`evedata.evefile.entities.data.TimestampData`

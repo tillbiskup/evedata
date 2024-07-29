@@ -353,26 +353,26 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.source.device.add_item(monitor2)
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
-        for monitor in evefile.monitors:
+        for monitor in evefile.monitors.values():
             self.assertIsInstance(
                 monitor,
                 evedata.evefile.entities.data.MonitorData,
             )
         self.assertEqual(
             "monitor",
-            evefile.monitors[0].metadata.id,
+            evefile.monitors["monitor"].metadata.id,
         )
         self.assertEqual(
             monitor1.attributes["Name"],
-            evefile.monitors[0].metadata.name,
+            evefile.monitors["monitor"].metadata.name,
         )
         self.assertEqual(
             monitor1.attributes["Access"].split(":", maxsplit=1)[1],
-            evefile.monitors[0].metadata.pv,
+            evefile.monitors["monitor"].metadata.pv,
         )
         self.assertEqual(
             monitor1.attributes["Access"].split(":", maxsplit=1)[0],
-            evefile.monitors[0].metadata.access_mode,
+            evefile.monitors["monitor"].metadata.access_mode,
         )
 
     def test_monitor_datasets_contain_importer(self):
@@ -386,17 +386,17 @@ class TestVersionMapperV5(unittest.TestCase):
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertEqual(
-            "/device/monitor", evefile.monitors[0].importer[0].item
+            "/device/monitor", evefile.monitors["monitor"].importer[0].item
         )
         self.assertEqual(
-            monitor.filename, evefile.monitors[0].importer[0].source
+            monitor.filename, evefile.monitors["monitor"].importer[0].source
         )
         mapping_dict = {
             monitor.dtype.names[0]: "milliseconds",
             monitor.dtype.names[1]: "data",
         }
         self.assertDictEqual(
-            mapping_dict, evefile.monitors[0].importer[0].mapping
+            mapping_dict, evefile.monitors["monitor"].importer[0].mapping
         )
 
     # noinspection PyUnresolvedReferences
@@ -430,39 +430,41 @@ class TestVersionMapperV5(unittest.TestCase):
             mapping_dict, evefile.position_timestamps.importer[0].mapping
         )
 
+    # noinspection PyUnresolvedReferences
     def test_map_adds_array_dataset(self):
         self.mapper.source = self.h5file
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertIsInstance(
-            evefile.data[0],
+            evefile.data["array"],
             evedata.evefile.entities.data.ArrayChannelData,
         )
         self.assertEqual(
             "array",
-            evefile.data[0].metadata.id,
+            evefile.data["array"].metadata.id,
         )
         self.assertEqual(
             self.h5file.c1.main.array.attributes["Name"],
-            evefile.data[0].metadata.name,
+            evefile.data["array"].metadata.name,
         )
         self.assertEqual(
             self.h5file.c1.main.array.attributes["Access"].split(
                 ":", maxsplit=1
             )[1],
-            evefile.data[0].metadata.pv,
+            evefile.data["array"].metadata.pv,
         )
         self.assertEqual(
             self.h5file.c1.main.array.attributes["Access"].split(
                 ":", maxsplit=1
             )[0],
-            evefile.data[0].metadata.access_mode,
+            evefile.data["array"].metadata.access_mode,
         )
         positions = [int(i) for i in self.h5file.c1.main.array.item_names()]
-        self.assertListEqual(positions, list(evefile.data[0].positions))
+        self.assertListEqual(positions, list(evefile.data["array"].positions))
         for idx, pos in enumerate(self.h5file.c1.main.array.item_names()):
             self.assertEqual(
-                f"/c1/main/array/{pos}", evefile.data[0].importer[idx].item
+                f"/c1/main/array/{pos}",
+                evefile.data["array"].importer[idx].item,
             )
 
 
