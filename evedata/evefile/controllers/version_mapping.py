@@ -162,13 +162,13 @@ principles of the schema overhaul include:
 
 * Much more explicit markup of the device types represented by the
   individual HDF5 datasets.
-* Parameters/options of devices are part of the HDF5 hdf5_group of the
+* Parameters/options of devices are part of the HDF5 dataset of the
   respective device.
 
     * Parameters/options static within a scan module appear as attributes of
       the HDF5 datasets.
     * Parameters/options that potentially change with ech individual recorded
-      data point are represented as additional columns in the HDF5 hdf5_group.
+      data point are represented as additional columns in the HDF5 dataset.
 
 * Removing of the chain ``c1`` that was never and will never be used.
 
@@ -369,10 +369,10 @@ class VersionMapper:
         information where to get the relevant data from and how. Different
         versions of the underlying eveH5 schema differ even in whether all
         data belonging to one :obj:`Data` object are located in one HDF5
-        hdf5_group or spread over multiple HDF5 datasets. In the latter case,
+        dataset or spread over multiple HDF5 datasets. In the latter case,
         individual importers are necessary for the separate HDF5 datasets.
 
-        As the :class:`VersionMapper` class deals with each HDF5 hdf5_group
+        As the :class:`VersionMapper` class deals with each HDF5 dataset
         individually, some fundamental settings for the
         :class:`HDF5DataImporter
         <evedata.evefile.entities.data.HDF5DataImporter>` are readily
@@ -390,13 +390,13 @@ class VersionMapper:
 
             .. code-block::
 
-                hdf5_group = HDF5Dataset()
+                dataset = HDF5Dataset()
                 importer_mapping = {
                     0: "milliseconds",
                     1: "data",
                 }
                 importer = self.get_hdf5_dataset_importer(
-                    hdf5_group=hdf5_group, mapping=importer_mapping
+                    dataset=dataset, mapping=importer_mapping
                 )
 
             Of course, in reality you will not just instantiate an empty
@@ -407,10 +407,10 @@ class VersionMapper:
         Parameters
         ----------
         dataset : :class:`evedata.evefile.boundaries.eveh5.HDF5Dataset`
-            Representation of an HDF5 hdf5_group.
+            Representation of an HDF5 dataset.
 
         mapping : :class:`dict`
-            Table mapping HDF5 hdf5_group columns to data class attributes.
+            Table mapping HDF5 dataset columns to data class attributes.
 
             **Note**: The keys in this dictionary are *integers*,
             not strings, as usual for dictionaries. This allows to directly
@@ -420,7 +420,7 @@ class VersionMapper:
         Returns
         -------
         importer : :class:`evedata.evefile.entities.data.HDF5DataImporter`
-            HDF5 hdf5_group importer
+            HDF5 dataset importer
 
         """
         if mapping is None:
@@ -434,6 +434,24 @@ class VersionMapper:
 
     @staticmethod
     def get_dataset_name(dataset=None):
+        """
+        Get the name of an HDF5 dataset.
+
+        The name here refers to the last part of the path within the HDF5
+        file, *i.e.* the part after the last slash.
+
+
+        Parameters
+        ----------
+        dataset : :class:`evedata.evefile.boundaries.eveh5.HDF5Dataset`
+            Representation of an HDF5 dataset.
+
+        Returns
+        -------
+        name : :class:`str`
+            Name of the HDF5 dataset
+
+        """
         return dataset.name.rsplit("/", maxsplit=1)[1]
 
     def _map(self):
