@@ -87,6 +87,10 @@ What follows is a summary of the different aspects, for the time being
     * Map array data to :obj:`ArrayChannelData
       <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
       having an attribute ``DeviceType`` set to ``Channel``). |check|
+
+      * Distinguish between MCA and scope data (at least). |cross|
+      * Map additional datasets in main section. |cross|
+
     * Map all axis datasets to :obj:`AxisData
       <evedata.evefile.entities.data.AxisData>` objects. |check|
 
