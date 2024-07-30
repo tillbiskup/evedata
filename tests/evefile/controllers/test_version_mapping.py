@@ -248,6 +248,36 @@ class TestVersionMapperV5(unittest.TestCase):
     def test_instantiate_class(self):
         pass
 
+    def test_map_sets_main_dataset_name_lists(self):
+        self.mapper.source = self.h5file
+        device = MockHDF5Dataset(name="/c1/main/device")
+        device.attributes = {
+            "Name": "myaxis1",
+            "Access": "ca:foobar",
+            "DeviceType": "Device",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.main.add_item(device)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertTrue(self.mapper.datasets2map_in_main)
+
+    def test_map_sets_snapshot_dataset_name_lists(self):
+        self.mapper.source = self.h5file
+        axis = MockHDF5Dataset(name="/c1/snapshot/axis1")
+        axis.attributes = {
+            "Name": "myaxis1",
+            "Access": "ca:foobar",
+            "DeviceType": "Axis",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.add_item(MockHDF5Group(name="/snapshot"))
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.snapshot.add_item(axis)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertTrue(self.mapper.datasets2map_in_snapshot)
+
     def test_map_sets_file_metadata_from_root_group(self):
         self.mapper.source = self.h5file
         evefile = evedata.evefile.boundaries.evefile.EveFile()
@@ -468,6 +498,14 @@ class TestVersionMapperV5(unittest.TestCase):
                 evefile.data["array"].importer[idx].item,
             )
 
+    # noinspection PyUnresolvedReferences
+    def test_map_array_dataset_removes_dataset_from_list2map(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertNotIn("array", self.mapper.datasets2map_in_main)
+
     def test_map_adds_axis_datasets(self):
         self.mapper.source = self.h5file
         axis1 = MockHDF5Dataset(name="/c1/main/axis1")
@@ -543,6 +581,20 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertDictEqual(
             mapping_dict, evefile.data["axis1"].importer[0].mapping
         )
+
+    def test_map_axis_dataset_removes_dataset_from_list2map(self):
+        self.mapper.source = self.h5file
+        axis1 = MockHDF5Dataset(name="/c1/main/axis1")
+        axis1.attributes = {
+            "Name": "myaxis1",
+            "Access": "ca:foobar",
+            "DeviceType": "Axis",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.main.add_item(axis1)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertNotIn("axis1", self.mapper.datasets2map_in_main)
 
 
 class TestVersionMapperV6(unittest.TestCase):

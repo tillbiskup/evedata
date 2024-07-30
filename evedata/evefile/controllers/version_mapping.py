@@ -86,12 +86,11 @@ What follows is a summary of the different aspects, for the time being
 
     * Map array data to :obj:`ArrayChannelData
       <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
-      that are *not* named ``normalized``, ``averagemeta``,
-      or ``standarddev``, and furthermore that have an attribute
-      ``DeviceType`` set to ``Channel``). |check|
+      having an attribute ``DeviceType`` set to ``Channel``). |check|
     * Map all axis datasets to :obj:`AxisData
-      <evedata.evefile.entities.data.AxisData>` objects (how to distinguish
-      between axes with and without encorders?). (|check|)
+      <evedata.evefile.entities.data.AxisData>` objects. |check|
+
+      How to distinguish between axes with and without encoders? |cross|
     * Distinguish between single point and area data, and map area data to
       :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
       objects.
@@ -107,7 +106,13 @@ What follows is a summary of the different aspects, for the time being
       Hint: Getting the shape of an HDF5 dataset is a cheap operation and
       does *not* require reading the actual data, as the information is
       contained in the metadata of the HDF5 dataset. This should allow for
-      additional checking whether a dataset as been redefined.
+      additional checking whether a dataset has been redefined.
+
+      If the number of (the sum of) positions differ, the channel has been
+      redefined. However, the average or interval settings may have
+      changed between scan modules as well, and this can only be figured
+      out by actually reading the data. How to handle this situation?
+      Split datasets only upon reading the data, if necessary?
 
       Take care of normalized channel data and treat them accordingly.
     * Map the additional data for average and interval channel data provided
@@ -310,6 +315,22 @@ class VersionMapper:
     destination : :class:`evedata.evefile.boundaries.evefile.File`
         High(er)-level evedata structure representing an eveH5 file
 
+    datasets2map_in_main : :class:`list`
+        Names of the datasets in the main section not yet mapped.
+
+        In order to not have to check all datasets several times,
+        this list contains only those datasets not yet mapped. Hence,
+        every private mapping method removes those names from the list it
+        handled successfully.
+
+    datasets2map_in_snapshot : :class:`list`
+        Names of the datasets in the snapshot section not yet mapped.
+
+        In order to not have to check all datasets several times,
+        this list contains only those datasets not yet mapped. Hence,
+        every private mapping method removes those names from the list it
+        handled successfully.
+
     Raises
     ------
     ValueError
@@ -342,6 +363,10 @@ class VersionMapper:
     def __init__(self):
         self.source = None
         self.destination = None
+        self.datasets2map_in_main = []
+        self.datasets2map_in_snapshot = []
+        self._main_group = None
+        self._snapshot_group = None
 
     def map(self, source=None, destination=None):
         """
@@ -366,6 +391,7 @@ class VersionMapper:
         if destination:
             self.destination = destination
         self._check_prerequisites()
+        self._set_dataset_names()
         self._map()
 
     @staticmethod
@@ -463,36 +489,80 @@ class VersionMapper:
         """
         return dataset.name.rsplit("/", maxsplit=1)[1]
 
-    def _map(self):
-        self._map_file_metadata()
-        self._map_monitor_datasets()
-        self._map_timestamp_dataset()
-        self._map_array_datasets()
-        self._map_axis_datasets()
-
     def _check_prerequisites(self):
         if not self.source:
             raise ValueError("Missing source to map from.")
         if not self.destination:
             raise ValueError("Missing destination to map to.")
 
+    def _set_dataset_names(self):
+        pass
+
+    def _map(self):
+        self._map_file_metadata()
+        self._map_monitor_datasets()
+        self._map_timestamp_dataset()
+        # Note: The sequence of method calls can be crucial, as the mapper
+        #       contains a list of datasets still to be mapped, and each
+        #       mapped dataset is removed from this list.
+        self._map_array_datasets()
+        self._map_axis_datasets()
+        self._map_area_datasets()
+        self._map_0d_datasets()
+        self._map_snapshot_datasets()
+
     def _map_file_metadata(self):
         pass
 
     def _map_monitor_datasets(self):
-        pass
+        if not hasattr(self.source, "device"):
+            return
+        for monitor in self.source.device:
+            dataset = evedata.evefile.entities.data.MonitorData()
+            importer_mapping = {
+                0: "milliseconds",
+                1: "data",
+            }
+            importer = self.get_hdf5_dataset_importer(
+                dataset=monitor, mapping=importer_mapping
+            )
+            dataset.importer.append(importer)
+            dataset.metadata.id = monitor.name.split("/")[-1]  # noqa
+            dataset.metadata.name = monitor.attributes["Name"]
+            dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
+                monitor.attributes
+            )["Access"].split(":", maxsplit=1)
+            self.destination.monitors[self.get_dataset_name(monitor)] = (
+                dataset
+            )
 
     def _map_timestamp_dataset(self):
         pass
 
     def _map_array_datasets(self):
-        pass
+        mapped_datasets = []
+        for name in self.datasets2map_in_main:
+            item = getattr(self._main_group, name)
+            # noinspection PyUnresolvedReferences
+            if isinstance(item, Iterable) and "DeviceType" in item.attributes:
+                # noinspection PyTypeChecker
+                self._map_array_dataset(hdf5_group=item)
+                mapped_datasets.append(self.get_dataset_name(item))
+        for item in mapped_datasets:
+            self.datasets2map_in_main.remove(item)
 
     def _map_array_dataset(self, hdf5_group=None):
         pass
 
     def _map_axis_datasets(self):
-        pass
+        mapped_datasets = []
+        for name in self.datasets2map_in_main:
+            item = getattr(self._main_group, name)
+            if item.attributes["DeviceType"] == "Axis":
+                self._map_axis_dataset(hdf5_dataset=item)
+                mapped_datasets.append(self.get_dataset_name(item))
+        for item in mapped_datasets:
+            self.datasets2map_in_main.remove(item)
 
     def _map_axis_dataset(self, hdf5_dataset=None):
         # TODO: Check whether axis has an encoder (how? mapping?)
@@ -511,6 +581,15 @@ class VersionMapper:
             hdf5_dataset.attributes
         )["Access"].split(":", maxsplit=1)
         self.destination.data[self.get_dataset_name(hdf5_dataset)] = dataset
+
+    def _map_area_datasets(self):
+        pass
+
+    def _map_0d_datasets(self):
+        pass
+
+    def _map_snapshot_datasets(self):
+        pass
 
 
 class VersionMapperV5(VersionMapper):
@@ -565,6 +644,20 @@ class VersionMapperV5(VersionMapper):
 
     """
 
+    def _set_dataset_names(self):
+        # TODO: Move up to VersionMapperV4
+        if hasattr(self.source.c1, "main"):
+            self._main_group = self.source.c1.main
+            self.datasets2map_in_main = [
+                self.get_dataset_name(item) for item in self.source.c1.main
+            ]
+        if hasattr(self.source.c1, "snapshot"):
+            self._main_group = self.source.c1.snapshot
+            self.datasets2map_in_snapshot = [
+                self.get_dataset_name(item)
+                for item in self.source.c1.snapshot
+            ]
+
     def _map(self):
         super()._map()
         self._map_log_messages()
@@ -601,29 +694,8 @@ class VersionMapperV5(VersionMapper):
             )
             self.destination.metadata.end = datetime.datetime(1970, 1, 1)
 
-    def _map_monitor_datasets(self):
-        if not hasattr(self.source, "device"):
-            return
-        for monitor in self.source.device:
-            dataset = evedata.evefile.entities.data.MonitorData()
-            importer_mapping = {
-                0: "milliseconds",
-                1: "data",
-            }
-            importer = self.get_hdf5_dataset_importer(
-                dataset=monitor, mapping=importer_mapping
-            )
-            dataset.importer.append(importer)
-            dataset.metadata.id = monitor.name.split("/")[-1]  # noqa
-            dataset.metadata.name = monitor.attributes["Name"]
-            dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
-                monitor.attributes
-            )["Access"].split(":", maxsplit=1)
-            self.destination.monitors[self.get_dataset_name(monitor)] = (
-                dataset
-            )
-
     def _map_timestamp_dataset(self):
+        # TODO: Move up to VersionMapperV2 (at least the earliest one)
         timestampdata = self.source.c1.meta.PosCountTimer
         dataset = evedata.evefile.entities.data.TimestampData()
         importer_mapping = {
@@ -636,16 +708,6 @@ class VersionMapperV5(VersionMapper):
         dataset.importer.append(importer)
         dataset.metadata.unit = timestampdata.attributes["Unit"]
         self.destination.position_timestamps = dataset
-
-    def _map_array_datasets(self):
-        # TODO: Move up to VersionMapperV4
-        if not hasattr(self.source.c1, "main"):
-            return
-        for item in self.source.c1.main:
-            # noinspection PyUnresolvedReferences
-            if isinstance(item, Iterable) and "DeviceType" in item.attributes:
-                # noinspection PyTypeChecker
-                self._map_array_dataset(hdf5_group=item)
 
     def _map_array_dataset(self, hdf5_group=None):
         # TODO: Move up to VersionMapperV2 (at least the earliest one)
@@ -668,14 +730,6 @@ class VersionMapperV5(VersionMapper):
             )
             dataset.importer.append(importer)
         self.destination.data[self.get_dataset_name(hdf5_group)] = dataset
-
-    def _map_axis_datasets(self):
-        # TODO: Move up to VersionMapperV4
-        if not hasattr(self.source.c1, "main"):
-            return
-        for item in self.source.c1.main:
-            if item.attributes["DeviceType"] == "Axis":
-                self._map_axis_dataset(hdf5_dataset=item)
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):
