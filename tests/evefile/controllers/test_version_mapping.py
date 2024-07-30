@@ -99,6 +99,9 @@ class MockEveH5v4(MockEveH5):
         self.c1.add_item(
             MockHDF5Group(name="/c1/main", filename=self.filename)
         )
+
+    # noinspection PyUnresolvedReferences
+    def add_array_channel(self):
         # Fake array channel
         self.c1.main.add_item(
             MockHDF5Group(name="/c1/main/array", filename=self.filename)
@@ -118,9 +121,6 @@ class MockEveH5v4(MockEveH5):
             )
             getattr(self.c1.main.array, str(position)).dtype = np.dtype(
                 [("0", "<i4")]
-            )
-            getattr(self.c1.main.array, str(position)).data = (
-                np.random.randint(low=0, high=1024, size=4096)
             )
 
 
@@ -433,6 +433,7 @@ class TestVersionMapperV5(unittest.TestCase):
     # noinspection PyUnresolvedReferences
     def test_map_adds_array_dataset(self):
         self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertIsInstance(
@@ -466,6 +467,82 @@ class TestVersionMapperV5(unittest.TestCase):
                 f"/c1/main/array/{pos}",
                 evefile.data["array"].importer[idx].item,
             )
+
+    def test_map_adds_axis_datasets(self):
+        self.mapper.source = self.h5file
+        axis1 = MockHDF5Dataset(name="/c1/main/axis1")
+        axis1.attributes = {
+            "Name": "myaxis1",
+            "Access": "ca:foobar",
+            "DeviceType": "Axis",
+        }
+        axis2 = MockHDF5Dataset(name="/c1/main/axis2")
+        axis2.attributes = {
+            "Name": "myaxis2",
+            "Access": "ca:barbaz",
+            "DeviceType": "Axis",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.main.add_item(axis1)
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.main.add_item(axis2)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for axis in evefile.data.values():
+            self.assertIsInstance(
+                axis,
+                evedata.evefile.entities.data.AxisData,
+            )
+        self.assertEqual(
+            "axis1",
+            evefile.data["axis1"].metadata.id,
+        )
+        self.assertEqual(
+            axis1.attributes["Name"],
+            evefile.data["axis1"].metadata.name,
+        )
+        self.assertEqual(
+            axis1.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.data["axis1"].metadata.pv,
+        )
+        self.assertEqual(
+            axis1.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.data["axis1"].metadata.access_mode,
+        )
+
+    def test_axis_datasets_contain_importer(self):
+        self.mapper.source = self.h5file
+        axis1 = MockHDF5Dataset(name="/c1/main/axis1")
+        axis1.attributes = {
+            "Name": "myaxis1",
+            "Access": "ca:foobar",
+            "DeviceType": "Axis",
+        }
+        axis2 = MockHDF5Dataset(name="/c1/main/axis2")
+        axis2.attributes = {
+            "Name": "myaxis2",
+            "Access": "ca:barbaz",
+            "DeviceType": "Axis",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.main.add_item(axis1)
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.main.add_item(axis2)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertEqual(
+            "/c1/main/axis1", evefile.data["axis1"].importer[0].item
+        )
+        self.assertEqual(
+            axis1.filename, evefile.data["axis1"].importer[0].source
+        )
+        mapping_dict = {
+            axis1.dtype.names[0]: "positions",
+            axis1.dtype.names[1]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data["axis1"].importer[0].mapping
+        )
 
 
 class TestVersionMapperV6(unittest.TestCase):

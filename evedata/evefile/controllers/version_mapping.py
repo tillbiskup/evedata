@@ -89,6 +89,9 @@ What follows is a summary of the different aspects, for the time being
       that are *not* named ``normalized``, ``averagemeta``,
       or ``standarddev``, and furthermore that have an attribute
       ``DeviceType`` set to ``Channel``). |check|
+    * Map all axis datasets to :obj:`AxisData
+      <evedata.evefile.entities.data.AxisData>` objects (how to distinguish
+      between axes with and without encorders?). (|check|)
     * Distinguish between single point and area data, and map area data to
       :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
       objects.
@@ -100,6 +103,12 @@ What follows is a summary of the different aspects, for the time being
       <evedata.evefile.entities.data.AverageChannelData>`,
       and :obj:`IntervalChannelData
       <evedata.evefile.entities.data.IntervalChannelData>`, respectively.
+
+      Hint: Getting the shape of an HDF5 dataset is a cheap operation and
+      does *not* require reading the actual data, as the information is
+      contained in the metadata of the HDF5 dataset. This should allow for
+      additional checking whether a dataset as been redefined.
+
       Take care of normalized channel data and treat them accordingly.
     * Map the additional data for average and interval channel data provided
       in the respective HDF5 groups to :obj:`AverageChannelData
@@ -459,6 +468,7 @@ class VersionMapper:
         self._map_monitor_datasets()
         self._map_timestamp_dataset()
         self._map_array_datasets()
+        self._map_axis_datasets()
 
     def _check_prerequisites(self):
         if not self.source:
@@ -478,8 +488,29 @@ class VersionMapper:
     def _map_array_datasets(self):
         pass
 
-    def _map_array_dataset(self):
+    def _map_array_dataset(self, hdf5_group=None):
         pass
+
+    def _map_axis_datasets(self):
+        pass
+
+    def _map_axis_dataset(self, hdf5_dataset=None):
+        # TODO: Check whether axis has an encoder (how? mapping?)
+        dataset = evedata.evefile.entities.data.NonencodedAxisData()
+        importer_mapping = {
+            0: "positions",
+            1: "data",
+        }
+        importer = self.get_hdf5_dataset_importer(
+            dataset=hdf5_dataset, mapping=importer_mapping
+        )
+        dataset.importer.append(importer)
+        dataset.metadata.id = hdf5_dataset.name.split("/")[-1]  # noqa
+        dataset.metadata.name = hdf5_dataset.attributes["Name"]
+        dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
+            hdf5_dataset.attributes
+        )["Access"].split(":", maxsplit=1)
+        self.destination.data[self.get_dataset_name(hdf5_dataset)] = dataset
 
 
 class VersionMapperV5(VersionMapper):
@@ -637,6 +668,14 @@ class VersionMapperV5(VersionMapper):
             )
             dataset.importer.append(importer)
         self.destination.data[self.get_dataset_name(hdf5_group)] = dataset
+
+    def _map_axis_datasets(self):
+        # TODO: Move up to VersionMapperV4
+        if not hasattr(self.source.c1, "main"):
+            return
+        for item in self.source.c1.main:
+            if item.attributes["DeviceType"] == "Axis":
+                self._map_axis_dataset(hdf5_dataset=item)
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

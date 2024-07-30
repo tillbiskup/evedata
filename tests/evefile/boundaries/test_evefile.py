@@ -24,8 +24,16 @@ class DummyHDF5File:
             c1 = file.create_group("c1")
             main = c1.create_group("main")
             meta = c1.create_group("meta")
-            test = main.create_dataset("test", data=np.ones([5, 2]))
-            test.attrs["name"] = np.bytes_(["foo"])
+            test = main.create_dataset(
+                "test",
+                data=np.ones(
+                    [5, 2],
+                    dtype=np.dtype([("PosCounter", "<i4"), ("fooo", "<f8")]),
+                ),
+            )
+            test.attrs["Name"] = np.bytes_(["foo"])
+            test.attrs["Access"] = np.bytes_(["ca:foobar"])
+            test.attrs["DeviceType"] = np.bytes_(["Axis"])
             data = np.ndarray(
                 [],
                 dtype=np.dtype(
