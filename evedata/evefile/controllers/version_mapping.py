@@ -89,7 +89,7 @@ What follows is a summary of the different aspects, for the time being
       having an attribute ``DeviceType`` set to ``Channel``). |check|
 
       * Distinguish between MCA and scope data (at least). |cross|
-      * Map additional datasets in main section. |cross|
+      * Map additional datasets in main section (and snapshot?). |cross|
 
     * Map all axis datasets to :obj:`AxisData
       <evedata.evefile.entities.data.AxisData>` objects. |check|
@@ -168,6 +168,67 @@ Other tasks not in the realm of the version mappers, but part of the
 .. admonition:: Questions to address
 
     * How were the log messages/live comments saved before v5?
+
+
+Notes on mapping MCA datasets
+-----------------------------
+
+MCA data themselves are stored as single dataset per spectrum in an HDF5
+group, and such group can be uniquely identified by having attributes,
+and an attribute ``DeviceType`` set to ``Channel``. Furthermore, he PV of a
+given MCA can be inferred from the ``Access`` attribute of the HDF5 group.
+
+Why not using the name of the MCA HDF5 group for obtaining the PV? The
+group typically has ``chan1`` added without separator straight to the PV
+name, but the ``Access`` attribute reveals the full PV with added ``.VAL``
+attribute.
+
+As all additional options follow directly the EPICS MCA record, and the
+dataset names can be mapped to the PVs of the MCA record, a direct mapping
+of datasets in the main and snapshot sections could be carried out. In
+this case, it seems not necessary to explicitly check the PV names of the
+individual datasets, as the datasets all have the PV attributes as their
+last part. Note that there are different and variable numbers of ROI
+channels and corresponding datasets available (up to 32 according to the
+EPICS MCA record, but probably <10 at PTB).
+
+How to map the values of the snapshot section to the options of the
+:class:`MCAChannelData <evedata.evefile.entities.data.MCAChannelData>` and
+:class:`MCAChannelROIData <evedata.evefile.entities.data.MCAChannelROIData>`
+classes? Check whether they have changed, and if not, use the first value?
+How to deal with the situation where the values in the snapshot dataset
+*have changed*? This would most probably mean that the MCA has been used
+with different settings in different scan modules of the scan and would
+need to be split into different datasets. However, this is only accessible
+once the data have been read. Again, two scenarios would be possible: (i)
+postpone the whole procedure to the data import in the
+:class:`MCAChannelData <evedata.evefile.entities.data.MCAChannelData>`
+class, or (ii) load the snapshot data during mapping, as this should
+usually only be small datasets, and deal with the differing values already
+here.
+
+
+Notes on mapping camera datasets
+--------------------------------
+
+Most probably, camera datasets can be identified by having (at least) two
+colons in their name. Furthermore, the second-right part between two
+colons should be one of ``TIFF1`` or ``cam1`` for scientific cameras and
+``uvc1`` for sample cameras.
+
+Having once identified one dataset belonging to a camera, all related
+datasets can be identified by the identical part before the first colon.
+Note that this criterion is *not* valid for other datasets not belonging
+to cameras.
+
+Identifying the "main" dataset for a camera is another task, as over time,
+this has changed as well, from storing image numbers to storing (full)
+filenames.
+
+How to map the values of the snapshot section to the respective camera
+classes? The same ideas as for the MCA datasets apply here, too - and
+probably more generally for all snapshot datasets, at least those where
+corresponding devices exist in the main section.
 
 
 Fundamental change of eveH5 schema with v8
