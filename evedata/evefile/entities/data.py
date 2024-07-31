@@ -1159,6 +1159,24 @@ class ScientificCameraData(AreaChannelData):
         Individual items in the list are objects of class
         :class:`ScientificCameraROIData`.
 
+        To each ROI belongs a :obj:`ScientificCameraStatisticsData`
+        object, but there can be an additional
+        :obj:`ScientificCameraStatisticsData` object for a scientific
+        camera, describing the entire image. Furthermore, mapping ROI to
+        statistics data is specific for each camera and setup.
+
+    statistics : :class:`list`
+        List of data for the individual statistics defined.
+
+        Individual items in the list are objects of class
+        :class:`ScientificCameraStatisticsData`.
+
+        To each ROI belongs a :obj:`ScientificCameraStatisticsData`
+        object, but there can be an additional
+        :obj:`ScientificCameraStatisticsData` object for a scientific
+        camera, describing the entire image. Furthermore, mapping ROI to
+        statistics data is specific for each camera and setup.
+
     acquire_time : any
         Short description
 
@@ -1184,6 +1202,7 @@ class ScientificCameraData(AreaChannelData):
         super().__init__()
         self.metadata = metadata.ScientificCameraMetadata()
         self.roi = []
+        self.statistics = []
         self.acquire_time = None
         self.temperature = np.ndarray(shape=[])
         self.humidity = np.ndarray(shape=[])
@@ -1207,6 +1226,35 @@ class ScientificCameraROIData(MeasureData):
         Four-element vector of integer values containing the boundary of
         the ROI.
 
+
+    Examples
+    --------
+    The :class:`ScientificCameraROIData` class is not meant to be used
+    directly, as any entities, but rather indirectly by means of the
+    respective facades in the boundaries technical layer of the
+    :mod:`evedata.evefile` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.label = ""
+        self.marker = np.asarray([0, 0, 0, 0], dtype=int)
+
+
+class ScientificCameraStatisticsData(MeasureData):
+    """
+    Data for an individual ROI of a scientific camera.
+
+    Many scientific cameras allow to define one or several regions of
+    interest (ROI). This class contains the relevant data for an
+    individual ROI.
+
+
+    Attributes
+    ----------
     background_width : :class:`int`
         Short description
 
@@ -1272,8 +1320,6 @@ class ScientificCameraROIData(MeasureData):
 
     def __init__(self):
         super().__init__()
-        self.label = ""
-        self.marker = np.asarray([0, 0, 0, 0], dtype=int)
         self.background_width = 0
         self.min_value = np.ndarray(shape=[], dtype=float)
         self.min_x = np.ndarray(shape=[], dtype=float)

@@ -591,6 +591,7 @@ class TestScientificCameraData(unittest.TestCase):
             "data",
             "positions",
             "roi",
+            "statistics",
             "acquire_time",
             "temperature",
             "humidity",
@@ -620,6 +621,25 @@ class TestScientificCameraROIData(unittest.TestCase):
             "positions",
             "label",
             "marker",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.data, attribute))
+
+
+class TestScientificCameraStatisticsData(unittest.TestCase):
+    def setUp(self):
+        self.data = data.ScientificCameraStatisticsData()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "metadata",
+            "options",
+            "data",
+            "positions",
             "background_width",
             "min_value",
             "min_x",

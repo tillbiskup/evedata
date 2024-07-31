@@ -12,6 +12,7 @@ class SampleCameraData extends AreaChannelData {
 
 class ScientificCameraData extends AreaChannelData {
     roi[] : ScientificCameraROIData
+    statistics[] : ScientificCameraStatisticsData
     acquire_time : float | np.ndarray
     {field} temperature : np.ndarray(dtype=float)
     {field} humidity : np.ndarray(dtype=float)
@@ -22,6 +23,8 @@ together {
     class ScientificCameraROIData
 }
 
+ScientificCameraStatisticsData -[hidden]> ScientificCameraROIData
+ScientificCameraStatisticsData "0..n" -* ScientificCameraData
 ScientificCameraROIData -[hidden]> ScientificCameraData
 ScientificCameraROIData "0..n" -* ScientificCameraData
 ScientificCameraROIData -[hidden]> ScientificCameraData
@@ -29,6 +32,13 @@ ScientificCameraROIData -[hidden]> ScientificCameraData
 class ScientificCameraROIData extends MeasureData {
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
+    {field} min_x : np.ndarray(dtype=float)
+    {field} min_y : np.ndarray(dtype=float)
+    {field} max_x : np.ndarray(dtype=float)
+    {field} max_y : np.ndarray(dtype=float)
+}
+
+class ScientificCameraStatisticsData extends MeasureData {
     background_width : int
     {field} min_value : np.ndarray(dtype=float)
     {field} min_x : np.ndarray(dtype=float)

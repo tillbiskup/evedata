@@ -183,7 +183,8 @@ group typically has ``chan1`` added without separator straight to the PV
 name, but the ``Access`` attribute reveals the full PV with added ``.VAL``
 attribute.
 
-As all additional options follow directly the EPICS MCA record, and the
+As all additional options follow directly the `EPICS MCA record
+<https://millenia.cars.aps.anl.gov/software/epics/mcaRecord.html>`_, and the
 dataset names can be mapped to the PVs of the MCA record, a direct mapping
 of datasets in the main and snapshot sections could be carried out. In
 this case, it seems not necessary to explicitly check the PV names of the

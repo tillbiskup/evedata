@@ -251,6 +251,7 @@ class "<scientificcameradata>_sm<#>" << (G,orchid) >> {}
 
 "<scientificcameradata>_sm<#>" *-- scientificcamera_data
 "<scientificcameradata>_sm<#>" *-- "0..n" "scientificcamera_roi<#>"
+"<scientificcameradata>_sm<#>" *-- "0..n" "scientificcamera_statistics<#>"
 
 class scientificcamera_data << (D,orange) >> {
     PV : string
@@ -283,6 +284,10 @@ endnote
 class "scientificcamera_roi<#>" << (D,orange) >> {
     Label : String
     Marker : [int32, int32, int32, int32]
+    --
+}
+
+class "scientificcamera_statistics<#>" << (D,orange) >> {
     BackgroundWidth : int32
     CentroidThreshold : float64
     --
@@ -309,6 +314,18 @@ class Setup << (D,orange) >> {
     --
     XML : string
 }
+
+note as scientificcamera_note
+    ROI and statistics need to be separated,
+    as depending on the camera settings,
+    different statistics are mapped to diffferent ROIs,
+    and the number of ROIs and statistics needs not be
+    the same (there can be statistics for the entire image).
+endnote
+
+"scientificcamera_roi<#>" .. scientificcamera_note
+"scientificcamera_statistics<#>" .. scientificcamera_note
+
 
 class Scan << (D,orange) >> {
     Version : string
