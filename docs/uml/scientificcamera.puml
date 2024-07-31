@@ -55,10 +55,6 @@ ScientificCameraROIData -[hidden]> ScientificCameraData
 class ScientificCameraROIData extends MeasureData {
     {field} label : string
     {field} marker : np.ndarray(dtype=int)
-    {field} min_x : np.ndarray(dtype=float)
-    {field} min_y : np.ndarray(dtype=float)
-    {field} max_x : np.ndarray(dtype=float)
-    {field} max_y : np.ndarray(dtype=float)
 }
 note bottom of ScientificCameraROIData
     Marker should be a four-element vector

@@ -19,9 +19,10 @@ class MockHDF5Item:
 class MockHDF5Dataset(MockHDF5Item):
     def __init__(self, name="", filename=""):
         super().__init__(name=name, filename=filename)
+        self.data = None
         self.get_data_called = False
         self.dtype = np.dtype(
-            [("PosCounter", "<i4"), ("A2980:23303chan1", "<f8")]
+            [("PosCounter", "<i4"), (name.split("/")[-1], "<f8")]
         )
 
     def get_data(self):
@@ -41,6 +42,11 @@ class MockHDF5Group(MockHDF5Item):
         name = item.name.split("/")[-1]
         setattr(self, name, item)
         self._items[name] = item
+
+    def remove_item(self, item):
+        name = item.name.split("/")[-1]
+        delattr(self, name)
+        self._items.pop(name)
 
     def item_names(self):
         return list(self._items.keys())
@@ -99,6 +105,9 @@ class MockEveH5v4(MockEveH5):
         self.c1.add_item(
             MockHDF5Group(name="/c1/main", filename=self.filename)
         )
+        self.c1.add_item(
+            MockHDF5Group(name="/c1/snapshot", filename=self.filename)
+        )
 
     # noinspection PyUnresolvedReferences
     def add_array_channel(self):
@@ -109,7 +118,7 @@ class MockEveH5v4(MockEveH5):
         self.c1.main.array.attributes = {
             "DeviceType": "Channel",
             "DetectorType": "Standard",
-            "Access": "ca:BRQM1:mca08.VAL",
+            "Access": "ca:array.VAL",
             "Name": "bsdd6_spectrum",
             "XML-ID": "BRQM1:mca08chan1",
         }
@@ -122,6 +131,81 @@ class MockEveH5v4(MockEveH5):
             getattr(self.c1.main.array, str(position)).dtype = np.dtype(
                 [("0", "<i4")]
             )
+        for option in ["ELTM", "ERTM", "PLTM", "PRTM", "R0", "R1"]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/array.{option}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": "ca:array.{option}",
+            }
+            self.c1.main.add_item(dataset)
+        for option in [
+            "CALO",
+            "CALQ",
+            "CALS",
+        ]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/snapshot/array.{option}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": "ca:array.{option}",
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [("PosCounter", "<i4"), (f"array.{option}", "f8")]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"array.{option}"] = np.random.random(2)
+            dataset.data = data_
+            self.c1.snapshot.add_item(dataset)
+        for option in [
+            "R0LO",
+            "R0HI",
+            "R1LO",
+            "R1HI",
+        ]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/snapshot/array.{option}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": "ca:array.{option}",
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [("PosCounter", "<i4"), (f"array.{option}", "<i4")]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"array.{option}"] = [-1, -1]
+            dataset.data = data_
+            self.c1.snapshot.add_item(dataset)
+        for option in [
+            "R0NM",
+            "R1NM",
+        ]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/snapshot/array.{option}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": "ca:array.{option}",
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [("PosCounter", "<i4"), (f"array.{option}", "S3")]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"array.{option}"] = ["foo", "foo"]
+            dataset.data = data_
+            self.c1.snapshot.add_item(dataset)
 
 
 class MockEveH5v5(MockEveH5v4):
@@ -505,6 +589,103 @@ class TestVersionMapperV5(unittest.TestCase):
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertNotIn("array", self.mapper.datasets2map_in_main)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_array_dataset_adds_importers_for_options(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        offset = 15
+        pv_attributes = ["ELTM", "ERTM", "PLTM", "PRTM"]
+        for idx, option in enumerate(pv_attributes):
+            self.assertEqual(
+                f"/c1/main/array.{option}",
+                evefile.data["array"].importer[idx + offset].item,
+            )
+        attribute_names = [
+            "life_time",
+            "real_time",
+            "preset_life_time",
+            "preset_real_time",
+        ]
+        for idx, attribute in enumerate(attribute_names):
+            self.assertEqual(
+                attribute,
+                evefile.data["array"]
+                .importer[idx + offset]
+                .mapping[f"array.{pv_attributes[idx]}"],
+            )
+
+    def test_map_array_adds_mca_roi_objects(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        # Assuming two ROI datasets to be added
+        self.assertEqual(2, len(evefile.data["array"].roi))
+
+    def test_map_array_adds_importers_to_mca_roi_objects(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for roi in evefile.data["array"].roi:
+            self.assertTrue(roi.importer)
+
+    def test_map_array_set_mca_roi_marker(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for roi in evefile.data["array"].roi:
+            self.assertListEqual([-1, -1], list(roi.marker))
+
+    def test_map_array_set_mca_roi_label(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for roi in evefile.data["array"].roi:
+            self.assertEqual("foo", roi.label)
+
+    def test_map_array_dataset_calibration_has_correct_values(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        mapping_table = {
+            "CALO": "offset",
+            "CALQ": "quadratic",
+            "CALS": "slope",
+        }
+        for key, value in mapping_table.items():
+            # noinspection PyUnresolvedReferences
+            self.assertEqual(
+                getattr(
+                    self.mapper.source.c1.snapshot, f"array." f"{key}"
+                ).data[f"array.{key}"][0],
+                getattr(evefile.data["array"].metadata.calibration, value),
+            )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_array_dataset_removes_options_from_list2map(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        array_datasets_in_main = [
+            item
+            for item in self.mapper.datasets2map_in_main
+            if item.startswith("array")
+        ]
+        self.assertFalse(array_datasets_in_main)
+        array_datasets_in_snapshot = [
+            item
+            for item in self.mapper.datasets2map_in_snapshot
+            if item.startswith("array")
+        ]
+        self.assertFalse(array_datasets_in_snapshot)
 
     def test_map_adds_axis_datasets(self):
         self.mapper.source = self.h5file
