@@ -216,7 +216,7 @@ class MockEveH5v4(MockEveH5):
             self.c1.snapshot.add_item(dataset)
 
     # noinspection PyUnresolvedReferences
-    def add_scientific_camera(self, camera="GREYQMP02"):
+    def add_scientific_camera(self, camera="GREYQMP02", n_roi=4, n_stats=5):
         # Fake scientific camera channels
         for name in [
             "TIFF1:chan1",
@@ -234,13 +234,15 @@ class MockEveH5v4(MockEveH5):
                 "Access": f"ca:{camera}:{name}",
             }
             self.c1.main.add_item(dataset)
-        for name in [
-            "MinX_RBV",
-            "MinY_RBV",
-            "SizeX_RBV",
-            "SizeY_RBV",
-        ]:
-            for roi in range(1, 5):
+        for idx, name in enumerate(
+            [
+                "MinX_RBV",
+                "MinY_RBV",
+                "SizeX_RBV",
+                "SizeY_RBV",
+            ]
+        ):
+            for roi in range(1, n_roi + 1):
                 dataset = MockHDF5Dataset(
                     name=f"/c1/main/{camera}:ROI{roi}:{name}",
                     filename=self.filename,
@@ -249,6 +251,18 @@ class MockEveH5v4(MockEveH5):
                     "DeviceType": "Channel",
                     "Access": f"ca:{camera}:ROI{roi}:{name}",
                 }
+                data_ = np.ndarray(
+                    [2],
+                    dtype=np.dtype(
+                        [
+                            ("PosCounter", "<i4"),
+                            (f"{camera}:ROI{roi}:{name}", "<i4"),
+                        ]
+                    ),
+                )
+                data_["PosCounter"] = np.asarray([2, 5])
+                data_[f"{camera}:ROI{roi}:{name}"] = [100 * idx, 100 * idx]
+                dataset.data = data_
                 self.c1.main.add_item(dataset)
         for name in [
             "BgdWidth_RBV",
@@ -269,7 +283,7 @@ class MockEveH5v4(MockEveH5):
             "Total_RBV",
             "chan1",
         ]:
-            for stats in range(1, 6):
+            for stats in range(1, n_stats + 1):
                 dataset = MockHDF5Dataset(
                     name=f"/c1/main/{camera}:Stats{stats}:{name}",
                     filename=self.filename,
@@ -874,6 +888,59 @@ class TestVersionMapperV5(unittest.TestCase):
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertIn(camera_name, evefile.data)
+        self.assertIsInstance(
+            evefile.data[camera_name],
+            evedata.evefile.entities.data.ScientificCameraData,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_camera_dataset_has_correct_number_of_rois(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        n_roi = 4
+        self.mapper.source.add_scientific_camera(
+            camera=camera_name, n_roi=n_roi
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertEqual(n_roi, len(evefile.data[camera_name].roi))
+
+    # noinspection PyUnresolvedReferences
+    def test_camera_dataset_has_correct_roi_marker(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        n_roi = 4
+        self.mapper.source.add_scientific_camera(
+            camera=camera_name, n_roi=n_roi
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for roi in evefile.data[camera_name].roi:
+            self.assertListEqual([0, 100, 200, 300], list(roi.marker))
+
+    # noinspection PyUnresolvedReferences
+    def test_camera_dataset_has_correct_number_of_stats(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        n_stats = 5
+        self.mapper.source.add_scientific_camera(
+            camera=camera_name, n_stats=n_stats
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertEqual(n_stats, len(evefile.data[camera_name].statistics))
+
+    def test_camera_dataset_statistics_have_importers(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        n_stats = 5
+        self.mapper.source.add_scientific_camera(
+            camera=camera_name, n_stats=n_stats
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for statistic in evefile.data[camera_name].statistics:
+            self.assertGreater(len(statistic.importer), 0)
 
     # noinspection PyUnresolvedReferences
     def test_map_camera_dataset_removes_options_from_list2map(self):

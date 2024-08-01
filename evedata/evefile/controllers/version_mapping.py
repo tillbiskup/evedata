@@ -983,15 +983,85 @@ class VersionMapperV5(VersionMapper):
             for item in self.datasets2map_in_main
             if item.startswith(camera)
         ]
-        for dataset in camera_datasets_in_main:
-            self.datasets2map_in_main.remove(dataset)
+        # TODO: Add importer for "main" dataset - whatever that is.
+        # TODO: Deal with attributes for metadata
+        # TODO: Deal with additional options in dataset
+        n_roi = len(
+            set(
+                [
+                    item.rsplit(":", maxsplit=2)[-2]
+                    for item in camera_datasets_in_main
+                    if "ROI" in item
+                ]
+            )
+        )
+        for idx in range(n_roi):
+            roi = evedata.evefile.entities.data.ScientificCameraROIData()
+            roi_pvs = ["MinX_RBV", "MinY_RBV", "SizeX_RBV", "SizeY_RBV"]
+            marker = []
+            for roi_pv in roi_pvs:
+                name = f"{camera}:ROI{idx+1}:{roi_pv}"
+                hdf5_dataset = getattr(self.source.c1.main, name)
+                hdf5_dataset.get_data()
+                marker.append(hdf5_dataset.data[name][0])
+                self.datasets2map_in_main.remove(name)
+                camera_datasets_in_main.remove(name)
+            roi.marker = np.asarray(marker)
+            dataset.roi.append(roi)
+        n_statistics = len(
+            set(
+                [
+                    item.rsplit(":", maxsplit=2)[-2]
+                    for item in camera_datasets_in_main
+                    if "Stats" in item
+                ]
+            )
+        )
+        for idx in range(n_statistics):
+            statistics = (
+                evedata.evefile.entities.data.ScientificCameraStatisticsData()
+            )
+            dataset.statistics.append(statistics)
+            mapping_table = {
+                "BgdWidth_RBV": "background_width",
+                "CentroidThreshold_RBV": "centroid_threshold",
+                "CentroidX_RBV": "centroid_x",
+                "CentroidY_RBV": "centroid_y",
+                "MaxValue_RBV": "max_value",
+                "MaxX_RBV": "max_x",
+                "MaxY_RBV": "max_y",
+                "MeanValue_RBV": "mean_value",
+                "MinValue_RBV": "min_value",
+                "MinX_RBV": "min_x",
+                "MinY_RBV": "min_y",
+                "SigmaXY_RBV": "sigma_xy",
+                "SigmaX_RBV": "sigma_x",
+                "SigmaY_RBV": "sigma_y",
+                "Sigma_RBV": "sigma",
+                "Total_RBV": "total",
+                "Net_RBV": "net",
+                "chan1": "data",
+            }
+            for pv in mapping_table.keys():
+                dataset_name = f"{camera}:Stats{idx+1}:{pv}"
+                if dataset_name in camera_datasets_in_main:
+                    importer_mapping = {1: mapping_table[pv]}
+                    importer = self.get_hdf5_dataset_importer(
+                        dataset=getattr(self.source.c1.main, dataset_name),
+                        mapping=importer_mapping,
+                    )
+                    dataset.statistics[idx].importer.append(importer)
+                    self.datasets2map_in_main.remove(dataset_name)
+                    camera_datasets_in_main.remove(dataset_name)
+        for name in camera_datasets_in_main:
+            self.datasets2map_in_main.remove(name)
         camera_datasets_in_snapshot = [
             item
             for item in self.datasets2map_in_snapshot
             if item.startswith(camera)
         ]
-        for dataset in camera_datasets_in_snapshot:
-            self.datasets2map_in_snapshot.remove(dataset)
+        for name in camera_datasets_in_snapshot:
+            self.datasets2map_in_snapshot.remove(name)
         self.destination.data[camera] = dataset
 
     def _map_log_messages(self):
