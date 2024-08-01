@@ -101,6 +101,14 @@ class MockEveH5v4(MockEveH5):
     # noinspection PyUnresolvedReferences
     def __init__(self):
         super().__init__()
+        self.attributes.update(
+            {
+                "EVEH5Version": "4",
+                "Location": "TEST",
+                "Version": "1.27",
+                "XMLversion": "5.0",
+            }
+        )
         # Only starting with v4
         self.c1.add_item(
             MockHDF5Group(name="/c1/main", filename=self.filename)
@@ -137,7 +145,7 @@ class MockEveH5v4(MockEveH5):
             )
             dataset.attributes = {
                 "DeviceType": "Channel",
-                "Access": "ca:array.{option}",
+                "Access": f"ca:array.{option}",
             }
             self.c1.main.add_item(dataset)
         for option in [
@@ -150,7 +158,7 @@ class MockEveH5v4(MockEveH5):
             )
             dataset.attributes = {
                 "DeviceType": "Channel",
-                "Access": "ca:array.{option}",
+                "Access": f"ca:array.{option}",
             }
             data_ = np.ndarray(
                 [2],
@@ -173,7 +181,7 @@ class MockEveH5v4(MockEveH5):
             )
             dataset.attributes = {
                 "DeviceType": "Channel",
-                "Access": "ca:array.{option}",
+                "Access": f"ca:array.{option}",
             }
             data_ = np.ndarray(
                 [2],
@@ -194,7 +202,7 @@ class MockEveH5v4(MockEveH5):
             )
             dataset.attributes = {
                 "DeviceType": "Channel",
-                "Access": "ca:array.{option}",
+                "Access": f"ca:array.{option}",
             }
             data_ = np.ndarray(
                 [2],
@@ -205,6 +213,87 @@ class MockEveH5v4(MockEveH5):
             data_["PosCounter"] = np.asarray([2, 5])
             data_[f"array.{option}"] = ["foo", "foo"]
             dataset.data = data_
+            self.c1.snapshot.add_item(dataset)
+
+    # noinspection PyUnresolvedReferences
+    def add_scientific_camera(self, camera="GREYQMP02"):
+        # Fake scientific camera channels
+        for name in [
+            "TIFF1:chan1",
+            "cam1:AcquireTime_RBV",
+            "cam1:Gain_RBV",
+            "cam1:Temperature_RBV",
+            "cam1:Time",
+            "cam1:greatEyesCooler",
+        ]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{camera}:{name}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{camera}:{name}",
+            }
+            self.c1.main.add_item(dataset)
+        for name in [
+            "MinX_RBV",
+            "MinY_RBV",
+            "SizeX_RBV",
+            "SizeY_RBV",
+        ]:
+            for roi in range(1, 5):
+                dataset = MockHDF5Dataset(
+                    name=f"/c1/main/{camera}:ROI{roi}:{name}",
+                    filename=self.filename,
+                )
+                dataset.attributes = {
+                    "DeviceType": "Channel",
+                    "Access": f"ca:{camera}:ROI{roi}:{name}",
+                }
+                self.c1.main.add_item(dataset)
+        for name in [
+            "BgdWidth_RBV",
+            "CentroidThreshold_RBV",
+            "CentroidX_RBV",
+            "CentroidY_RBV",
+            "MaxValue_RBV",
+            "MaxX_RBV",
+            "MaxY_RBV",
+            "MeanValue_RBV",
+            "MinValue_RBV",
+            "MinX_RBV",
+            "MinY_RBV",
+            "SigmaXY_RBV",
+            "SigmaX_RBV",
+            "SigmaY_RBV",
+            "Sigma_RBV",
+            "Total_RBV",
+            "chan1",
+        ]:
+            for stats in range(1, 6):
+                dataset = MockHDF5Dataset(
+                    name=f"/c1/main/{camera}:Stats{stats}:{name}",
+                    filename=self.filename,
+                )
+                dataset.attributes = {
+                    "DeviceType": "Channel",
+                    "Access": f"ca:{camera}:Stats{stats}:{name}",
+                }
+                self.c1.main.add_item(dataset)
+
+        for name in [
+            "TIFF1:FileName",
+            "cam1:ReverseX_RBV",
+            "cam1:ReverseY_RBV",
+            "cam1:Temperature",
+            "cam1:TemperatureActual",
+        ]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{camera}:{name}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{camera}:{name}",
+            }
             self.c1.snapshot.add_item(dataset)
 
 
@@ -776,6 +865,35 @@ class TestVersionMapperV5(unittest.TestCase):
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         self.assertNotIn("axis1", self.mapper.datasets2map_in_main)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_camera_dataset_adds_dataset(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        self.mapper.source.add_scientific_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertIn(camera_name, evefile.data)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_camera_dataset_removes_options_from_list2map(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        self.mapper.source.add_scientific_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        camera_datasets_in_main = [
+            item
+            for item in self.mapper.datasets2map_in_main
+            if item.startswith(camera_name)
+        ]
+        self.assertFalse(camera_datasets_in_main)
+        camera_datasets_in_snapshot = [
+            item
+            for item in self.mapper.datasets2map_in_snapshot
+            if item.startswith(camera_name)
+        ]
+        self.assertFalse(camera_datasets_in_snapshot)
 
 
 class TestVersionMapperV6(unittest.TestCase):

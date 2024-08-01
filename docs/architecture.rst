@@ -278,6 +278,17 @@ Regarding file names/paths: Some of the scientific cameras are operated from Win
 Note for Pilatus cameras: Those cameras seem to have three sensors each for temperature and humidity. Probably the simplest solution would be to store those values in an array rather than having three individual fields each. In case of temperature (and humidity) readings for each individual image, the array would become a 2D array.
 
 
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    * Label for the ROIs
+
+      The camera controller seems to provide the possibility to set labels for ROIs. Is this supported by the EPICS driver currently in use, and could we just add the PV to the template file(s)?
+
+    * Marker for the ROIs
+
+      The camera controller seems to set MinX, MinY, SizeX, SizeY. Is this the generally agreed and consistent way of defining the marker area? What should the four elements of the :attr:`ScientificCameraROIData.marker <evedata.evefile.entities.data.ScientificCameraROIData.marker>` attribute represent?
+
+
 metadata module
 ~~~~~~~~~~~~~~~
 
@@ -306,6 +317,11 @@ A note on the ``AbstractDeviceMetadata`` interface class: The eveH5 dataset corr
 #. Create a mixin class (abstract interface) with the three attributes and use multiple inheritance/implements.
 
 As obvious from the UML diagram, the last option has been chosen. The name "DeviceMetadata" resembles the hierarchy in the ``scml.setup`` module and clearly distinguishes actual devices from datasets not containing data read from some instrument.
+
+
+.. admonition:: Points to discuss further (without claiming to be complete)
+
+    Currently none... ;-)
 
 
 Some comments (not discussions any more, though):

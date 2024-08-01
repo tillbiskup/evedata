@@ -641,6 +641,9 @@ class VersionMapper:
     def _map_array_dataset(self, hdf5_group=None):
         pass
 
+    def _map_mca_dataset(self, hdf5_group=None):
+        pass
+
     def _map_axis_datasets(self):
         mapped_datasets = []
         for name in self.datasets2map_in_main:
@@ -666,7 +669,55 @@ class VersionMapper:
         self.destination.data[self.get_dataset_name(hdf5_dataset)] = dataset
 
     def _map_area_datasets(self):
+        scientific_cameras = self._get_camera_datasets(camera="cam1")
+        for scientific_camera in scientific_cameras:
+            self._map_scientific_camera(camera=scientific_camera)
+        sample_cameras = self._get_camera_datasets(camera="uvc1")
+        for sample_camera in sample_cameras:
+            self._map_sample_camera(camera=sample_camera)
+
+    def _map_scientific_camera(self, camera=""):
         pass
+
+    def _map_sample_camera(self, camera=""):
+        pass
+
+    def _get_camera_datasets(self, camera="cam1"):
+        """
+        Obtain camera names from a list of dataset names.
+
+        Datasets in eveH5 files are usually named according to the EPICS PV.
+        Cameras seem to be the only PV names with at least two colons.
+        Furthermore, there are signalling parts of the PV, identifying the
+        PV as camera, see the ``camera`` parameter below.
+
+        The camera name used to identify all datasets belonging to this
+        camera is the part before the second-last colon. Note that camera
+        names can contain colons themselves, hence looking from the right is
+        crucial.
+
+        Parameters
+        ----------
+        camera : :class:`str`
+            Second-last part of the PV name identifying the camera type
+
+            "cam1" identifies a scientific camera, while "uvc1" identifies a
+            sample camera.
+
+        Returns
+        -------
+        camera_names : :class:`set`
+            Names of the identified cameras.
+
+        """
+        camera_names = set(
+            [
+                item.rsplit(":", maxsplit=2)[0]
+                for item in self.datasets2map_in_main
+                if (item.count(":") > 1 and item.rsplit(":")[-2] in [camera])
+            ]
+        )
+        return camera_names
 
     def _map_0d_datasets(self):
         pass
@@ -924,6 +975,24 @@ class VersionMapperV5(VersionMapper):
         for option in options_in_snapshot:
             # TODO: Issue/log warning that there were unmapped options
             self.datasets2map_in_snapshot.remove(option)
+
+    def _map_scientific_camera(self, camera=""):
+        dataset = evedata.evefile.entities.data.ScientificCameraData()
+        camera_datasets_in_main = [
+            item
+            for item in self.datasets2map_in_main
+            if item.startswith(camera)
+        ]
+        for dataset in camera_datasets_in_main:
+            self.datasets2map_in_main.remove(dataset)
+        camera_datasets_in_snapshot = [
+            item
+            for item in self.datasets2map_in_snapshot
+            if item.startswith(camera)
+        ]
+        for dataset in camera_datasets_in_snapshot:
+            self.datasets2map_in_snapshot.remove(dataset)
+        self.destination.data[camera] = dataset
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):
