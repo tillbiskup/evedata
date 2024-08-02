@@ -94,10 +94,16 @@ What follows is a summary of the different aspects, for the time being
     * Map all axis datasets to :obj:`AxisData
       <evedata.evefile.entities.data.AxisData>` objects. |check|
 
-      How to distinguish between axes with and without encoders? |cross|
+      * How to distinguish between axes with and without encoders? |cross|
+      * How to deal with pseudo-axes used as options in channel datasets? Do
+        we need to deal with axes later? |cross|
+
     * Distinguish between single point and area data, and map area data to
       :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
-      objects.
+      objects. (|check|)
+
+      * Which dataset is the "main" dataset for scientific cameras? |cross|
+
     * Figure out which single point data have been redefined between scan
       modules, and split data accordingly. Map the data to
       :obj:`SinglePointChannelData
@@ -848,8 +854,8 @@ class VersionMapperV5(VersionMapper):
         dataset = evedata.evefile.entities.data.MCAChannelData()
         self.set_basic_metadata(hdf5_item=hdf5_group, dataset=dataset)
         self._mca_dataset_set_data(dataset=dataset, hdf5_group=hdf5_group)
-        self._mca_dataset_options_in_main(dataset=dataset)
-        self._mca_dataset_options_in_snapshot(dataset)
+        self._mca_dataset_set_options_in_main(dataset=dataset)
+        self._mca_dataset_set_options_in_snapshot(dataset)
         self.destination.data[self.get_dataset_name(hdf5_group)] = dataset
 
     def _mca_dataset_set_data(self, dataset=None, hdf5_group=None):
@@ -866,7 +872,7 @@ class VersionMapperV5(VersionMapper):
             )
             dataset.importer.append(importer)
 
-    def _mca_dataset_options_in_main(self, dataset=None):
+    def _mca_dataset_set_options_in_main(self, dataset=None):
         # Handle options in main section
         pv_base = dataset.metadata.pv.split(".")[0]
         options_in_main = [
@@ -905,7 +911,7 @@ class VersionMapperV5(VersionMapper):
                 dataset.roi.append(roi)
                 self.datasets2map_in_main.remove(option)
 
-    def _mca_dataset_options_in_snapshot(self, dataset):
+    def _mca_dataset_set_options_in_snapshot(self, dataset):
         # Handle options in snapshot section
         pv_base = dataset.metadata.pv.split(".")[0]
         options_in_snapshot = [
@@ -973,7 +979,7 @@ class VersionMapperV5(VersionMapper):
                 options_in_snapshot.remove(name)
                 self.datasets2map_in_snapshot.remove(name)
         for option in options_in_snapshot:
-            # TODO: Issue/log warning that there were unmapped options
+            logger.warning("Option %s unmapped", option.split(".")[-1])
             self.datasets2map_in_snapshot.remove(option)
 
     def _map_scientific_camera(self, camera=""):

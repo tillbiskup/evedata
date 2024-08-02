@@ -1,4 +1,5 @@
 import datetime
+import logging
 import unittest
 
 import numpy as np
@@ -770,6 +771,28 @@ class TestVersionMapperV5(unittest.TestCase):
                 ).data[f"array.{key}"][0],
                 getattr(evefile.data["array"].metadata.calibration, value),
             )
+
+    def test_map_mca_dataset_with_unknown_options_logs_warning(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_array_channel()
+        option = "UNKNOWN"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/snapshot/array.{option}",
+            filename=self.mapper.source.filename,
+        )
+        dataset.attributes = {
+            "DeviceType": "Channel",
+            "Access": f"ca:array.{option}",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.snapshot.add_item(dataset)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.mapper.map(destination=evefile)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(), f"Option {option} " f"unmapped"
+        )
 
     # noinspection PyUnresolvedReferences
     def test_map_array_dataset_removes_options_from_list2map(self):
