@@ -634,9 +634,9 @@ class ScientificCameraMetadata(AreaChannelMetadata):
 
     def __init__(self):
         super().__init__()
-        self.gain = float
-        self.reverse_x = bool
-        self.reverse_y = bool
+        self.gain = float()
+        self.reverse_x = bool()
+        self.reverse_y = bool()
 
 
 class SampleCameraMetadata(AreaChannelMetadata):
@@ -681,12 +681,12 @@ class SampleCameraMetadata(AreaChannelMetadata):
 
     def __init__(self):
         super().__init__()
-        self.beam_x = int
-        self.beam_y = int
-        self.fractional_x_position = float
-        self.fractional_y_position = float
-        self.skip_frames = int
-        self.average_frames = int
+        self.beam_x = int()
+        self.beam_y = int()
+        self.fractional_x_position = float()
+        self.fractional_y_position = float()
+        self.skip_frames = int()
+        self.average_frames = int()
 
 
 class NonencodedAxisMetadata(AxisMetadata):

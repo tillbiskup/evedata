@@ -104,7 +104,7 @@ What follows is a summary of the different aspects, for the time being
 
       * Distinguish between scientific and sample cameras. |check|
       * Which dataset is the "main" dataset for scientific cameras? |cross|
-      * Map sample camera datasets. |cross|
+      * Map sample camera datasets. |check|
 
     * Figure out which single point data have been redefined between scan
       modules, and split data accordingly. Map the data to
@@ -1065,6 +1065,81 @@ class VersionMapperV5(VersionMapper):
         for name in camera_datasets_in_snapshot:
             self.datasets2map_in_snapshot.remove(name)
         self.destination.data[camera] = dataset
+
+    def _map_sample_camera(self, camera=""):
+        dataset = evedata.evefile.entities.data.SampleCameraData()
+        self._sample_camera_set_data(camera=camera, dataset=dataset)
+        camera_datasets_in_snapshot = [
+            item
+            for item in self.datasets2map_in_snapshot
+            if item.startswith(camera)
+        ]
+        self._sample_camera_set_options(
+            camera=camera,
+            datasets=camera_datasets_in_snapshot,
+            dataset=dataset,
+        )
+        camera_datasets_in_main = [
+            item
+            for item in self.datasets2map_in_main
+            if item.startswith(camera)
+        ]
+        self._sample_camera_set_options(
+            camera=camera,
+            datasets=camera_datasets_in_main,
+            dataset=dataset,
+        )
+        self.destination.data[camera] = dataset
+
+    def _sample_camera_set_data(self, camera="", dataset=None):
+        hdf5_name = f"{camera}:uvc1:chan1"
+        importer_mapping = {
+            0: "positions",
+            1: "data",
+        }
+        importer = self.get_hdf5_dataset_importer(
+            dataset=getattr(self.source.c1.main, hdf5_name),
+            mapping=importer_mapping,
+        )
+        dataset.importer.append(importer)
+        self.datasets2map_in_main.remove(hdf5_name)
+
+    def _sample_camera_set_options(
+        self, camera="", datasets=None, dataset=None
+    ):
+        mapping_table = {
+            "BeamX": "beam_x",
+            "BeamY": "beam_y",
+            "BeamXfrac": "fractional_x_position",
+            "BeamYfrac": "fractional_y_position",
+            "SkipFrames": "skip_frames",
+            "AvgFrames": "average_frames",
+        }
+        for name in datasets:
+            option = name.rsplit(":")[-1]
+            if option in mapping_table:
+                if name in self.datasets2map_in_main:
+                    hdf5_dataset = getattr(self.source.c1.main, name)
+                else:
+                    hdf5_dataset = getattr(self.source.c1.snapshot, name)
+                hdf5_dataset.get_data()
+                setattr(
+                    dataset.metadata,
+                    mapping_table[option],
+                    hdf5_dataset.data[name][0],
+                )
+                if name in self.datasets2map_in_main:
+                    self.datasets2map_in_main.remove(name)
+                if name in self.datasets2map_in_snapshot:
+                    self.datasets2map_in_snapshot.remove(name)
+            else:
+                logger.info(
+                    "Option %s unmapped for camera %s", option, camera
+                )
+                if name in self.datasets2map_in_main:
+                    self.datasets2map_in_main.remove(name)
+                if name in self.datasets2map_in_snapshot:
+                    self.datasets2map_in_snapshot.remove(name)
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

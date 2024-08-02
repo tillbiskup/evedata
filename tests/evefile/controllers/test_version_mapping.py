@@ -303,12 +303,77 @@ class MockEveH5v4(MockEveH5):
             "cam1:TemperatureActual",
         ]:
             dataset = MockHDF5Dataset(
+                name=f"/c1/snapshot/{camera}:{name}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{camera}:{name}",
+            }
+            self.c1.snapshot.add_item(dataset)
+
+    # noinspection PyUnresolvedReferences
+    def add_sample_camera(self, camera="fcm"):
+        # Fake sample camera channels
+        dataset = MockHDF5Dataset(
+            name=f"/c1/main/{camera}:uvc1:chan1", filename=self.filename
+        )
+        dataset.attributes = {
+            "DeviceType": "Channel",
+            "Access": f"ca:{camera}:uvc1:chan1",
+        }
+        self.c1.main.add_item(dataset)
+        for name in [
+            "uvc1:BeamX",
+            "uvc1:BeamY",
+            "uvc1:FileNumberRBV",
+        ]:
+            dataset = MockHDF5Dataset(
                 name=f"/c1/main/{camera}:{name}", filename=self.filename
             )
             dataset.attributes = {
                 "DeviceType": "Channel",
                 "Access": f"ca:{camera}:{name}",
             }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [
+                        ("PosCounter", "<i4"),
+                        (f"{camera}:{name}", "<i4"),
+                    ]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{camera}:{name}"] = [42, 42]
+            dataset.data = data_
+            self.c1.main.add_item(dataset)
+        for name in [
+            "uvc1:BeamX",
+            "uvc1:BeamY",
+            "uvc1:BeamXfrac",
+            "uvc1:BeamYfrac",
+            "uvc1:SkipFrames",
+            "uvc1:AvgFrames",
+        ]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/snapshot/{camera}:{name}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{camera}:{name}",
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [
+                        ("PosCounter", "<i4"),
+                        (f"{camera}:{name}", "<i4"),
+                    ]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{camera}:{name}"] = [21, 21]
+            dataset.data = data_
             self.c1.snapshot.add_item(dataset)
 
 
@@ -904,7 +969,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertNotIn("axis1", self.mapper.datasets2map_in_main)
 
     # noinspection PyUnresolvedReferences
-    def test_map_camera_dataset_adds_dataset(self):
+    def test_map_scientific_camera_dataset_adds_dataset(self):
         self.mapper.source = self.h5file
         camera_name = "GREYQMP02"
         self.mapper.source.add_scientific_camera(camera=camera_name)
@@ -917,7 +982,7 @@ class TestVersionMapperV5(unittest.TestCase):
         )
 
     # noinspection PyUnresolvedReferences
-    def test_camera_dataset_has_correct_number_of_rois(self):
+    def test_scientific_camera_dataset_has_correct_number_of_rois(self):
         self.mapper.source = self.h5file
         camera_name = "GREYQMP02"
         n_roi = 4
@@ -929,7 +994,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertEqual(n_roi, len(evefile.data[camera_name].roi))
 
     # noinspection PyUnresolvedReferences
-    def test_camera_dataset_has_correct_roi_marker(self):
+    def test_scientific_camera_dataset_has_correct_roi_marker(self):
         self.mapper.source = self.h5file
         camera_name = "GREYQMP02"
         n_roi = 4
@@ -942,7 +1007,7 @@ class TestVersionMapperV5(unittest.TestCase):
             self.assertListEqual([0, 100, 200, 300], list(roi.marker))
 
     # noinspection PyUnresolvedReferences
-    def test_camera_dataset_has_correct_number_of_stats(self):
+    def test_scientific_camera_dataset_has_correct_number_of_stats(self):
         self.mapper.source = self.h5file
         camera_name = "GREYQMP02"
         n_stats = 5
@@ -953,7 +1018,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.map(destination=evefile)
         self.assertEqual(n_stats, len(evefile.data[camera_name].statistics))
 
-    def test_camera_dataset_statistics_have_importers(self):
+    def test_scientific_camera_dataset_statistics_have_importers(self):
         self.mapper.source = self.h5file
         camera_name = "GREYQMP02"
         n_stats = 5
@@ -966,7 +1031,9 @@ class TestVersionMapperV5(unittest.TestCase):
             self.assertGreater(len(statistic.importer), 0)
 
     # noinspection PyUnresolvedReferences
-    def test_map_camera_dataset_removes_options_from_list2map(self):
+    def test_map_scientific_camera_dataset_removes_options_from_list2map(
+        self,
+    ):
         self.mapper.source = self.h5file
         camera_name = "GREYQMP02"
         self.mapper.source.add_scientific_camera(camera=camera_name)
@@ -984,6 +1051,137 @@ class TestVersionMapperV5(unittest.TestCase):
             if item.startswith(camera_name)
         ]
         self.assertFalse(camera_datasets_in_snapshot)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_sample_camera_dataset_removes_options_from_list2map(self):
+        self.mapper.source = self.h5file
+        camera_name = "fcm"
+        self.mapper.source.add_sample_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        camera_datasets_in_main = [
+            item
+            for item in self.mapper.datasets2map_in_main
+            if item.startswith(camera_name)
+        ]
+        self.assertFalse(camera_datasets_in_main)
+        camera_datasets_in_snapshot = [
+            item
+            for item in self.mapper.datasets2map_in_snapshot
+            if item.startswith(camera_name)
+        ]
+        self.assertFalse(camera_datasets_in_snapshot)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_sample_camera_dataset_adds_dataset(self):
+        self.mapper.source = self.h5file
+        camera_name = "fcm"
+        self.mapper.source.add_sample_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertIn(camera_name, evefile.data)
+        self.assertIsInstance(
+            evefile.data[camera_name],
+            evedata.evefile.entities.data.SampleCameraData,
+        )
+
+    def test_map_sample_camera_dataset_adds_importer(self):
+        self.mapper.source = self.h5file
+        camera_name = "fcm"
+        self.mapper.source.add_sample_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertEqual(
+            getattr(
+                self.mapper.source.c1.main, f"{camera_name}:uvc1:chan1"
+            ).filename,
+            evefile.data[camera_name].importer[0].source,
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main, f"{camera_name}:uvc1:chan1"
+            ).dtype.names[0]: "positions",
+            getattr(
+                self.mapper.source.c1.main, f"{camera_name}:uvc1:chan1"
+            ).dtype.names[1]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[camera_name].importer[0].mapping
+        )
+
+    def test_map_sample_camera_sets_correct_option_values_from_main(self):
+        self.mapper.source = self.h5file
+        camera_name = "fcm"
+        self.mapper.source.add_sample_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        mapping_table = {
+            "BeamX": "beam_x",
+            "BeamY": "beam_y",
+        }
+        for key, value in mapping_table.items():
+            # noinspection PyUnresolvedReferences
+            self.assertEqual(
+                getattr(
+                    self.mapper.source.c1.main, f"{camera_name}:uvc1:{key}"
+                ).data[f"{camera_name}:uvc1:{key}"][0],
+                getattr(evefile.data[camera_name].metadata, value),
+            )
+
+    def test_map_sample_camera_sets_correct_option_values_from_snapshot(self):
+        self.mapper.source = self.h5file
+        camera_name = "fcm"
+        self.mapper.source.add_sample_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        mapping_table = {
+            "BeamXfrac": "fractional_x_position",
+            "BeamYfrac": "fractional_y_position",
+            "SkipFrames": "skip_frames",
+            "AvgFrames": "average_frames",
+        }
+        for key, value in mapping_table.items():
+            # noinspection PyUnresolvedReferences
+            self.assertEqual(
+                getattr(
+                    self.mapper.source.c1.snapshot,
+                    f"{camera_name}:uvc1:{key}",
+                ).data[f"{camera_name}:uvc1:{key}"][0],
+                getattr(evefile.data[camera_name].metadata, value),
+            )
+
+    def test_map_sample_camera_prefers_option_values_from_main(self):
+        self.mapper.source = self.h5file
+        camera_name = "fcm"
+        self.mapper.source.add_sample_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        mapping_table = {
+            "BeamX": "beam_x",
+            "BeamY": "beam_y",
+        }
+        for key, value in mapping_table.items():
+            # noinspection PyUnresolvedReferences
+            self.assertEqual(
+                getattr(
+                    self.mapper.source.c1.main, f"{camera_name}:uvc1:{key}"
+                ).data[f"{camera_name}:uvc1:{key}"][0],
+                getattr(evefile.data[camera_name].metadata, value),
+            )
+
+    def test_map_sample_camera_with_unmapped_options_logs_info(self):
+        self.mapper.source = self.h5file
+        camera_name = "fcm"
+        self.mapper.source.add_sample_camera(camera=camera_name)
+        option = "FileNumberRBV"
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        with self.assertLogs(level=logging.INFO) as captured:
+            self.mapper.map(destination=evefile)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            f"Option {option} " f"unmapped " f"for camera {camera_name}",
+        )
 
 
 class TestVersionMapperV6(unittest.TestCase):
