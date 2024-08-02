@@ -42,6 +42,49 @@ clearly distinguishes actual devices from datasets not containing data
 read from some instrument.
 
 
+The following is not a strict inheritance hierarchy, but rather a grouped
+hierarchical list of classes for quick access to their individual API
+documentation:
+
+* :class:`Metadata`
+
+  * :class:`MonitorMetadata`
+  * :class:`MeasureMetadata`
+
+    * :class:`DeviceMetadata`
+    * :class:`TimestampMetadata`
+    * :class:`AxisMetadata`
+
+      * :class:`NonnumericAxisMetadata`
+
+    * :class:`ChannelMetadata`
+
+        * :class:`NonnumericChannelMetadata`
+        * :class:`SinglePointChannelMetadata`
+
+          * :class:`SinglePointNormalizedChannelMetadata`
+
+        * :class:`AverageChannelMetadata`
+
+          * :class:`AverageNormalizedChannelMetadata`
+
+        * :class:`IntervalChannelMetadata`
+
+          * :class:`IntervalNormalizedChannelMetadata`
+
+        * :class:`ArrayChannelMetadata`
+
+          * :class:`MCAChannelMetadata`
+
+            * :class:`MCAChannelCalibration`
+
+          * :class:`ScopeChannelMetadata`
+
+        * :class:`AreaChannelMetadata`
+
+          * :class:`ScientificCameraMetadata`
+          * :class:`SampleCameraMetadata`
+
 
 Module documentation
 ====================
