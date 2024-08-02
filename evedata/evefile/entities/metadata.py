@@ -647,6 +647,27 @@ class SampleCameraMetadata(AreaChannelMetadata):
     :class:`evedata.evefile.entities.data.SampleCameraData`.
 
 
+    Attributes
+    ----------
+    beam_x : :class:`int`
+        Position of the beam in *x* direction in image coordinates
+
+    beam_y : :class:`int`
+        Position of the beam in *y* direction in image coordinates
+
+    fractional_x_position : :class:`float`
+        Fractional position of the beam in *x* direction in image coordinates
+
+    fractional_y_position : :class:`float`
+        Fractional position of the beam in *y* direction in image coordinates
+
+    skip_frames : :class:`int`
+        Number of frames skipped
+
+    average_frames : :class:`int`
+        Number of frames averaged
+
+
     Examples
     --------
     The :class:`SampleCameraMetadata` class is not meant
@@ -657,6 +678,15 @@ class SampleCameraMetadata(AreaChannelMetadata):
     you can instantiate an object as usual.
 
     """
+
+    def __init__(self):
+        super().__init__()
+        self.beam_x = int
+        self.beam_y = int
+        self.fractional_x_position = float
+        self.fractional_y_position = float
+        self.skip_frames = int
+        self.average_frames = int
 
 
 class NonencodedAxisMetadata(AxisMetadata):

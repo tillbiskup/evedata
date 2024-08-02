@@ -472,6 +472,12 @@ class TestSampleCameraMetadata(unittest.TestCase):
             "id",
             "pv",
             "access_mode",
+            "beam_x",
+            "beam_y",
+            "fractional_x_position",
+            "fractional_y_position",
+            "skip_frames",
+            "average_frames",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):

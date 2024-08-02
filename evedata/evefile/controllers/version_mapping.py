@@ -102,7 +102,9 @@ What follows is a summary of the different aspects, for the time being
       :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
       objects. (|check|)
 
+      * Distinguish between scientific and sample cameras. |check|
       * Which dataset is the "main" dataset for scientific cameras? |cross|
+      * Map sample camera datasets. |cross|
 
     * Figure out which single point data have been redefined between scan
       modules, and split data accordingly. Map the data to
@@ -716,12 +718,10 @@ class VersionMapper:
             Names of the identified cameras.
 
         """
-        camera_names = set(
-            [
-                item.rsplit(":", maxsplit=2)[0]
-                for item in self.datasets2map_in_main
-                if (item.count(":") > 1 and item.rsplit(":")[-2] in [camera])
-            ]
+        camera_names = (
+            item.rsplit(":", maxsplit=2)[0]
+            for item in self.datasets2map_in_main
+            if (item.count(":") > 1 and item.rsplit(":")[-2] in [camera])
         )
         return camera_names
 
@@ -855,7 +855,7 @@ class VersionMapperV5(VersionMapper):
         self.set_basic_metadata(hdf5_item=hdf5_group, dataset=dataset)
         self._mca_dataset_set_data(dataset=dataset, hdf5_group=hdf5_group)
         self._mca_dataset_set_options_in_main(dataset=dataset)
-        self._mca_dataset_set_options_in_snapshot(dataset)
+        self._mca_dataset_set_options_in_snapshot(dataset=dataset)
         self.destination.data[self.get_dataset_name(hdf5_group)] = dataset
 
     def _mca_dataset_set_data(self, dataset=None, hdf5_group=None):
@@ -994,11 +994,9 @@ class VersionMapperV5(VersionMapper):
         # TODO: Deal with additional options in dataset
         n_roi = len(
             set(
-                [
-                    item.rsplit(":", maxsplit=2)[-2]
-                    for item in camera_datasets_in_main
-                    if "ROI" in item
-                ]
+                item.rsplit(":", maxsplit=2)[-2]
+                for item in camera_datasets_in_main
+                if "ROI" in item
             )
         )
         for idx in range(n_roi):
@@ -1016,11 +1014,9 @@ class VersionMapperV5(VersionMapper):
             dataset.roi.append(roi)
         n_statistics = len(
             set(
-                [
-                    item.rsplit(":", maxsplit=2)[-2]
-                    for item in camera_datasets_in_main
-                    if "Stats" in item
-                ]
+                item.rsplit(":", maxsplit=2)[-2]
+                for item in camera_datasets_in_main
+                if "Stats" in item
             )
         )
         for idx in range(n_statistics):
@@ -1048,10 +1044,10 @@ class VersionMapperV5(VersionMapper):
                 "Net_RBV": "net",
                 "chan1": "data",
             }
-            for pv in mapping_table.keys():
-                dataset_name = f"{camera}:Stats{idx+1}:{pv}"
+            for pv_name, attribute in mapping_table.items():
+                dataset_name = f"{camera}:Stats{idx+1}:{pv_name}"
                 if dataset_name in camera_datasets_in_main:
-                    importer_mapping = {1: mapping_table[pv]}
+                    importer_mapping = {1: attribute}
                     importer = self.get_hdf5_dataset_importer(
                         dataset=getattr(self.source.c1.main, dataset_name),
                         mapping=importer_mapping,

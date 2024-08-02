@@ -6,8 +6,6 @@ class ChannelData extends MeasureData
 class AreaChannelData extends ChannelData
 
 class SampleCameraData extends AreaChannelData {
-    beam_x : int
-    beam_y : int
 }
 
 class ScientificCameraData extends AreaChannelData {

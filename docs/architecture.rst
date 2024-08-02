@@ -288,6 +288,10 @@ Note for Pilatus cameras: Those cameras seem to have three sensors each for temp
 
       The camera controller seems to set MinX, MinY, SizeX, SizeY. Is this the generally agreed and consistent way of defining the marker area? What should the four elements of the :attr:`ScientificCameraROIData.marker <evedata.evefile.entities.data.ScientificCameraROIData.marker>` attribute represent?
 
+    * Sample cameras: additional fields
+
+      Are ``beam_x`` and ``beam_y`` really parameters that change between images within a scan module? AFAIK, these are values set once when adjusting the camera, and otherwise never change. If so, they should be moved to the metadata.
+
 
 metadata module
 ~~~~~~~~~~~~~~~
