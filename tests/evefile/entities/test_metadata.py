@@ -1,5 +1,8 @@
 import unittest
 
+import numpy
+import numpy as np
+
 from evedata.evefile.entities import metadata
 
 
@@ -431,6 +434,24 @@ class TestMCAChannelCalibration(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.calibration, attribute))
+
+    def test_calibrate_returns_array(self):
+        calibrated_values = self.calibration.calibrate(n_channels=4096)
+        self.assertIsInstance(calibrated_values, numpy.ndarray)
+
+    def test_calibrate_returns_correct_calibration(self):
+        n_channels = 4096
+        self.calibration.offset = 12.0
+        self.calibration.slope = 2.0
+        self.calibration.quadratic = 1.2
+        channels = np.arange(n_channels)
+        expected_values = (
+            self.calibration.offset
+            + channels * self.calibration.slope
+            + channels**2 * self.calibration.quadratic
+        )
+        calibrated_values = self.calibration.calibrate(n_channels=n_channels)
+        np.testing.assert_array_equal(expected_values, calibrated_values)
 
 
 class TestScientificCameraMetadata(unittest.TestCase):
