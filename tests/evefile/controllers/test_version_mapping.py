@@ -982,6 +982,31 @@ class TestVersionMapperV5(unittest.TestCase):
         )
 
     # noinspection PyUnresolvedReferences
+    def test_map_scientific_camera_dataset_adds_importer(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        self.mapper.source.add_scientific_camera(camera=camera_name)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertEqual(
+            getattr(
+                self.mapper.source.c1.main, f"{camera_name}:TIFF1:chan1"
+            ).filename,
+            evefile.data[camera_name].importer[0].source,
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main, f"{camera_name}:TIFF1:chan1"
+            ).dtype.names[0]: "positions",
+            getattr(
+                self.mapper.source.c1.main, f"{camera_name}:TIFF1:chan1"
+            ).dtype.names[1]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[camera_name].importer[0].mapping
+        )
+
+    # noinspection PyUnresolvedReferences
     def test_scientific_camera_dataset_has_correct_number_of_rois(self):
         self.mapper.source = self.h5file
         camera_name = "GREYQMP02"
@@ -1085,6 +1110,7 @@ class TestVersionMapperV5(unittest.TestCase):
             evedata.evefile.entities.data.SampleCameraData,
         )
 
+    # noinspection PyUnresolvedReferences
     def test_map_sample_camera_dataset_adds_importer(self):
         self.mapper.source = self.h5file
         camera_name = "fcm"

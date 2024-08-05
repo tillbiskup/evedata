@@ -104,6 +104,11 @@ What follows is a summary of the different aspects, for the time being
 
       * Distinguish between scientific and sample cameras. |check|
       * Which dataset is the "main" dataset for scientific cameras? |cross|
+
+        * Starting with eve v1.39, it is ``TIFF1:chan1``, before, this is
+          less clear, and there might not exist a dataset containing
+          filenames with full paths, but only numbers.
+
       * Map sample camera datasets. |check|
 
     * Figure out which single point data have been redefined between scan
@@ -989,13 +994,59 @@ class VersionMapperV5(VersionMapper):
             for item in self.datasets2map_in_main
             if item.startswith(camera)
         ]
-        # TODO: Add importer for "main" dataset - whatever that is.
+        self._scientific_camera_add_data(
+            camera=camera,
+            sources=camera_datasets_in_main,
+            destination=dataset,
+        )
         # TODO: Deal with attributes for metadata
         # TODO: Deal with additional options in dataset
+        self._scientific_camera_add_roi(
+            camera=camera,
+            sources=camera_datasets_in_main,
+            destination=dataset,
+        )
+        self._scientific_camera_add_statistics(
+            camera=camera,
+            sources=camera_datasets_in_main,
+            destination=dataset,
+        )
+        for name in camera_datasets_in_main:
+            self.datasets2map_in_main.remove(name)
+        camera_datasets_in_snapshot = [
+            item
+            for item in self.datasets2map_in_snapshot
+            if item.startswith(camera)
+        ]
+        # TODO: Deal with scientific camera datasets in snapshot section
+        for name in camera_datasets_in_snapshot:
+            self.datasets2map_in_snapshot.remove(name)
+        self.destination.data[camera] = dataset
+
+    def _scientific_camera_add_data(
+        self, camera=None, sources=None, destination=None
+    ):
+        # TODO: Deal with situations where this dataset does not exist
+        hdf5_name = f"{camera}:TIFF1:chan1"
+        importer_mapping = {
+            0: "positions",
+            1: "data",
+        }
+        importer = self.get_hdf5_dataset_importer(
+            dataset=getattr(self.source.c1.main, hdf5_name),
+            mapping=importer_mapping,
+        )
+        destination.importer.append(importer)
+        sources.remove(hdf5_name)
+        self.datasets2map_in_main.remove(hdf5_name)
+
+    def _scientific_camera_add_roi(
+        self, camera=None, sources=None, destination=None
+    ):
         n_roi = len(
             set(
                 item.rsplit(":", maxsplit=2)[-2]
-                for item in camera_datasets_in_main
+                for item in sources
                 if "ROI" in item
             )
         )
@@ -1004,18 +1055,22 @@ class VersionMapperV5(VersionMapper):
             roi_pvs = ["MinX_RBV", "MinY_RBV", "SizeX_RBV", "SizeY_RBV"]
             marker = []
             for roi_pv in roi_pvs:
-                name = f"{camera}:ROI{idx+1}:{roi_pv}"
+                name = f"{camera}:ROI{idx + 1}:{roi_pv}"
                 hdf5_dataset = getattr(self.source.c1.main, name)
                 hdf5_dataset.get_data()
                 marker.append(hdf5_dataset.data[name][0])
                 self.datasets2map_in_main.remove(name)
-                camera_datasets_in_main.remove(name)
+                sources.remove(name)
             roi.marker = np.asarray(marker)
-            dataset.roi.append(roi)
+            destination.roi.append(roi)
+
+    def _scientific_camera_add_statistics(
+        self, camera=None, sources=None, destination=None
+    ):
         n_statistics = len(
             set(
                 item.rsplit(":", maxsplit=2)[-2]
-                for item in camera_datasets_in_main
+                for item in sources
                 if "Stats" in item
             )
         )
@@ -1023,7 +1078,7 @@ class VersionMapperV5(VersionMapper):
             statistics = (
                 evedata.evefile.entities.data.ScientificCameraStatisticsData()
             )
-            dataset.statistics.append(statistics)
+            destination.statistics.append(statistics)
             mapping_table = {
                 "BgdWidth_RBV": "background_width",
                 "CentroidThreshold_RBV": "centroid_threshold",
@@ -1045,26 +1100,16 @@ class VersionMapperV5(VersionMapper):
                 "chan1": "data",
             }
             for pv_name, attribute in mapping_table.items():
-                dataset_name = f"{camera}:Stats{idx+1}:{pv_name}"
-                if dataset_name in camera_datasets_in_main:
+                dataset_name = f"{camera}:Stats{idx + 1}:{pv_name}"
+                if dataset_name in sources:
                     importer_mapping = {1: attribute}
                     importer = self.get_hdf5_dataset_importer(
                         dataset=getattr(self.source.c1.main, dataset_name),
                         mapping=importer_mapping,
                     )
-                    dataset.statistics[idx].importer.append(importer)
+                    destination.statistics[idx].importer.append(importer)
                     self.datasets2map_in_main.remove(dataset_name)
-                    camera_datasets_in_main.remove(dataset_name)
-        for name in camera_datasets_in_main:
-            self.datasets2map_in_main.remove(name)
-        camera_datasets_in_snapshot = [
-            item
-            for item in self.datasets2map_in_snapshot
-            if item.startswith(camera)
-        ]
-        for name in camera_datasets_in_snapshot:
-            self.datasets2map_in_snapshot.remove(name)
-        self.destination.data[camera] = dataset
+                    sources.remove(dataset_name)
 
     def _map_sample_camera(self, camera=""):
         dataset = evedata.evefile.entities.data.SampleCameraData()
