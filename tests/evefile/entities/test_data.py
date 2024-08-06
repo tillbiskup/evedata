@@ -307,6 +307,23 @@ class TestAverageChannelData(unittest.TestCase):
             self.data.metadata, metadata.AverageChannelMetadata
         )
 
+    def test_mean_returns_mean_values(self):
+        self.data.raw_data = np.asarray([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        np.testing.assert_array_equal(
+            self.data.raw_data.mean(axis=1), self.data.mean
+        )
+
+    def test_std_returns_std_values(self):
+        self.data.raw_data = np.asarray([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        np.testing.assert_array_equal(
+            self.data.raw_data.std(axis=1), self.data.std
+        )
+
+    def test_set_std_values(self):
+        self.data.std = np.asarray([[1, 2, 3], [1, 2, 3], [1, 2, 3]]).std(
+            axis=1
+        )
+
 
 class TestIntervalChannelData(unittest.TestCase):
     def setUp(self):
@@ -331,6 +348,23 @@ class TestIntervalChannelData(unittest.TestCase):
     def test_metadata_are_of_corresponding_type(self):
         self.assertIsInstance(
             self.data.metadata, metadata.IntervalChannelMetadata
+        )
+
+    def test_mean_returns_mean_values(self):
+        self.data.raw_data = np.asarray([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        np.testing.assert_array_equal(
+            self.data.raw_data.mean(axis=1), self.data.mean
+        )
+
+    def test_std_returns_std_values(self):
+        self.data.raw_data = np.asarray([[1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        np.testing.assert_array_equal(
+            self.data.raw_data.std(axis=1), self.data.std
+        )
+
+    def test_set_std_values(self):
+        self.data.std = np.asarray([[1, 2, 3], [1, 2, 3], [1, 2, 3]]).std(
+            axis=1
         )
 
 

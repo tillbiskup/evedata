@@ -55,7 +55,7 @@ documentation:
     * :class:`TimestampMetadata`
     * :class:`AxisMetadata`
 
-      * :class:`NonnumericAxisMetadata`
+      * :class:`NonencodedAxisMetadata`
 
     * :class:`ChannelMetadata`
 
@@ -468,7 +468,7 @@ class AreaChannelMetadata(ChannelMetadata):
 
     def __init__(self):
         super().__init__()
-        self.file_type = str
+        self.file_type = ""
 
 
 class NormalizedChannelMetadata:
@@ -494,7 +494,7 @@ class NormalizedChannelMetadata:
 
     def __init__(self):
         super().__init__()
-        self.normalize_id = str
+        self.normalize_id = ""
 
 
 class SinglePointNormalizedChannelMetadata(

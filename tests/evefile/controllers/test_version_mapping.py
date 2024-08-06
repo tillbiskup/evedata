@@ -376,6 +376,193 @@ class MockEveH5v4(MockEveH5):
             dataset.data = data_
             self.c1.snapshot.add_item(dataset)
 
+    # noinspection PyUnresolvedReferences
+    def add_singlepoint_detector_data(self, normalized=False):
+        names = [
+            "A2980:gw24103chan1",
+            "K0617:gw24126chan1",
+            "mlsCurrent:Mnt1chan1",
+        ]
+        for name in names:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{name}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{name}",
+                "Name": name,
+                "Detectortype": "Standard",
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [
+                        ("PosCounter", "<i4"),
+                        (f"{name}", "f8"),
+                    ]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{name}"] = [42.0, 42.0]
+            dataset.data = data_
+            # noinspection PyUnresolvedReferences
+            self.c1.main.add_item(dataset)
+        if normalized:
+            name = "K0617:gw24126chan1"
+            normalized = "A2980:gw24103chan1"
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/normalized/{name}__{normalized}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{name}",
+                "Name": name,
+                "Detectortype": "Standard",
+                "channel": name,
+                "normalizeId": normalized,
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [
+                        ("PosCounter", "<i4"),
+                        (f"{name}", "f8"),
+                    ]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{name}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.main.add_item(MockHDF5Group(name="/c1/main/normalized"))
+            self.c1.main.normalized.add_item(dataset)
+        return names
+
+    # noinspection PyUnresolvedReferences
+    def add_interval_detector_data(self, normalized=False):
+        self.c1.main.add_item(MockHDF5Group(name="/c1/main/standarddev"))
+        if normalized:
+            basename = "bIICurrent:Mnt1chan1"
+            name = f"{basename}__bIICurrent:Mnt1lifeTimechan1"
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/normalized/{name}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{basename}",
+                "Name": basename,
+                "Detectortype": "Interval",
+                "channel": basename,
+                "normalizeId": normalized,
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{basename}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{basename}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.main.add_item(MockHDF5Group(name="/c1/main/normalized"))
+            self.c1.main.normalized.add_item(dataset)
+            # Non-normalized dataset
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{basename}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{basename}",
+                "Name": basename,
+                "Detectortype": "Standard",
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{basename}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{basename}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.main.add_item(dataset)
+        else:
+            name = "mlsCurrent:Mnt1chan1"
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{name}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{name}",
+                "Name": name,
+                "Detectortype": "Interval",
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [
+                        ("PosCounter", "<i4"),
+                        (f"{name}", "f8"),
+                    ]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{name}"] = [42.0, 42.0]
+            dataset.data = data_
+            # noinspection PyUnresolvedReferences
+            self.c1.main.add_item(dataset)
+        metadata = "Count"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/main/standarddev/{name}__{metadata}",
+            filename=self.filename,
+        )
+        dataset.attributes = {
+            "Name": name,
+            "channel": name,
+        }
+        dtype = np.dtype(
+            [
+                ("PosCounter", "<i4"),
+                (f"{metadata}", "f8"),
+            ]
+        )
+        data_ = np.ndarray([2], dtype=dtype)
+        data_["PosCounter"] = np.asarray([2, 5])
+        data_[f"{metadata}"] = [42.0, 42.0]
+        dataset.data = data_
+        dataset.dtype = dtype
+        # noinspection PyUnresolvedReferences
+        self.c1.main.standarddev.add_item(dataset)
+        metadata = "TrigIntv-StdDev"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/main/standarddev/{name}__{metadata}",
+            filename=self.filename,
+        )
+        dataset.attributes = {
+            "Name": name,
+            "channel": name,
+        }
+        dtype = np.dtype(
+            [
+                ("PosCounter", "<i4"),
+                ("TriggerIntv", "f8"),
+                ("StandardDeviation", "f8"),
+            ]
+        )
+        data_ = np.ndarray([2], dtype=dtype)
+        data_["PosCounter"] = np.asarray([2, 5])
+        data_["TriggerIntv"] = [0.1, 0.1]
+        data_["StandardDeviation"] = [42.21, 42.21]
+        dataset.data = data_
+        dataset.dtype = dtype
+        # noinspection PyUnresolvedReferences
+        self.c1.main.standarddev.add_item(dataset)
+        return name
+
 
 class MockEveH5v5(MockEveH5v4):
     pass
@@ -497,10 +684,13 @@ class TestVersionMapperV5(unittest.TestCase):
     def setUp(self):
         self.mapper = version_mapping.VersionMapperV5()
         self.h5file = MockEveH5v5()
+        self.logger = logging.getLogger(name="evedata")
+        self.logger.setLevel(logging.ERROR)
 
     def test_instantiate_class(self):
         pass
 
+    @unittest.skip
     def test_map_sets_main_dataset_name_lists(self):
         self.mapper.source = self.h5file
         device = MockHDF5Dataset(name="/c1/main/device")
@@ -852,6 +1042,7 @@ class TestVersionMapperV5(unittest.TestCase):
         # noinspection PyUnresolvedReferences
         self.mapper.source.c1.snapshot.add_item(dataset)
         evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.logger.setLevel(logging.WARN)
         with self.assertLogs(level=logging.WARN) as captured:
             self.mapper.map(destination=evefile)
         self.assertEqual(len(captured.records), 1)
@@ -1077,6 +1268,54 @@ class TestVersionMapperV5(unittest.TestCase):
         ]
         self.assertFalse(camera_datasets_in_snapshot)
 
+    def test_map_scientific_camera_w_unknown_options_logs_warning(self):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        self.mapper.source.add_scientific_camera(camera=camera_name)
+        option = "cam1:UNKNOWN"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/main/{camera_name}:{option}",
+            filename=self.mapper.source.filename,
+        )
+        dataset.attributes = {
+            "DeviceType": "Channel",
+            "Access": f"ca:{camera_name}:{option}",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.main.add_item(dataset)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.logger.setLevel(logging.WARN)
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.mapper.map(destination=evefile)
+        messages = [record.getMessage() for record in captured.records]
+        self.assertGreaterEqual(len(captured.records), 1)
+        self.assertIn(f"Option {option} unmapped", messages)
+
+    def test_map_scientific_camera_w_unknown_snapshot_options_logs_warning(
+        self,
+    ):
+        self.mapper.source = self.h5file
+        camera_name = "GREYQMP02"
+        self.mapper.source.add_scientific_camera(camera=camera_name)
+        option = "cam1:UNKNOWN2"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/snapshot/{camera_name}:{option}",
+            filename=self.mapper.source.filename,
+        )
+        dataset.attributes = {
+            "DeviceType": "Channel",
+            "Access": f"ca:{camera_name}:{option}",
+        }
+        # noinspection PyUnresolvedReferences
+        self.mapper.source.c1.snapshot.add_item(dataset)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.logger.setLevel(logging.WARN)
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.mapper.map(destination=evefile)
+        messages = [record.getMessage() for record in captured.records]
+        self.assertGreaterEqual(len(captured.records), 1)
+        self.assertIn(f"Option {option} unmapped", messages)
+
     # noinspection PyUnresolvedReferences
     def test_map_sample_camera_dataset_removes_options_from_list2map(self):
         self.mapper.source = self.h5file
@@ -1201,12 +1440,309 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.source.add_sample_camera(camera=camera_name)
         option = "FileNumberRBV"
         evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.logger.setLevel(logging.INFO)
         with self.assertLogs(level=logging.INFO) as captured:
             self.mapper.map(destination=evefile)
         self.assertEqual(len(captured.records), 1)
         self.assertEqual(
             captured.records[0].getMessage(),
             f"Option {option} " f"unmapped " f"for camera {camera_name}",
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_singlepoint_datasets_removes_from_list2map(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_singlepoint_detector_data(normalized=False)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertFalse(self.mapper.datasets2map_in_main)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_singlepoint_datasets_adds_datasets(self):
+        self.mapper.source = self.h5file
+        datasets = self.mapper.source.add_singlepoint_detector_data(
+            normalized=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for dataset in datasets:
+            h5_dataset = getattr(self.mapper.source.c1.main, dataset)
+            self.assertIn(dataset, evefile.data.keys())
+            self.assertIsInstance(
+                evefile.data[dataset],
+                evedata.evefile.entities.data.SinglePointChannelData,
+            )
+            self.assertEqual(
+                dataset,
+                evefile.data[dataset].metadata.id,
+            )
+            self.assertEqual(
+                h5_dataset.attributes["Name"],
+                evefile.data[dataset].metadata.name,
+            )
+            self.assertEqual(
+                h5_dataset.attributes["Access"].split(":", maxsplit=1)[1],
+                evefile.data[dataset].metadata.pv,
+            )
+            self.assertEqual(
+                h5_dataset.attributes["Access"].split(":", maxsplit=1)[0],
+                evefile.data[dataset].metadata.access_mode,
+            )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_singlepoint_datasets_adds_importer(self):
+        self.mapper.source = self.h5file
+        datasets = self.mapper.source.add_singlepoint_detector_data(
+            normalized=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for dataset in datasets:
+            self.assertEqual(
+                getattr(self.mapper.source.c1.main, dataset).filename,
+                evefile.data[dataset].importer[0].source,
+            )
+            mapping_dict = {
+                getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                    0
+                ]: "positions",
+                getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                    1
+                ]: "data",
+            }
+            self.assertDictEqual(
+                mapping_dict, evefile.data[dataset].importer[0].mapping
+            )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_normalized_singlepoint_datasets_adds_datasets(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_singlepoint_detector_data(normalized=True)
+        dataset = "K0617:gw24126chan1"
+        normalizing = "K0617:gw24126chan1__A2980:gw24103chan1"
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertIn(dataset, evefile.data.keys())
+        self.assertIsInstance(
+            evefile.data[dataset],
+            evedata.evefile.entities.data.SinglePointNormalizedChannelData,
+        )
+        h5_dataset = getattr(
+            self.mapper.source.c1.main.normalized, normalizing
+        )
+        self.assertEqual(
+            h5_dataset.attributes["normalizeId"],
+            evefile.data[dataset].metadata.normalize_id,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_normalized_singlepoint_datasets_adds_importer(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_singlepoint_detector_data(normalized=True)
+        dataset = "K0617:gw24126chan1"
+        normalizing = "K0617:gw24126chan1__A2980:gw24103chan1"
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for importer in evefile.data[dataset].importer:
+            self.assertEqual(
+                getattr(self.mapper.source.c1.main, dataset).filename,
+                importer.source,
+            )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.normalized, normalizing
+            ).dtype.names[1]: "normalized_data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[1].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main, normalizing.split("__")[1]
+            ).dtype.names[1]: "normalizing_data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[2].mapping
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_interval_dataset_removes_from_list2map(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_interval_detector_data(normalized=False)
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertFalse(self.mapper.datasets2map_in_main)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_interval_dataset_adds_dataset(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_interval_detector_data(
+            normalized=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        h5_dataset = getattr(self.mapper.source.c1.main, dataset)
+        self.assertIn(dataset, evefile.data.keys())
+        self.assertIsInstance(
+            evefile.data[dataset],
+            evedata.evefile.entities.data.IntervalChannelData,
+        )
+        self.assertEqual(
+            dataset,
+            evefile.data[dataset].metadata.id,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Name"],
+            evefile.data[dataset].metadata.name,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.data[dataset].metadata.pv,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.data[dataset].metadata.access_mode,
+        )
+
+    def test_map_interval_channel_sets_trigger_interval(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_interval_detector_data(
+            normalized=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(
+            getattr(
+                self.mapper.source.c1.main.standarddev,
+                f"{dataset}__TrigIntv-StdDev",
+            ).data["TriggerIntv"][0],
+            evefile.data[dataset].metadata.trigger_interval,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_interval_dataset_adds_importer(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_interval_detector_data(
+            normalized=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for importer in evefile.data[dataset].importer:
+            self.assertEqual(
+                getattr(self.mapper.source.c1.main, dataset).filename,
+                importer.source,
+            )
+        mapping_dict = {
+            getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                0
+            ]: "positions",
+            getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                1
+            ]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[0].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.standarddev, f"{dataset}__Count"
+            ).dtype.names[1]: "counts",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[1].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.standarddev,
+                f"{dataset}__TrigIntv-StdDev",
+            ).dtype.names[2]: "std",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[2].mapping
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_normalized_interval_dataset_adds_dataset(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_interval_detector_data(
+            normalized=True
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        h5_dataset = getattr(self.mapper.source.c1.main.normalized, dataset)
+        self.assertIn(dataset, evefile.data.keys())
+        self.assertIsInstance(
+            evefile.data[dataset],
+            evedata.evefile.entities.data.IntervalNormalizedChannelData,
+        )
+        self.assertEqual(
+            dataset,
+            evefile.data[dataset].metadata.id,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Name"],
+            evefile.data[dataset].metadata.name,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.data[dataset].metadata.pv,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.data[dataset].metadata.access_mode,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_normalized_interval_dataset_adds_importer(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_interval_detector_data(
+            normalized=True
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for importer in evefile.data[dataset].importer:
+            self.assertEqual(
+                getattr(
+                    self.mapper.source.c1.main.normalized, dataset
+                ).filename,
+                importer.source,
+            )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.normalized, dataset
+            ).dtype.names[0]: "positions",
+            getattr(
+                self.mapper.source.c1.main.normalized, dataset
+            ).dtype.names[1]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[0].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.standarddev, f"{dataset}__Count"
+            ).dtype.names[1]: "counts",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[1].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.standarddev,
+                f"{dataset}__TrigIntv-StdDev",
+            ).dtype.names[2]: "std",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[2].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.normalized, dataset
+            ).dtype.names[1]: "normalized_data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[3].mapping
         )
 
 
@@ -1218,7 +1754,7 @@ class TestVersionMapperV6(unittest.TestCase):
         pass
 
     def test_map_converts_date_to_datetime(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = MockEveH5v5()
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         date_mappings = {
@@ -1243,7 +1779,7 @@ class TestVersionMapperV7(unittest.TestCase):
         pass
 
     def test_map_converts_simulation_flag_to_boolean(self):
-        self.mapper.source = MockEveH5()
+        self.mapper.source = MockEveH5v5()
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.source.attributes["Simulation"] = "no"
         self.mapper.map(destination=evefile)

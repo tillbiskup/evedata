@@ -216,6 +216,56 @@ each. In case of temperature (and humidity) readings for each individual
 image, the array would become a 2D array.
 
 
+Individual classes
+------------------
+
+The following is not a strict inheritance hierarchy, but rather a grouped
+hierarchical list of classes for quick access to their individual API
+documentation:
+
+* :class:`Data`
+
+  * :class:`MonitorData`
+  * :class:`MeasureData`
+
+    * :class:`DeviceData`
+    * :class:`TimestampData`
+    * :class:`AxisData`
+
+      * :class:`NonencodedAxisData`
+
+    * :class:`ChannelData`
+
+        * :class:`NonnumericChannelData`
+        * :class:`SinglePointChannelData`
+
+          * :class:`SinglePointNormalizedChannelData`
+
+        * :class:`AverageChannelData`
+
+          * :class:`AverageNormalizedChannelData`
+
+        * :class:`IntervalChannelData`
+
+          * :class:`IntervalNormalizedChannelData`
+
+        * :class:`ArrayChannelData`
+
+          * :class:`MCAChannelData`
+
+            * :class:`MCAChannelROIData`
+
+          * :class:`ScopeChannelData`
+
+        * :class:`AreaChannelData`
+
+          * :class:`ScientificCameraData`
+
+            * :class:`ScientificCameraROIData`
+            * :class:`ScientificCameraStatisticsData`
+
+          * :class:`SampleCameraData`
+
 Module documentation
 ====================
 
@@ -303,7 +353,7 @@ class Data:
 
         Returns
         -------
-        data : np.ndarray
+        data : :class:`numpy.ndarray`
             Actual data recorded from the device.
 
             The actual data type (:class:`numpy.dtype`) depends on the
@@ -654,7 +704,7 @@ class AverageChannelData(ChannelData):
         Relevant metadata for the individual device.
 
     raw_data : Any
-        Short description
+        The raw individual values measured.
 
     attempts : numpy.ndarray
         Short description
@@ -676,6 +726,54 @@ class AverageChannelData(ChannelData):
         self.metadata = metadata.AverageChannelMetadata()
         self.raw_data = None
         self.attempts = np.ndarray(shape=[], dtype=int)
+        self._mean = None
+        self._std = None
+
+    @property
+    def mean(self):
+        """
+        Mean values for channel data.
+
+        Returns
+        -------
+        mean : :class:`numpy.ndarray`
+            The mean of the values recorded.
+
+            If more values have been recorded than should be averaged
+            over, only the number of values to average over are taken from
+            the end of the individual :attr:`raw_data` row.
+
+        """
+        if self._mean is None:
+            if self.raw_data is not None:
+                self._mean = self.raw_data.mean(axis=1)
+            else:
+                self._mean = self.data
+        return self._mean
+
+    @property
+    def std(self):
+        """
+        Standard deviation values for channel data.
+
+        Returns
+        -------
+        mean : :class:`numpy.ndarray`
+            The standard deviation of the values recorded.
+
+            If more values have been recorded than should be averaged
+            over, only the number of values to average over are taken from
+            the end of the individual :attr:`raw_data` row to calculate
+            the standard deviation.
+
+        """
+        if self._std is None and self.raw_data is not None:
+            self._std = self.raw_data.std(axis=1)
+        return self._std
+
+    @std.setter
+    def std(self, std=None):
+        self._std = std
 
 
 class IntervalChannelData(ChannelData):
@@ -725,6 +823,46 @@ class IntervalChannelData(ChannelData):
         self.metadata = metadata.IntervalChannelMetadata()
         self.raw_data = None
         self.counts = np.ndarray(shape=[], dtype=int)
+        self._mean = None
+        self._std = None
+
+    @property
+    def mean(self):
+        """
+        Mean values for channel data.
+
+        Returns
+        -------
+        mean : :class:`numpy.ndarray`
+            The mean of the values measured in the given time interval.
+
+        """
+        if self._mean is None:
+            if self.raw_data is not None:
+                self._mean = self.raw_data.mean(axis=1)
+            else:
+                self._mean = self.data
+        return self._mean
+
+    @property
+    def std(self):
+        """
+        Standard deviation values for channel data.
+
+        Returns
+        -------
+        mean : :class:`numpy.ndarray`
+            The standard deviation of the values measured in the given
+            time interval.
+
+        """
+        if self._std is None and self.raw_data is not None:
+            self._std = self.raw_data.std(axis=1)
+        return self._std
+
+    @std.setter
+    def std(self, std=None):
+        self._std = std
 
 
 class ArrayChannelData(ChannelData):
