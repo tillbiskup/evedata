@@ -4,7 +4,7 @@
 legend top left
     **eveH5 schema v7** <U+2014> released with evEngine 1.37 (2022-05-12)
 
-    cf. [[https://www.ahf.ptb.de/messpl/eve/doc/eveH5Structure/eveH5Structure-7.html]]
+    cf. [[https://www.ahf.ptb.de/messpl/sw/c++/eve-engine/docs/html/md_manual_eveH5_eveH5Structure-7.html]]
 
     G: HDF5 groups; D: HDF5 datasets; <color:#firebrick><U+2610></color>: optional attributes
     Dataset columns appear below the attributes.
@@ -23,7 +23,7 @@ class Root << (G,orchid) >> {
     EndTimeISO : string
     Version : string
     XMLversion : string
-    Comment : string
+    - Comment : string
     Simulation : string
 }
 

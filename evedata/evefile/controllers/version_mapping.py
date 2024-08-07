@@ -137,10 +137,10 @@ What follows is a summary of the different aspects, for the time being
       <evedata.evefile.entities.data.AverageChannelData>` and
       :obj:`IntervalChannelData
       <evedata.evefile.entities.data.IntervalChannelData>` objects,
-      respectively.
+      respectively. |check|
     * Map normalized channel data (and the data provided in the
       respective HDF5 groups) to :obj:`NormalizedChannelData
-      <evedata.evefile.entities.data.NormalizedChannelData>`.
+      <evedata.evefile.entities.data.NormalizedChannelData>`. |check|
     * Map all remaining HDF5 datasets that belong to one of the already
       mapped data objects (*i.e.*, variable options) to their respective
       attributes. (Should have been done already)
@@ -819,9 +819,12 @@ class VersionMapperV5(VersionMapper):
             "description": "Comment",
         }
         for key, value in root_mappings.items():
-            setattr(
-                self.destination.metadata, key, self.source.attributes[value]
-            )
+            if value in self.source.attributes:
+                setattr(
+                    self.destination.metadata,
+                    key,
+                    self.source.attributes[value],
+                )
         c1_mappings = {
             "preferred_axis": "preferredAxis",
             "preferred_channel": "preferredChannel",

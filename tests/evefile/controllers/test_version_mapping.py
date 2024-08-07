@@ -454,7 +454,7 @@ class MockEveH5v4(MockEveH5):
                 "Name": basename,
                 "Detectortype": "Interval",
                 "channel": basename,
-                "normalizeId": normalized,
+                "normalizeId": name.split("__")[1],
             }
             dtype = np.dtype(
                 [
@@ -907,6 +907,25 @@ class TestVersionMapperV5(unittest.TestCase):
             "xml_version": "XMLversion",
             "measurement_station": "Location",
             "description": "Comment",
+        }
+        for key, value in root_mappings.items():
+            with self.subTest(key=key, val=value):
+                self.assertEqual(
+                    getattr(evefile.metadata, key),
+                    self.mapper.source.attributes[value],
+                )
+
+    def test_map_sets_file_metadata_from_root_group_without_comment(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.attributes.pop("Comment")
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        # destination: source
+        root_mappings = {
+            "eveh5_version": "EVEH5Version",
+            "eve_version": "Version",
+            "xml_version": "XMLversion",
+            "measurement_station": "Location",
         }
         for key, value in root_mappings.items():
             with self.subTest(key=key, val=value):
