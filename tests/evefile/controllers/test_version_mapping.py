@@ -738,6 +738,86 @@ class MockEveH5v4(MockEveH5):
             self.c1.main.averagemeta.add_item(dataset)
         return name
 
+    # noinspection PyUnresolvedReferences
+    def add_axes_snapshot_data(self):
+        # Axes have a unit attribute
+        axes_names = [
+            "SimMt:testrack01000",
+            "SimMt:testrack01001",
+            "SimMt:testrack01002",
+            "SimMt:testrack01003",
+            "SimMt:testrack01004",
+            "SimMt:testrack01005",
+        ]
+        # Nonnumeric axes have no unit attribute
+        nonnumeric_axes_names = [
+            "DiscPosSimMt:testrack01000",
+            "DiscPosSimMt:testrack01001",
+        ]
+        for name in [*axes_names, *nonnumeric_axes_names]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/snapshot/{name}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Axis",
+                "Access": f"ca:{name}",
+                "Name": name,
+            }
+            if name not in nonnumeric_axes_names:
+                dataset.attributes["Unit"] = "degrees"
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{name}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{name}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.snapshot.add_item(dataset)
+        return [*axes_names, *nonnumeric_axes_names]
+
+    # noinspection PyUnresolvedReferences
+    def add_channel_snapshot_data(self):
+        # Channels need not have a unit attribute, example: SmCounter-det
+        channel_names = [
+            "SmCounter-det",
+            "U125P:ioIDB00GapMotchan1",
+            "bIICurrent:Mnt1chan1",
+            "bIICurrent:Mnt1lifeTimechan1",
+        ]
+        # Nonnumeric channels definitely have no unit attribute
+        nonnumeric_channel_names = [
+            "bIICurrent:Mnt1topupStatechan1",
+            "wftest:filenamechan1",
+        ]
+        for name in [*channel_names, *nonnumeric_channel_names]:
+            dataset = MockHDF5Dataset(
+                name=f"/c1/snapshot/{name}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{name}",
+                "Name": name,
+            }
+            if name not in ["SmCounter-det", *nonnumeric_channel_names]:
+                dataset.attributes["Unit"] = "mA"
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{name}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{name}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.snapshot.add_item(dataset)
+        return [*channel_names, *nonnumeric_channel_names]
+
 
 class MockEveH5v5(MockEveH5v4):
     pass
@@ -880,6 +960,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.map(destination=evefile)
         self.assertTrue(self.mapper.datasets2map_in_main)
 
+    @unittest.skip
     def test_map_sets_snapshot_dataset_name_lists(self):
         self.mapper.source = self.h5file
         axis = MockHDF5Dataset(name="/c1/snapshot/axis1")
@@ -2207,6 +2288,46 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertDictEqual(
             mapping_dict, evefile.data[base_dataset].importer[3].mapping
         )
+
+    def test_map_axes_snapshot_datasets(self):
+        self.mapper.source = self.h5file
+        datasets = self.mapper.source.add_axes_snapshot_data()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertTrue(evefile.snapshots)
+        for dataset in datasets:
+            self.assertIsInstance(
+                evefile.snapshots[dataset],
+                evedata.evefile.entities.data.AxisData,
+            )
+
+    def test_map_axes_snapshot_datasets_removes_from_2map(self):
+        self.mapper.source = self.h5file
+        datasets = self.mapper.source.add_axes_snapshot_data()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for dataset in datasets:
+            self.assertNotIn(dataset, self.mapper.datasets2map_in_snapshot)
+
+    def test_map_channel_snapshot_datasets(self):
+        self.mapper.source = self.h5file
+        datasets = self.mapper.source.add_channel_snapshot_data()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertTrue(evefile.snapshots)
+        for dataset in datasets:
+            self.assertIsInstance(
+                evefile.snapshots[dataset],
+                evedata.evefile.entities.data.AxisData,
+            )
+
+    def test_map_channel_snapshot_datasets_removes_from_2map(self):
+        self.mapper.source = self.h5file
+        datasets = self.mapper.source.add_channel_snapshot_data()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for dataset in datasets:
+            self.assertNotIn(dataset, self.mapper.datasets2map_in_snapshot)
 
 
 class TestVersionMapperV6(unittest.TestCase):

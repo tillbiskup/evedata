@@ -667,7 +667,7 @@ class VersionMapper:
         for item in mapped_datasets:
             self.datasets2map_in_main.remove(item)
 
-    def _map_axis_dataset(self, hdf5_dataset=None):
+    def _map_axis_dataset(self, hdf5_dataset=None, section="data"):
         # TODO: Check whether axis has an encoder (how? mapping?)
         dataset = entities.data.NonencodedAxisData()
         importer_mapping = {
@@ -679,7 +679,9 @@ class VersionMapper:
         )
         dataset.importer.append(importer)
         self.set_basic_metadata(hdf5_item=hdf5_dataset, dataset=dataset)
-        self.destination.data[self.get_dataset_name(hdf5_dataset)] = dataset
+        getattr(self.destination, section)[
+            self.get_dataset_name(hdf5_dataset)
+        ] = dataset
 
     def _map_area_datasets(self):
         scientific_cameras = self._get_camera_datasets(camera="cam1")
@@ -734,7 +736,32 @@ class VersionMapper:
         pass
 
     def _map_snapshot_datasets(self):
-        pass
+        mapped_datasets = []
+        for name in self.datasets2map_in_snapshot:
+            item = getattr(self._snapshot_group, name)
+            if item.attributes["DeviceType"] == "Axis":
+                self._map_axis_dataset(hdf5_dataset=item, section="snapshots")
+                mapped_datasets.append(self.get_dataset_name(item))
+            elif item.attributes["DeviceType"] == "Channel":
+                self._map_channel_snapshot_dataset(hdf5_dataset=item)
+                mapped_datasets.append(self.get_dataset_name(item))
+        for item in mapped_datasets:
+            self.datasets2map_in_snapshot.remove(item)
+
+    def _map_channel_snapshot_dataset(self, hdf5_dataset=None):
+        dataset = entities.data.NonencodedAxisData()
+        importer_mapping = {
+            0: "positions",
+            1: "data",
+        }
+        importer = self.get_hdf5_dataset_importer(
+            dataset=hdf5_dataset, mapping=importer_mapping
+        )
+        dataset.importer.append(importer)
+        self.set_basic_metadata(hdf5_item=hdf5_dataset, dataset=dataset)
+        self.destination.snapshots[self.get_dataset_name(hdf5_dataset)] = (
+            dataset
+        )
 
 
 class VersionMapperV5(VersionMapper):
@@ -1270,7 +1297,7 @@ class VersionMapperV5(VersionMapper):
             self._map_singlepoint_dataset(hdf5_name, normalized_datasets)
 
     def _map_singlepoint_dataset(
-        self, hdf5_name=None, normalized_datasets=None
+        self, hdf5_name=None, normalized_datasets=None, section="data"
     ):
         importer_mapping = {
             0: "positions",
