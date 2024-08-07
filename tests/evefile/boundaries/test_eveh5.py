@@ -74,6 +74,17 @@ class TestHDF5Item(unittest.TestCase):
         self.hdf5_item.get_attributes()
         self.assertTrue(self.hdf5_item.attributes)
 
+    def test_get_attributes_with_iso8859_characters_reads_attributes(self):
+        DummyHDF5File(filename=self.filename).create()
+        with h5py.File(self.filename, "w") as file:
+            file.attrs["Comment"] = np.bytes_(
+                ["äöü".encode(encoding="iso8859")]
+            )
+        self.hdf5_item.filename = self.filename
+        self.hdf5_item.name = "/"
+        self.hdf5_item.get_attributes()
+        self.assertTrue(self.hdf5_item.attributes)
+
     def test_attribute_values_are_strings(self):
         DummyHDF5File(filename=self.filename).create()
         self.hdf5_item.filename = self.filename

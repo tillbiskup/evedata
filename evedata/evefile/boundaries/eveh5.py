@@ -298,10 +298,16 @@ class HDF5Item:
         if not self.name:
             raise ValueError("Missing attribute name")
         with h5py.File(self.filename, "r") as file:
-            self.attributes = {
-                key: value[0].decode()
-                for key, value in file[self.name].attrs.items()
-            }
+            try:
+                self.attributes = {
+                    key: value[0].decode()
+                    for key, value in file[self.name].attrs.items()
+                }
+            except UnicodeDecodeError:
+                self.attributes = {
+                    key: value[0].decode(encoding="iso8859")
+                    for key, value in file[self.name].attrs.items()
+                }
 
 
 class HDF5Dataset(HDF5Item):
