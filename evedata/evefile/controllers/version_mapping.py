@@ -1215,9 +1215,18 @@ class VersionMapperV5(VersionMapper):
         ]
         for hdf5_name in interval_datasets:
             datasets.remove(hdf5_name)
-            self._map_interval_dataset(hdf5_name=hdf5_name)
+            self._map_interval_dataset(hdf5_name=hdf5_name, normalized=False)
+        average_datasets = []
+        if hasattr(self.source.c1.main, "averagemeta"):
+            average_datasets = {
+                item.name.split("__")[0].split("/")[-1]
+                for item in self.source.c1.main.averagemeta
+                if item.name.count("__") == 1
+            }
+        for hdf5_name in average_datasets:
+            datasets.remove(hdf5_name)
+            self._map_average_dataset(hdf5_name=hdf5_name, normalized=False)
         normalized_datasets = []
-        normalized_interval_datasets = []
         if hasattr(self.source.c1.main, "normalized"):
             normalized_datasets = [
                 self.get_dataset_name(item)
@@ -1232,9 +1241,28 @@ class VersionMapperV5(VersionMapper):
                 ).attributes["Detectortype"]
                 == "Interval"
             ]
-        for hdf5_name in normalized_interval_datasets:
-            normalized_datasets.remove(hdf5_name)
-            self._map_interval_dataset(hdf5_name=hdf5_name, normalized=True)
+            for hdf5_name in normalized_interval_datasets:
+                normalized_datasets.remove(hdf5_name)
+                self._map_interval_dataset(
+                    hdf5_name=hdf5_name, normalized=True
+                )
+            if hasattr(self.source.c1.main, "averagemeta"):
+                average_datasets = {
+                    item.name.split("__")[0].split("/")[-1]
+                    for item in self.source.c1.main.averagemeta
+                }
+            normalized_average_datasets = [
+                self.get_dataset_name(item)
+                for item in self.source.c1.main.normalized
+                if self.get_dataset_name(item).split("__")[0]
+                in average_datasets
+            ]
+            for hdf5_name in normalized_average_datasets:
+                normalized_datasets.remove(hdf5_name)
+                datasets.remove(hdf5_name.split("__")[0])
+                self._map_average_dataset(
+                    hdf5_name=hdf5_name, normalized=True
+                )
         for hdf5_name in datasets:
             self._map_singlepoint_dataset(hdf5_name, normalized_datasets)
 
@@ -1352,6 +1380,77 @@ class VersionMapperV5(VersionMapper):
             )
             self.datasets2map_in_main.remove(hdf5_name)
         self.destination.data[hdf5_name] = dataset
+
+    def _map_average_dataset(self, hdf5_name=None, normalized=False):
+        if normalized:
+            basename = hdf5_name.split("__")[0]
+            dataset = entities.data.AverageNormalizedChannelData()
+        else:
+            basename = hdf5_name
+            dataset = entities.data.AverageChannelData()
+        importer_mapping = {
+            0: "positions",
+            1: "data",
+        }
+        importer = self.get_hdf5_dataset_importer(
+            dataset=getattr(self.source.c1.main, basename),
+            mapping=importer_mapping,
+        )
+        dataset.importer.append(importer)
+        if hasattr(self.source.c1.main.averagemeta, f"{hdf5_name}__Attempts"):
+            importer_mapping = {
+                1: "attempts",
+            }
+            importer = self.get_hdf5_dataset_importer(
+                dataset=getattr(
+                    self.source.c1.main.averagemeta, f"{hdf5_name}__Attempts"
+                ),
+                mapping=importer_mapping,
+            )
+            dataset.importer.append(importer)
+            dataset.metadata.max_attempts = getattr(
+                self.source.c1.main.averagemeta,
+                f"{hdf5_name}__Attempts",
+            ).data["MaxAttempts"][0]
+            dataset.metadata.low_limit = getattr(
+                self.source.c1.main.averagemeta,
+                f"{hdf5_name}__Limit-MaxDev",
+            ).data["Limit"][0]
+            dataset.metadata.max_deviation = getattr(
+                self.source.c1.main.averagemeta,
+                f"{hdf5_name}__Limit-MaxDev",
+            ).data["maxDeviation"][0]
+        if normalized:
+            importer_mapping = {
+                1: "normalized_data",
+            }
+            importer = self.get_hdf5_dataset_importer(
+                dataset=getattr(self.source.c1.main.normalized, hdf5_name),
+                mapping=importer_mapping,
+            )
+            dataset.importer.append(importer)
+            importer_mapping = {
+                1: "normalizing_data",
+            }
+            importer = self.get_hdf5_dataset_importer(
+                dataset=getattr(
+                    self.source.c1.main, hdf5_name.split("__")[1]
+                ),
+                mapping=importer_mapping,
+            )
+            dataset.importer.append(importer)
+        self.set_basic_metadata(
+            hdf5_item=getattr(self.source.c1.main, basename),
+            dataset=dataset,
+        )
+        dataset.metadata.n_averages = getattr(
+            self.source.c1.main.averagemeta,
+            f"{hdf5_name}__AverageCount",
+        ).data["AverageCount"][0]
+        self.destination.data[basename] = dataset
+        self.datasets2map_in_main.remove(basename)
+        if hdf5_name in self.datasets2map_in_main:
+            self.datasets2map_in_main.remove(hdf5_name)
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

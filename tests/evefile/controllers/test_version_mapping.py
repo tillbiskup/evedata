@@ -563,6 +563,181 @@ class MockEveH5v4(MockEveH5):
         self.c1.main.standarddev.add_item(dataset)
         return name
 
+    # noinspection PyUnresolvedReferences
+    def add_average_detector_data(self, maxdev=False, normalized=False):
+        self.c1.main.add_item(MockHDF5Group(name="/c1/main/averagemeta"))
+        if normalized:
+            basename = "bIICurrent:Mnt1chan1"
+            normalize_name = "bIICurrent:Mnt1lifeTimechan1"
+            name = f"{basename}__{normalize_name}"
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/normalized/{name}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{basename}",
+                "Name": basename,
+                "Detectortype": "Standard",
+                "channel": basename,
+                "normalizeId": normalized,
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{basename}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{basename}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.main.add_item(MockHDF5Group(name="/c1/main/normalized"))
+            self.c1.main.normalized.add_item(dataset)
+            # Non-normalized dataset
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{basename}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{basename}",
+                "Name": basename,
+                "Detectortype": "Standard",
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{basename}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{basename}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.main.add_item(dataset)
+            # Normalizing dataset
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{normalize_name}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{normalize_name}",
+                "Name": normalize_name,
+                "Detectortype": "Standard",
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{normalize_name}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{normalize_name}"] = [42.0, 42.0]
+            dataset.data = data_
+            self.c1.main.add_item(dataset)
+        else:
+            name = "mlsCurrent:Mnt1chan1"
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{name}", filename=self.filename
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Access": f"ca:{name}",
+                "Name": name,
+                "Detectortype": "Standard",
+            }
+            data_ = np.ndarray(
+                [2],
+                dtype=np.dtype(
+                    [
+                        ("PosCounter", "<i4"),
+                        (f"{name}", "f8"),
+                    ]
+                ),
+            )
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_[f"{name}"] = [42.0, 42.0]
+            dataset.data = data_
+            # noinspection PyUnresolvedReferences
+            self.c1.main.add_item(dataset)
+        metadata = "AverageCount"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/main/averagemeta/{name}__{metadata}",
+            filename=self.filename,
+        )
+        dataset.attributes = {
+            "Name": name,
+            "channel": name,
+        }
+        dtype = np.dtype(
+            [
+                ("PosCounter", "<i4"),
+                ("AverageCount", "<i4"),
+                ("Preset", "<i4"),
+            ]
+        )
+        data_ = np.ndarray([2], dtype=dtype)
+        data_["PosCounter"] = np.asarray([2, 5])
+        data_["AverageCount"] = [3, 3]
+        data_["Preset"] = [3, 3]
+        dataset.data = data_
+        dataset.dtype = dtype
+        # noinspection PyUnresolvedReferences
+        self.c1.main.averagemeta.add_item(dataset)
+        if maxdev:
+            metadata = "Attempts"
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/averagemeta/{name}__{metadata}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "Name": name,
+                "channel": name,
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    ("Attempts", "<i4"),
+                    ("MaxAttempts", "<i4"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_["Attempts"] = [1, 1]
+            data_["MaxAttempts"] = [4, 4]
+            dataset.data = data_
+            dataset.dtype = dtype
+            # noinspection PyUnresolvedReferences
+            self.c1.main.averagemeta.add_item(dataset)
+            metadata = "Limit-MaxDev"
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/averagemeta/{name}__{metadata}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "Name": name,
+                "channel": name,
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    ("Limit", "f8"),
+                    ("maxDeviation", "f8"),
+                ]
+            )
+            data_ = np.ndarray([2], dtype=dtype)
+            data_["PosCounter"] = np.asarray([2, 5])
+            data_["Limit"] = [21.42, 21.42]
+            data_["maxDeviation"] = [0.21, 0.21]
+            dataset.data = data_
+            dataset.dtype = dtype
+            # noinspection PyUnresolvedReferences
+            self.c1.main.averagemeta.add_item(dataset)
+        return name
+
 
 class MockEveH5v5(MockEveH5v4):
     pass
@@ -1743,6 +1918,275 @@ class TestVersionMapperV5(unittest.TestCase):
         }
         self.assertDictEqual(
             mapping_dict, evefile.data[dataset].importer[3].mapping
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_average_dataset_removes_from_list2map(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_average_detector_data(
+            normalized=False, maxdev=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertFalse(self.mapper.datasets2map_in_main)
+
+    # noinspection PyUnresolvedReferences
+    def test_map_average_dataset_adds_dataset(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=False, maxdev=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        h5_dataset = getattr(self.mapper.source.c1.main, dataset)
+        self.assertIn(dataset, evefile.data.keys())
+        self.assertIsInstance(
+            evefile.data[dataset],
+            evedata.evefile.entities.data.AverageChannelData,
+        )
+        self.assertEqual(
+            dataset,
+            evefile.data[dataset].metadata.id,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Name"],
+            evefile.data[dataset].metadata.name,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.data[dataset].metadata.pv,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.data[dataset].metadata.access_mode,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_average_dataset_adds_importer(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=False, maxdev=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for importer in evefile.data[dataset].importer:
+            self.assertEqual(
+                getattr(self.mapper.source.c1.main, dataset).filename,
+                importer.source,
+            )
+        mapping_dict = {
+            getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                0
+            ]: "positions",
+            getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                1
+            ]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[0].mapping
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_average_dataset_with_maxdev_adds_additional_importer(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=False, maxdev=True
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for importer in evefile.data[dataset].importer:
+            self.assertEqual(
+                getattr(self.mapper.source.c1.main, dataset).filename,
+                importer.source,
+            )
+        mapping_dict = {
+            getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                0
+            ]: "positions",
+            getattr(self.mapper.source.c1.main, dataset).dtype.names[
+                1
+            ]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[0].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.averagemeta, f"{dataset}__Attempts"
+            ).dtype.names[1]: "attempts",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[1].mapping
+        )
+
+    def test_map_average_channel_sets_metadata(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=False, maxdev=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        # noinspection PyUnresolvedReferences
+        self.assertEqual(
+            getattr(
+                self.mapper.source.c1.main.averagemeta,
+                f"{dataset}__AverageCount",
+            ).data["AverageCount"][0],
+            evefile.data[dataset].metadata.n_averages,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_average_channel_with_maxdev_sets_metadata(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=False, maxdev=True
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        self.assertEqual(
+            getattr(
+                self.mapper.source.c1.main.averagemeta,
+                f"{dataset}__Attempts",
+            ).data["MaxAttempts"][0],
+            evefile.data[dataset].metadata.max_attempts,
+        )
+        self.assertEqual(
+            getattr(
+                self.mapper.source.c1.main.averagemeta,
+                f"{dataset}__Limit-MaxDev",
+            ).data["Limit"][0],
+            evefile.data[dataset].metadata.low_limit,
+        )
+        self.assertEqual(
+            getattr(
+                self.mapper.source.c1.main.averagemeta,
+                f"{dataset}__Limit-MaxDev",
+            ).data["maxDeviation"][0],
+            evefile.data[dataset].metadata.max_deviation,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_normalized_average_dataset_adds_dataset(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=True, maxdev=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        h5_dataset = getattr(self.mapper.source.c1.main.normalized, dataset)
+        dataset = dataset.split("__")[0]
+        self.assertIn(dataset, evefile.data.keys())
+        self.assertIsInstance(
+            evefile.data[dataset],
+            evedata.evefile.entities.data.AverageNormalizedChannelData,
+        )
+        self.assertEqual(
+            dataset,
+            evefile.data[dataset].metadata.id,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Name"],
+            evefile.data[dataset].metadata.name,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.data[dataset].metadata.pv,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.data[dataset].metadata.access_mode,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_normalized_average_dataset_adds_importer(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=True, maxdev=False
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        base_dataset = dataset.split("__")[0]
+        for importer in evefile.data[base_dataset].importer:
+            self.assertEqual(
+                getattr(self.mapper.source.c1.main, base_dataset).filename,
+                importer.source,
+            )
+        mapping_dict = {
+            getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
+                0
+            ]: "positions",
+            getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
+                1
+            ]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[base_dataset].importer[0].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.normalized, dataset
+            ).dtype.names[1]: "normalized_data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[base_dataset].importer[1].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main, dataset.split("__")[1]
+            ).dtype.names[1]: "normalizing_data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[base_dataset].importer[2].mapping
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_norm_avg_dataset_with_maxdev_adds_additional_importer(self):
+        self.mapper.source = self.h5file
+        dataset = self.mapper.source.add_average_detector_data(
+            normalized=True, maxdev=True
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        base_dataset = dataset.split("__")[0]
+        for importer in evefile.data[base_dataset].importer:
+            self.assertEqual(
+                getattr(self.mapper.source.c1.main, base_dataset).filename,
+                importer.source,
+            )
+        mapping_dict = {
+            getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
+                0
+            ]: "positions",
+            getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
+                1
+            ]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[base_dataset].importer[0].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.averagemeta, f"{dataset}__Attempts"
+            ).dtype.names[1]: "attempts",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[base_dataset].importer[1].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main.normalized, dataset
+            ).dtype.names[1]: "normalized_data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[base_dataset].importer[2].mapping
+        )
+        mapping_dict = {
+            getattr(
+                self.mapper.source.c1.main, dataset.split("__")[1]
+            ).dtype.names[1]: "normalizing_data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[base_dataset].importer[3].mapping
         )
 
 
