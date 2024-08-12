@@ -87,15 +87,15 @@ Loading the contents of a data file of a measurement may be as simple as:
 .. code-block::
 
     evefile = File()
-    evefile.load(filename="my_measurement_file.h5")
+    evefile.load(filename_="my_measurement_file.h5")
 
-Of course, you could alternatively set the filename first,
+Of course, you could alternatively set the filename_ first,
 thus shortening the :meth:`load` method call:
 
 .. code-block::
 
     evefile = File()
-    evefile.filename = "my_measurement_file.h5"
+    evefile.filename_ = "my_measurement_file.h5"
     evefile.load()
 
 
@@ -210,15 +210,15 @@ class EveFile(File):
     .. code-block::
 
         evefile = File()
-        evefile.load(filename="my_measurement_file.h5")
+        evefile.load(filename_="my_measurement_file.h5")
 
-    Of course, you could alternatively set the filename first,
+    Of course, you could alternatively set the filename_ first,
     thus shortening the :meth:`load` method call:
 
     .. code-block::
 
         evefile = File()
-        evefile.filename = "my_measurement_file.h5"
+        evefile.filename_ = "my_measurement_file.h5"
         evefile.load()
 
 
@@ -231,7 +231,7 @@ class EveFile(File):
 
         Returns
         -------
-        filename : :class:`str`
+        filename_ : :class:`str`
             Name of the file to be loaded.
 
         """
@@ -262,7 +262,25 @@ class EveFile(File):
     def _read_and_map_eveh5_file(self):
         eveh5 = HDF5File()
         eveh5.read_attributes = True
+        eveh5.close_file = False
         eveh5.read(filename=self.metadata.filename)
         mapper_factory = version_mapping.VersionMapperFactory()
         mapper = mapper_factory.get_mapper(eveh5)
         mapper.map(source=eveh5, destination=self)
+        eveh5.close()
+
+
+if __name__ == "__main__":
+    import timeit
+
+    number = 10
+    file = EveFile()
+    filename_ = "/messung/euvr/daten/2024/KW32_24/TOPPAN/00092.h5"
+    time = timeit.timeit(
+        "file.load(filename_)", number=number, globals=globals()
+    )
+    print(time / number)
+
+    import cProfile
+
+    cProfile.run("file.load(filename_)")

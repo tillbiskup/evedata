@@ -67,7 +67,7 @@ Reading an HDF5 (eveH5) file is as simple as:
 
     from evedata.evefile.boundaries import eveh5
 
-    file = eveh5.HDF5File(filename="test.h5")
+    file = eveh5.HDF5File(filename_="test.h5")
     file.read()
 
 Each HDF5 item present in the root group (``/``) will appear as attribute by
@@ -149,7 +149,7 @@ The following classes are implemented in the module:
 
   Base class for HDF5 items.
 
-  Provides the filename, name of the item, and attributes, as well as
+  Provides the filename_, name of the item, and attributes, as well as
   mechanisms to load the attributes on demand from the original HDF5 file.
 
 * :class:`HDF5Dataset`
@@ -183,6 +183,7 @@ Module documentation
 
 import functools
 import logging
+from contextlib import contextmanager
 
 import h5py
 import numpy as np
@@ -234,7 +235,7 @@ class HDF5Item:
     Raises
     ------
     ValueError
-        Raised if either filename or name are not provided and attributes
+        Raised if either filename_ or name are not provided and attributes
         are accessed.
 
 
@@ -248,11 +249,11 @@ class HDF5Item:
 
         item = HDF5Item()
 
-    Both, filename and name can be set upon instantiation:
+    Both, filename_ and name can be set upon instantiation:
 
     .. code-block::
 
-        item = HDF5Item(filename="test.h5", name="/")
+        item = HDF5Item(filename_="test.h5", name="/")
 
     Here ``/`` refers to the HDF5 root group that is always present.
 
@@ -261,10 +262,10 @@ class HDF5Item:
 
     .. code-block::
 
-        item = HDF5Item(filename="test.h5", name="/")
+        item = HDF5Item(filename_="test.h5", name="/")
         item.get_attributes()
 
-    Note that this will raise if either filename or name are not provided.
+    Note that this will raise if either filename_ or name are not provided.
 
     The idea behind obtaining the attributes: being independent of the
     HDF5 file. By directly using the h5py package, the file would always
@@ -276,6 +277,7 @@ class HDF5Item:
         self.filename = filename
         self.name = name
         self.attributes = {}
+        self._hdf5_filehandle = None
 
     def get_attributes(self):
         """
@@ -298,15 +300,15 @@ class HDF5Item:
         Raises
         ------
         ValueError
-            Raised if either filename or name are not provided and attributes
+            Raised if either filename_ or name are not provided and attributes
             are accessed.
 
         """
         if not self.filename:
-            raise ValueError("Missing attribute filename")
+            raise ValueError("Missing attribute filename_")
         if not self.name:
             raise ValueError("Missing attribute name")
-        with h5py.File(self.filename, "r") as file:
+        with self._hdf5_file() as file:
             try:
                 self.attributes = {
                     key: value[0].decode()
@@ -317,6 +319,31 @@ class HDF5Item:
                     key: value[0].decode(encoding="iso8859")
                     for key, value in file[self.name].attrs.items()
                 }
+
+    @contextmanager
+    def _hdf5_file(self):
+        """
+        Context manager for HDF5 file.
+
+        Opening the HDF5 file for each read operation is a massive
+        overhead. Hence, if the private attribute ``_hdf5_filehandle`` is
+        set, this will be returned, and only otherwise the HDF5 file
+        opened and the file handle set.
+
+        Returns
+        -------
+        hdf5_filehandle : :class:`h5py.File`
+            (Open) file object of an HDF5 file to read from.
+        """
+        close_file = False
+        if not self._hdf5_filehandle:
+            self._hdf5_filehandle = h5py.File(self.filename, "r")
+            close_file = True
+        try:
+            yield self._hdf5_filehandle
+        finally:
+            if close_file:
+                self._hdf5_filehandle.close()
 
 
 class HDF5Dataset(HDF5Item):
@@ -332,7 +359,7 @@ class HDF5Dataset(HDF5Item):
     Raises
     ------
     ValueError
-        Raised if either filename or name are not provided and data are
+        Raised if either filename_ or name are not provided and data are
         obtained from HDF5 file.
 
 
@@ -345,11 +372,11 @@ class HDF5Dataset(HDF5Item):
 
         dataset = HDF5Dataset()
 
-    Both, filename and name can be set upon instantiation:
+    Both, filename_ and name can be set upon instantiation:
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename="test.h5", name="/test")
+        dataset = HDF5Dataset(filename_="test.h5", name="/test")
 
     Here ``/test`` refers to a hypothetical HDF5 dataset ``test`` present
     in the root group ``/`` of the HDF5 file.
@@ -359,17 +386,17 @@ class HDF5Dataset(HDF5Item):
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename="test.h5", name="/test")
+        dataset = HDF5Dataset(filename_="test.h5", name="/test")
         dataset.get_attributes()
 
-    Note that this will raise if either filename or name are not provided.
+    Note that this will raise if either filename_ or name are not provided.
 
     To set the data, *i.e.* read the data of the dataset from the HDF5
     file, use the :meth:`get_data` method:
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename="test.h5", name="/test")
+        dataset = HDF5Dataset(filename_="test.h5", name="/test")
         dataset.get_data()
 
     Several subsequent calls to the :meth:`get_data` method will *not* read
@@ -431,10 +458,10 @@ class HDF5Dataset(HDF5Item):
         """
         if not self._dtype:
             if not self.filename:
-                raise ValueError("Missing attribute filename")
+                raise ValueError("Missing attribute filename_")
             if not self.name:
                 raise ValueError("Missing attribute name")
-            with h5py.File(self.filename, "r") as file:
+            with self._hdf5_file() as file:
                 self._dtype = file[self.name].dtype
         return self._dtype
 
@@ -452,17 +479,17 @@ class HDF5Dataset(HDF5Item):
         Raises
         ------
         ValueError
-            Raised if either filename or name are not provided and attributes
+            Raised if either filename_ or name are not provided and attributes
             are accessed.
 
         """
         if self._data.size > 0:
             return
         if not self.filename:
-            raise ValueError("Missing attribute filename")
+            raise ValueError("Missing attribute filename_")
         if not self.name:
             raise ValueError("Missing attribute name")
-        with h5py.File(self.filename, "r") as file:
+        with self._hdf5_file() as file:
             self._data = file[self.name][...]
 
 
@@ -506,11 +533,11 @@ class HDF5Group(HDF5Item):
 
         group = HDF5Group()
 
-    Both, filename and name can be set upon instantiation:
+    Both, filename_ and name can be set upon instantiation:
 
     .. code-block::
 
-        group = HDF5Group(filename="test.h5", name="/test")
+        group = HDF5Group(filename_="test.h5", name="/test")
 
     Here ``/test`` refers to a hypothetical HDF5 group ``test`` present
     in the root group ``/`` of the HDF5 file.
@@ -520,19 +547,19 @@ class HDF5Group(HDF5Item):
 
     .. code-block::
 
-        group = HDF5Group(filename="test.h5", name="/test")
+        group = HDF5Group(filename_="test.h5", name="/test")
         group.get_attributes()
 
-    Note that this will raise if either filename or name are not provided.
+    Note that this will raise if either filename_ or name are not provided.
 
     To add an item to the group, you first need to have an item, and only
     afterwards you can add it to the group:
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
+        dataset = HDF5Dataset(filename_="test.h5", name="/test/foo")
 
-        group = HDF5Group(filename="test.h5", name="/test")
+        group = HDF5Group(filename_="test.h5", name="/test")
         group.add_item(dataset)
 
     Items of a group are set as attributes in the object, with their name
@@ -541,8 +568,8 @@ class HDF5Group(HDF5Item):
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
-        group = HDF5Group(filename="test.h5", name="/test")
+        dataset = HDF5Dataset(filename_="test.h5", name="/test/foo")
+        group = HDF5Group(filename_="test.h5", name="/test")
         group.add_item(dataset)
 
         item = group.test
@@ -554,9 +581,9 @@ class HDF5Group(HDF5Item):
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
-        subgroup = HDF5Group(filename="test.h5", name="/test/bar")
-        group = HDF5Group(filename="test.h5", name="/test")
+        dataset = HDF5Dataset(filename_="test.h5", name="/test/foo")
+        subgroup = HDF5Group(filename_="test.h5", name="/test/bar")
+        group = HDF5Group(filename_="test.h5", name="/test")
         group.add_item(dataset)
         group.add_item(subgroup)
 
@@ -661,10 +688,21 @@ class HDF5File(HDF5Group):
 
         Default: False
 
+    close_file : :class:`bool`
+        Whether to close the HDF5 file after read.
+
+        For performance reasons, particularly in context of the
+        :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>`
+        class, it may be sensible to leave the HDF5 file open and close it
+        only afterwards.
+
+        In such case, you are responsible for closing the file yourself.
+        Use the :meth:`close` method for convenience.
+
     Raises
     ------
     ValueError
-        Raised if filename is not provided and data are obtained from HDF5
+        Raised if filename_ is not provided and data are obtained from HDF5
         file.
 
 
@@ -697,7 +735,7 @@ class HDF5File(HDF5Group):
 
     .. code-block::
 
-        file = HDF5File(filename="test.h5")
+        file = HDF5File(filename_="test.h5")
         file.read()
 
     Note that the :attr:`name` attribute of the :obj:`HDF5File` object will
@@ -708,7 +746,7 @@ class HDF5File(HDF5Group):
 
     .. code-block::
 
-        file = HDF5File(filename="test.h5")
+        file = HDF5File(filename_="test.h5")
         file.read_attributes = True
         file.read()
 
@@ -721,6 +759,7 @@ class HDF5File(HDF5Group):
         super().__init__()
         self.name = "/"
         self.read_attributes = False
+        self.close_file = True
         self._hdf5_items = {}
 
     def read(self, filename=""):
@@ -741,27 +780,32 @@ class HDF5File(HDF5Group):
         filename : :class:`str`
             Name of the HDF5 (eveH5) file to read.
 
-            If not provided, but set as attribute :attr:`filename`,
+            If not provided, but set as attribute :attr:`filename_`,
             the latter will be used. Takes precedence of the attribute
-            :attr:`filename`.
+            :attr:`filename_`.
 
         Raises
         ------
         ValueError
-            Raised if filename is not provided and data are obtained from
+            Raised if filename_ is not provided and data are obtained from
             HDF5 file.
 
         """
         if filename:
             self.filename = filename
         if not self.filename:
-            raise ValueError("Missing attribute filename")
+            raise ValueError("Missing attribute filename_")
+
+        self._hdf5_filehandle = h5py.File(self.filename, "r")
 
         if self.read_attributes:
             self.get_attributes()
 
         self._get_hdf5_items()
         self._set_hdf5_items()
+
+        if self._hdf5_file() and self.close_file:
+            self._hdf5_filehandle.close()
 
     def _get_hdf5_items(self):
         """
@@ -783,7 +827,7 @@ class HDF5File(HDF5Group):
                 item_type = HDF5Dataset
             self._hdf5_items[name] = item_type
 
-        with h5py.File(self.filename, "r") as file:
+        with self._hdf5_file() as file:
             file.visititems(inspect)
 
     def _set_hdf5_items(self):
@@ -798,6 +842,7 @@ class HDF5File(HDF5Group):
         """
         for name, node_type in self._hdf5_items.items():
             item = node_type(filename=self.filename, name=f"/{name}")
+            item._hdf5_filehandle = self._hdf5_filehandle
             if self.read_attributes:
                 item.get_attributes()
             if "/" not in name:
@@ -806,3 +851,37 @@ class HDF5File(HDF5Group):
                 parent = "/".join(name.split("/")[:-1])
                 node = functools.reduce(getattr, parent.split("/"), self)
                 node.add_item(item)
+
+    def close(self):
+        """
+        Close open HDF5 file.
+
+        For performance reasons, particularly in context of the
+        :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>`
+        class, it may be sensible to leave the HDF5 file open and close it
+        only afterwards.
+
+        In such case, you are responsible for closing the file yourself.
+        Use this method for convenience.
+
+        """
+        if self._hdf5_filehandle:
+            self._hdf5_filehandle.close()
+
+
+if __name__ == "__main__":
+    import timeit
+
+    number = 10
+    h5 = HDF5File()
+    h5.read_attributes = True
+    h5.close_file = False
+    filename_ = "/messung/euvr/daten/2024/KW32_24/TOPPAN/00092.h5"
+    time = timeit.timeit(
+        "h5.read(filename_); h5.close()", number=number, globals=globals()
+    )
+    print(time / number)
+
+    import cProfile
+
+    cProfile.run("h5.read(filename_)")

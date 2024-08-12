@@ -59,7 +59,9 @@ class TestHDF5Item(unittest.TestCase):
         self.assertEqual(name, hdf5_item.name)
 
     def test_get_attributes_without_filename_raises(self):
-        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+        with self.assertRaisesRegex(
+            ValueError, "Missing attribute filename_"
+        ):
             self.hdf5_item.get_attributes()
 
     def test_get_attributes_without_name_raises(self):
@@ -129,7 +131,9 @@ class TestHDF5Dataset(unittest.TestCase):
         self.assertEqual(name, hdf5_dataset.name)
 
     def test_get_data_without_filename_raises(self):
-        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+        with self.assertRaisesRegex(
+            ValueError, "Missing attribute filename_"
+        ):
             self.hdf5_dataset.get_data()
 
     def test_get_data_without_name_raises(self):
@@ -157,7 +161,9 @@ class TestHDF5Dataset(unittest.TestCase):
         np.testing.assert_array_equal(array, self.hdf5_dataset.data)
 
     def test_dtype_without_filename_raises(self):
-        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+        with self.assertRaisesRegex(
+            ValueError, "Missing attribute filename_"
+        ):
             self.hdf5_dataset.dtype
 
     def test_dtype_without_name_raises(self):
@@ -290,7 +296,9 @@ class TestHDF5File(unittest.TestCase):
         self.hdf5_file.read()
 
     def test_read_without_filename_raises(self):
-        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+        with self.assertRaisesRegex(
+            ValueError, "Missing attribute filename_"
+        ):
             self.hdf5_file.read()
 
     def test_read_adds_items_to_root(self):
@@ -361,3 +369,26 @@ class TestHDF5File(unittest.TestCase):
         self.hdf5_file.read_attributes = True
         self.hdf5_file.read(self.filename)
         self.assertTrue(self.hdf5_file.attributes)
+
+    def test_read_closes_hdf5_file(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_file.read_attributes = True
+        self.hdf5_file.read(self.filename)
+        self.assertFalse(self.hdf5_file._hdf5_filehandle)
+
+    def test_read_with_close_file_false_leaves_hdf5_file_open(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_file.read_attributes = True
+        self.hdf5_file.close_file = False
+        self.hdf5_file.read(self.filename)
+        self.assertTrue(self.hdf5_file._hdf5_filehandle)
+        self.hdf5_file._hdf5_filehandle.close()
+
+    def test_close_closes_open_hdf5_file(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_file.read_attributes = True
+        self.hdf5_file.close_file = False
+        self.hdf5_file.read(self.filename)
+        self.assertTrue(self.hdf5_file._hdf5_filehandle)
+        self.hdf5_file.close()
+        self.assertFalse(self.hdf5_file._hdf5_filehandle)
