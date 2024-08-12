@@ -87,15 +87,15 @@ Loading the contents of a data file of a measurement may be as simple as:
 .. code-block::
 
     evefile = File()
-    evefile.load(filename_="my_measurement_file.h5")
+    evefile.load(filename="my_measurement_file.h5")
 
-Of course, you could alternatively set the filename_ first,
+Of course, you could alternatively set the filename first,
 thus shortening the :meth:`load` method call:
 
 .. code-block::
 
     evefile = File()
-    evefile.filename_ = "my_measurement_file.h5"
+    evefile.filename = "my_measurement_file.h5"
     evefile.load()
 
 
@@ -210,15 +210,15 @@ class EveFile(File):
     .. code-block::
 
         evefile = File()
-        evefile.load(filename_="my_measurement_file.h5")
+        evefile.load(filename="my_measurement_file.h5")
 
-    Of course, you could alternatively set the filename_ first,
+    Of course, you could alternatively set the filename first,
     thus shortening the :meth:`load` method call:
 
     .. code-block::
 
         evefile = File()
-        evefile.filename_ = "my_measurement_file.h5"
+        evefile.filename = "my_measurement_file.h5"
         evefile.load()
 
 
@@ -231,7 +231,7 @@ class EveFile(File):
 
         Returns
         -------
-        filename_ : :class:`str`
+        filename : :class:`str`
             Name of the file to be loaded.
 
         """

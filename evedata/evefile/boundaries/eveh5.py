@@ -149,7 +149,7 @@ The following classes are implemented in the module:
 
   Base class for HDF5 items.
 
-  Provides the filename_, name of the item, and attributes, as well as
+  Provides the filename, name of the item, and attributes, as well as
   mechanisms to load the attributes on demand from the original HDF5 file.
 
 * :class:`HDF5Dataset`
@@ -235,7 +235,7 @@ class HDF5Item:
     Raises
     ------
     ValueError
-        Raised if either filename_ or name are not provided and attributes
+        Raised if either filename or name are not provided and attributes
         are accessed.
 
 
@@ -249,11 +249,11 @@ class HDF5Item:
 
         item = HDF5Item()
 
-    Both, filename_ and name can be set upon instantiation:
+    Both, filename and name can be set upon instantiation:
 
     .. code-block::
 
-        item = HDF5Item(filename_="test.h5", name="/")
+        item = HDF5Item(filename="test.h5", name="/")
 
     Here ``/`` refers to the HDF5 root group that is always present.
 
@@ -262,10 +262,10 @@ class HDF5Item:
 
     .. code-block::
 
-        item = HDF5Item(filename_="test.h5", name="/")
+        item = HDF5Item(filename="test.h5", name="/")
         item.get_attributes()
 
-    Note that this will raise if either filename_ or name are not provided.
+    Note that this will raise if either filename or name are not provided.
 
     The idea behind obtaining the attributes: being independent of the
     HDF5 file. By directly using the h5py package, the file would always
@@ -300,12 +300,12 @@ class HDF5Item:
         Raises
         ------
         ValueError
-            Raised if either filename_ or name are not provided and attributes
+            Raised if either filename or name are not provided and attributes
             are accessed.
 
         """
         if not self.filename:
-            raise ValueError("Missing attribute filename_")
+            raise ValueError("Missing attribute filename")
         if not self.name:
             raise ValueError("Missing attribute name")
         with self._hdf5_file() as file:
@@ -359,7 +359,7 @@ class HDF5Dataset(HDF5Item):
     Raises
     ------
     ValueError
-        Raised if either filename_ or name are not provided and data are
+        Raised if either filename or name are not provided and data are
         obtained from HDF5 file.
 
 
@@ -372,11 +372,11 @@ class HDF5Dataset(HDF5Item):
 
         dataset = HDF5Dataset()
 
-    Both, filename_ and name can be set upon instantiation:
+    Both, filename and name can be set upon instantiation:
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename_="test.h5", name="/test")
+        dataset = HDF5Dataset(filename="test.h5", name="/test")
 
     Here ``/test`` refers to a hypothetical HDF5 dataset ``test`` present
     in the root group ``/`` of the HDF5 file.
@@ -386,17 +386,17 @@ class HDF5Dataset(HDF5Item):
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename_="test.h5", name="/test")
+        dataset = HDF5Dataset(filename="test.h5", name="/test")
         dataset.get_attributes()
 
-    Note that this will raise if either filename_ or name are not provided.
+    Note that this will raise if either filename or name are not provided.
 
     To set the data, *i.e.* read the data of the dataset from the HDF5
     file, use the :meth:`get_data` method:
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename_="test.h5", name="/test")
+        dataset = HDF5Dataset(filename="test.h5", name="/test")
         dataset.get_data()
 
     Several subsequent calls to the :meth:`get_data` method will *not* read
@@ -458,7 +458,7 @@ class HDF5Dataset(HDF5Item):
         """
         if not self._dtype:
             if not self.filename:
-                raise ValueError("Missing attribute filename_")
+                raise ValueError("Missing attribute filename")
             if not self.name:
                 raise ValueError("Missing attribute name")
             with self._hdf5_file() as file:
@@ -479,14 +479,14 @@ class HDF5Dataset(HDF5Item):
         Raises
         ------
         ValueError
-            Raised if either filename_ or name are not provided and attributes
+            Raised if either filename or name are not provided and attributes
             are accessed.
 
         """
         if self._data.size > 0:
             return
         if not self.filename:
-            raise ValueError("Missing attribute filename_")
+            raise ValueError("Missing attribute filename")
         if not self.name:
             raise ValueError("Missing attribute name")
         with self._hdf5_file() as file:
@@ -533,11 +533,11 @@ class HDF5Group(HDF5Item):
 
         group = HDF5Group()
 
-    Both, filename_ and name can be set upon instantiation:
+    Both, filename and name can be set upon instantiation:
 
     .. code-block::
 
-        group = HDF5Group(filename_="test.h5", name="/test")
+        group = HDF5Group(filename="test.h5", name="/test")
 
     Here ``/test`` refers to a hypothetical HDF5 group ``test`` present
     in the root group ``/`` of the HDF5 file.
@@ -547,19 +547,19 @@ class HDF5Group(HDF5Item):
 
     .. code-block::
 
-        group = HDF5Group(filename_="test.h5", name="/test")
+        group = HDF5Group(filename="test.h5", name="/test")
         group.get_attributes()
 
-    Note that this will raise if either filename_ or name are not provided.
+    Note that this will raise if either filename or name are not provided.
 
     To add an item to the group, you first need to have an item, and only
     afterwards you can add it to the group:
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename_="test.h5", name="/test/foo")
+        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
 
-        group = HDF5Group(filename_="test.h5", name="/test")
+        group = HDF5Group(filename="test.h5", name="/test")
         group.add_item(dataset)
 
     Items of a group are set as attributes in the object, with their name
@@ -568,8 +568,8 @@ class HDF5Group(HDF5Item):
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename_="test.h5", name="/test/foo")
-        group = HDF5Group(filename_="test.h5", name="/test")
+        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
+        group = HDF5Group(filename="test.h5", name="/test")
         group.add_item(dataset)
 
         item = group.test
@@ -581,9 +581,9 @@ class HDF5Group(HDF5Item):
 
     .. code-block::
 
-        dataset = HDF5Dataset(filename_="test.h5", name="/test/foo")
-        subgroup = HDF5Group(filename_="test.h5", name="/test/bar")
-        group = HDF5Group(filename_="test.h5", name="/test")
+        dataset = HDF5Dataset(filename="test.h5", name="/test/foo")
+        subgroup = HDF5Group(filename="test.h5", name="/test/bar")
+        group = HDF5Group(filename="test.h5", name="/test")
         group.add_item(dataset)
         group.add_item(subgroup)
 
@@ -702,7 +702,7 @@ class HDF5File(HDF5Group):
     Raises
     ------
     ValueError
-        Raised if filename_ is not provided and data are obtained from HDF5
+        Raised if filename is not provided and data are obtained from HDF5
         file.
 
 
@@ -735,7 +735,7 @@ class HDF5File(HDF5Group):
 
     .. code-block::
 
-        file = HDF5File(filename_="test.h5")
+        file = HDF5File(filename="test.h5")
         file.read()
 
     Note that the :attr:`name` attribute of the :obj:`HDF5File` object will
@@ -746,7 +746,7 @@ class HDF5File(HDF5Group):
 
     .. code-block::
 
-        file = HDF5File(filename_="test.h5")
+        file = HDF5File(filename="test.h5")
         file.read_attributes = True
         file.read()
 
@@ -780,21 +780,21 @@ class HDF5File(HDF5Group):
         filename : :class:`str`
             Name of the HDF5 (eveH5) file to read.
 
-            If not provided, but set as attribute :attr:`filename_`,
+            If not provided, but set as attribute :attr:`filename`,
             the latter will be used. Takes precedence of the attribute
-            :attr:`filename_`.
+            :attr:`filename`.
 
         Raises
         ------
         ValueError
-            Raised if filename_ is not provided and data are obtained from
+            Raised if filename is not provided and data are obtained from
             HDF5 file.
 
         """
         if filename:
             self.filename = filename
         if not self.filename:
-            raise ValueError("Missing attribute filename_")
+            raise ValueError("Missing attribute filename")
 
         self._hdf5_filehandle = h5py.File(self.filename, "r")
 
