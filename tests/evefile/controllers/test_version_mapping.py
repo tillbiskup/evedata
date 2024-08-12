@@ -1068,8 +1068,8 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_map_adds_log_messages(self):
         log_messages = [
-            "2024-07-25T10:04:03: Lorem ipsum",
-            "2024-07-25T10:05:23: dolor sit amet",
+            b"2024-07-25T10:04:03: Lorem ipsum",
+            b"2024-07-25T10:05:23: dolor sit amet",
         ]
         self.mapper.source = self.h5file
         self.mapper.source.LiveComment = MockHDF5Dataset()
@@ -1081,7 +1081,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertIsInstance(
             evefile.log_messages[0], evedata.evefile.entities.file.LogMessage
         )
-        timestamp, message = log_messages[0].split(": ", maxsplit=1)
+        timestamp, message = log_messages[0].decode().split(": ", maxsplit=1)
         self.assertEqual(
             datetime.datetime.fromisoformat(timestamp),
             evefile.log_messages[0].timestamp,

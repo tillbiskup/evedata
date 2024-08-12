@@ -286,6 +286,15 @@ class HDF5Item:
         this should be valid for all eveH5 datasets and groups, but not
         generally for HDF5 items.
 
+        .. note::
+
+            As in reality, sometimes other character sets than UTF-8 or
+            ASCII have been used, most probably ISO8859-1, conversion will
+            check for a :class:`UnicodeDecodeError` and try ``iso8859`` as
+            encoding in this case. Note, however, that technically
+            speaking, eveH5 files with such character encoding are *no*
+            valid HDF5 files.
+
         Raises
         ------
         ValueError
@@ -319,13 +328,6 @@ class HDF5Dataset(HDF5Item):
     attributes. Data can be of arbitrary type, not only numeric, and are
     represented as :class:`numpy.array`.
 
-
-    Attributes
-    ----------
-    data : :class:`numpy.ndarray`
-        Data of the HDF5 dataset
-
-        Can be numeric, but generally of any type numpy supports.
 
     Raises
     ------
@@ -381,8 +383,35 @@ class HDF5Dataset(HDF5Item):
 
     def __init__(self, filename="", name=""):
         super().__init__(filename=filename, name=name)
-        self.data = np.ndarray([0])
+        self._data = np.ndarray([0])
         self._dtype = None
+
+    @property
+    def data(self):
+        """
+        Data of the HDF5 dataset.
+
+        Can be numeric, but generally of any type numpy supports.
+
+        .. note::
+
+            Data are only loaded on demand, *i.e.* first access,
+            for performance reasons. However, accessing the :attr:`data`
+            property automatically triggers a load as long as no data have
+            been set before.
+
+        Returns
+        -------
+        data : :class:`numpy.ndarray`
+            Data of the HDF5 dataset
+
+        """
+        self.get_data()
+        return self._data
+
+    @data.setter
+    def data(self, data=None):
+        self._data = data
 
     @property
     def dtype(self):
@@ -427,14 +456,14 @@ class HDF5Dataset(HDF5Item):
             are accessed.
 
         """
-        if self.data.size > 0:
+        if self._data.size > 0:
             return
         if not self.filename:
             raise ValueError("Missing attribute filename")
         if not self.name:
             raise ValueError("Missing attribute name")
         with h5py.File(self.filename, "r") as file:
-            self.data = file[self.name][...]
+            self._data = file[self.name][...]
 
 
 class HDF5Group(HDF5Item):

@@ -1297,7 +1297,7 @@ class VersionMapperV5(VersionMapper):
             self._map_singlepoint_dataset(hdf5_name, normalized_datasets)
 
     def _map_singlepoint_dataset(
-        self, hdf5_name=None, normalized_datasets=None, section="data"
+        self, hdf5_name=None, normalized_datasets=None
     ):
         importer_mapping = {
             0: "positions",
@@ -1488,7 +1488,7 @@ class VersionMapperV5(VersionMapper):
         self.source.LiveComment.get_data()
         for message in self.source.LiveComment.data:
             log_message = entities.file.LogMessage()
-            log_message.from_string(message)
+            log_message.from_string(message.decode())
             self.destination.log_messages.append(log_message)
 
 

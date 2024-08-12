@@ -113,9 +113,9 @@ class "<channel>__<normalizeId>" << (D,orange) >> {
 }
 
 note bottom of "<channel>__<normalizeId>"
-    If a channel is normalized,
-    the dataset only appears
-    in the group ""normalized",
+    If a channel is normalized and an
+    <b>interval channel</b>, the dataset only
+    appears in the group ""normalized",
     but not in main.
 end note
 

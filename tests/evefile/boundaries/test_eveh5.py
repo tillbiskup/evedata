@@ -118,12 +118,6 @@ class TestHDF5Dataset(unittest.TestCase):
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.hdf5_dataset, attribute))
 
-    def test_has_attributes(self):
-        attributes = ["data"]
-        for attribute in attributes:
-            with self.subTest(attribute=attribute):
-                self.assertTrue(hasattr(self.hdf5_dataset, attribute))
-
     def test_set_filename_on_init(self):
         filename = "foo"
         hdf5_dataset = eveh5.HDF5Dataset(filename=filename)
@@ -133,9 +127,6 @@ class TestHDF5Dataset(unittest.TestCase):
         name = "bar"
         hdf5_dataset = eveh5.HDF5Dataset(name=name)
         self.assertEqual(name, hdf5_dataset.name)
-
-    def test_data_attribute_is_empty_by_default(self):
-        self.assertEqual(0, self.hdf5_dataset.data.size)
 
     def test_get_data_without_filename_raises(self):
         with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
@@ -151,6 +142,12 @@ class TestHDF5Dataset(unittest.TestCase):
         self.hdf5_dataset.filename = self.filename
         self.hdf5_dataset.name = "/c1/main/test"
         self.hdf5_dataset.get_data()
+        self.assertGreater(self.hdf5_dataset.data.size, 0)
+
+    def test_accessing_data_sets_data(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_dataset.filename = self.filename
+        self.hdf5_dataset.name = "/c1/main/test"
         self.assertGreater(self.hdf5_dataset.data.size, 0)
 
     def test_get_data_does_nothing_if_data_are_set(self):
