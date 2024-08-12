@@ -884,4 +884,4 @@ if __name__ == "__main__":
 
     import cProfile
 
-    cProfile.run("h5.read(filename_)")
+    cProfile.run("h5.read(filename_); h5.close()")

@@ -59,9 +59,7 @@ class TestHDF5Item(unittest.TestCase):
         self.assertEqual(name, hdf5_item.name)
 
     def test_get_attributes_without_filename_raises(self):
-        with self.assertRaisesRegex(
-            ValueError, "Missing attribute filename_"
-        ):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
             self.hdf5_item.get_attributes()
 
     def test_get_attributes_without_name_raises(self):
@@ -131,9 +129,7 @@ class TestHDF5Dataset(unittest.TestCase):
         self.assertEqual(name, hdf5_dataset.name)
 
     def test_get_data_without_filename_raises(self):
-        with self.assertRaisesRegex(
-            ValueError, "Missing attribute filename_"
-        ):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
             self.hdf5_dataset.get_data()
 
     def test_get_data_without_name_raises(self):
@@ -161,9 +157,7 @@ class TestHDF5Dataset(unittest.TestCase):
         np.testing.assert_array_equal(array, self.hdf5_dataset.data)
 
     def test_dtype_without_filename_raises(self):
-        with self.assertRaisesRegex(
-            ValueError, "Missing attribute filename_"
-        ):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
             self.hdf5_dataset.dtype
 
     def test_dtype_without_name_raises(self):
@@ -296,9 +290,7 @@ class TestHDF5File(unittest.TestCase):
         self.hdf5_file.read()
 
     def test_read_without_filename_raises(self):
-        with self.assertRaisesRegex(
-            ValueError, "Missing attribute filename_"
-        ):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
             self.hdf5_file.read()
 
     def test_read_adds_items_to_root(self):
