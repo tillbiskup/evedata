@@ -163,6 +163,7 @@ What follows is a summary of the different aspects, for the time being
     * Add all data objects to the :attr:`snapshots
       <evedata.evefile.boundaries.evefile.EveFile.snapshots>` attribute of the
       :obj:`EveFile  <evedata.evefile.boundaries.evefile.EveFile>` object.
+      |check|
 
 
 Most probably, not all these tasks can be inferred from the contents of an
@@ -1244,8 +1245,8 @@ class VersionMapperV5(VersionMapper):
             == "Interval"
         ]
         for hdf5_name in interval_datasets:
-            datasets.remove(hdf5_name)
             self._map_interval_dataset(hdf5_name=hdf5_name, normalized=False)
+            datasets.remove(hdf5_name)
         average_datasets = []
         if hasattr(self.source.c1.main, "averagemeta"):
             average_datasets = {
@@ -1254,8 +1255,8 @@ class VersionMapperV5(VersionMapper):
                 if item.name.count("__") == 1
             }
         for hdf5_name in average_datasets:
-            datasets.remove(hdf5_name)
             self._map_average_dataset(hdf5_name=hdf5_name, normalized=False)
+            datasets.remove(hdf5_name)
         normalized_datasets = []
         if hasattr(self.source.c1.main, "normalized"):
             normalized_datasets = [
