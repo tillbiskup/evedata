@@ -11,20 +11,33 @@ class DummyHDF5File:
     def __init__(self, filename=""):
         self.filename = filename
 
-    def create(self):
+    def create(self, random=False, double=False):
         with h5py.File(self.filename, "w") as file:
             c1 = file.create_group("c1")
             c1.create_group("main")
             c1.create_group("snapshot")
             meta = c1.create_group("meta")
             data_ = np.ndarray(
-                [4],
+                [10],
                 dtype=np.dtype(
                     [("PosCounter", "<i4"), ("PosCountTimer", "<i4")]
                 ),
             )
-            data_["PosCounter"] = np.asarray([1, 2, 3, 4])
-            data_["PosCountTimer"] = np.asarray([2, 4, 6, 8])
+            if random:
+                data_["PosCounter"] = np.random.randint(
+                    low=1, high=10, size=10
+                )
+                data_["PosCountTimer"] = np.linspace(start=2, stop=20, num=10)
+            elif double:
+                data_["PosCounter"] = np.asarray(
+                    [1, 1, 2, 3, 4, 4, 4, 5, 6, 7]
+                )
+                data_["PosCountTimer"] = np.asarray(
+                    [2, 3, 4, 6, 8, 9, 9, 10, 12, 14]
+                )
+            else:
+                data_["PosCounter"] = np.linspace(start=1, stop=10, num=10)
+                data_["PosCountTimer"] = np.linspace(start=2, stop=20, num=10)
             poscounttimer = meta.create_dataset("PosCountTimer", data=data_)
             poscounttimer.attrs["Unit"] = np.bytes_(["msecs"])
 
@@ -126,6 +139,11 @@ class TestMonitorData(unittest.TestCase):
 class TestMeasureData(unittest.TestCase):
     def setUp(self):
         self.data = data.MeasureData()
+        self.filename = "test.h5"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
 
     def test_instantiate_class(self):
         pass
@@ -143,6 +161,20 @@ class TestMeasureData(unittest.TestCase):
 
     def test_metadata_are_of_corresponding_type(self):
         self.assertIsInstance(self.data.metadata, metadata.MeasureMetadata)
+
+    def test_get_data_sorts_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(random=True)
+        importer = data.HDF5DataImporter(source=self.filename)
+        importer.item = "/c1/meta/PosCountTimer"
+        importer.mapping = {
+            "PosCounter": "positions",
+            "PosCountTimer": "data",
+        }
+        self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertTrue(np.all(np.diff(self.data.positions) >= 0))
+        self.assertFalse(np.all(np.diff(self.data.data) >= 0))
 
 
 class TestDeviceData(unittest.TestCase):
@@ -170,6 +202,11 @@ class TestDeviceData(unittest.TestCase):
 class TestAxisData(unittest.TestCase):
     def setUp(self):
         self.data = data.AxisData()
+        self.filename = "test.h5"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
 
     def test_instantiate_class(self):
         pass
@@ -189,10 +226,29 @@ class TestAxisData(unittest.TestCase):
     def test_metadata_are_of_corresponding_type(self):
         self.assertIsInstance(self.data.metadata, metadata.AxisMetadata)
 
+    def test_get_data_takes_last_from_duplicate_pos_counts(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(double=True)
+        importer = data.HDF5DataImporter(source=self.filename)
+        importer.item = "/c1/meta/PosCountTimer"
+        importer.mapping = {
+            "PosCounter": "positions",
+            "PosCountTimer": "data",
+        }
+        self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertTrue(np.all(np.diff(self.data.positions) > 0))
+        self.assertTrue(np.any(self.data.data % 2))
+
 
 class TestChannelData(unittest.TestCase):
     def setUp(self):
         self.data = data.ChannelData()
+        self.filename = "test.h5"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
 
     def test_instantiate_class(self):
         pass
@@ -210,6 +266,20 @@ class TestChannelData(unittest.TestCase):
 
     def test_metadata_are_of_corresponding_type(self):
         self.assertIsInstance(self.data.metadata, metadata.ChannelMetadata)
+
+    def test_get_data_takes_first_from_duplicate_pos_counts(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(double=True)
+        importer = data.HDF5DataImporter(source=self.filename)
+        importer.item = "/c1/meta/PosCountTimer"
+        importer.mapping = {
+            "PosCounter": "positions",
+            "PosCountTimer": "data",
+        }
+        self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertTrue(np.all(np.diff(self.data.positions) > 0))
+        self.assertFalse(np.any(self.data.data % 2))
 
 
 class TestTimestampData(unittest.TestCase):
@@ -232,6 +302,32 @@ class TestTimestampData(unittest.TestCase):
 
     def test_metadata_are_of_corresponding_type(self):
         self.assertIsInstance(self.data.metadata, metadata.TimestampMetadata)
+
+    def test_get_position_returns_position(self):
+        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.data = np.linspace(start=0, stop=19, num=20)
+        self.assertEqual(self.data.positions[3], self.data.get_position(3.2))
+
+    def test_get_position_with_array_returns_position_array(self):
+        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.data = np.linspace(start=0, stop=19, num=20)
+        np.testing.assert_array_equal(
+            self.data.positions[[3, 5, 6]],
+            self.data.get_position([3.2, 5.5, 6.8]),
+        )
+
+    def test_get_position_for_minus_one_returns_first_position(self):
+        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.data = np.linspace(start=0, stop=19, num=20)
+        self.assertEqual(self.data.positions[0], self.data.get_position(-1))
+
+    def test_get_position_with_minus_one_in_array(self):
+        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.data = np.linspace(start=0, stop=19, num=20)
+        np.testing.assert_array_equal(
+            self.data.positions[[0, 3, 5, 6]],
+            self.data.get_position([-1, 3.2, 5.5, 6.8]),
+        )
 
 
 class TestNonnumericChannelData(unittest.TestCase):

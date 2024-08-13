@@ -6,7 +6,7 @@ r"""
 
     .. contents::
         :local:
-        :depth: 1
+        :depth: 2
 
 Data are organised in "datasets" within HDF5, and the
 :mod:`evedata.evefile.entities.data` module provides the relevant entities
@@ -393,12 +393,6 @@ class Data:
         typical use case is the :class:`AreaChannelData` class dealing with
         image data stored mostly in separate files.
 
-        .. todo::
-            * Decide whether all data need to be ordered according to their
-              first axis (monitor data and measure data), and if only the
-              latter, implement the sorting in the :meth:`MeasureData.get_data`
-              method. Otherwise, implement it here.
-
         """
         for importer in self.importer:
             self._import_from_hdf5dataimporter(importer=importer)
@@ -451,6 +445,12 @@ class MeasureData(Data):
     position as primary axis rather than a timestamp in milliseconds, *i.e.*,
     the :attr:`positions` attribute.
 
+    .. note::
+
+        Positions and (all) corresponding data are sorted upon load. For
+        the handling of duplicate positions in :class:`AxisData` and
+        :class:`ChannelData`. see there.
+
 
     Attributes
     ----------
@@ -479,6 +479,27 @@ class MeasureData(Data):
         super().__init__()
         self.metadata = metadata.MeasureMetadata()
         self.positions = np.ndarray(shape=[], dtype=int)
+
+    def _import_from_hdf5dataimporter(self, importer=None):
+        """
+        Import data from HDF5 using data importer.
+
+        .. note::
+
+            The only difference to the superclass method is the sorting of
+            the arrays by positions, as due to the way values are recorded,
+            eveH5 files can have positions in non-ascending order.
+
+        Parameters
+        ----------
+        importer : :class:`HDF5DataImporter`
+            Importer used to import the data
+
+        """
+        super()._import_from_hdf5dataimporter(importer=importer)
+        sort_indices = np.argsort(self.positions)
+        for attribute in importer.mapping.values():
+            setattr(self, attribute, getattr(self, attribute)[sort_indices])
 
 
 class DeviceData(MeasureData):
@@ -517,6 +538,11 @@ class AxisData(MeasureData):
     Three types of devices are distinguished by the eve measurement
     program: (dumb) devices, motor axes, and detector channels.
 
+    .. note::
+
+        Positions and (all) corresponding data are sorted upon load. In
+        case of duplicate positions, only the *last* position is retained.
+
 
     Attributes
     ----------
@@ -547,6 +573,27 @@ class AxisData(MeasureData):
         self.metadata = metadata.AxisMetadata()
         self.set_values = None
 
+    def _import_from_hdf5dataimporter(self, importer=None):
+        """
+        Import data from HDF5 using data importer.
+
+        .. note::
+
+            The only difference to the superclass method is its handling of
+            double position values: in this case, only the *last* position
+            is taken.
+
+        Parameters
+        ----------
+        importer : :class:`HDF5DataImporter`
+            Importer used to import the data
+
+        """
+        super()._import_from_hdf5dataimporter(importer=importer)
+        indices = np.where(np.diff(self.positions))
+        for attribute in importer.mapping.values():
+            setattr(self, attribute, getattr(self, attribute)[indices])
+
 
 class ChannelData(MeasureData):
     """
@@ -554,6 +601,11 @@ class ChannelData(MeasureData):
 
     Three types of devices are distinguished by the eve measurement
     program: (dumb) devices, motor axes, and detector channels.
+
+    .. note::
+
+        Positions and (all) corresponding data are sorted upon load. In
+        case of duplicate positions, only the *first* position is retained.
 
 
     Attributes
@@ -575,6 +627,31 @@ class ChannelData(MeasureData):
     def __init__(self):
         super().__init__()
         self.metadata = metadata.ChannelMetadata()
+
+    def _import_from_hdf5dataimporter(self, importer=None):
+        """
+        Import data from HDF5 using data importer.
+
+        .. note::
+
+            The only difference to the superclass method is its handling of
+            double position values: in this case, only the *first* position
+            is taken.
+
+        Parameters
+        ----------
+        importer : :class:`HDF5DataImporter`
+            Importer used to import the data
+
+        """
+        super()._import_from_hdf5dataimporter(importer=importer)
+        indices = (
+            np.where((self.positions[:-1] - self.positions[1:]) + 1)[0] + 1
+        )
+        for attribute in importer.mapping.values():
+            setattr(
+                self, attribute, np.delete(getattr(self, attribute), indices)
+            )
 
 
 class TimestampData(MeasureData):
@@ -612,6 +689,35 @@ class TimestampData(MeasureData):
     def __init__(self):
         super().__init__()
         self.metadata = metadata.TimestampMetadata()
+
+    def get_position(self, time=-1):
+        """
+        Get position for a given (list of) time(stamp)s.
+
+        This method is used to map monitor timestamps to positions.
+
+        .. note::
+
+            Due to not being able to distinguish between axes and channels
+            up to eveH5 v7, timestamps are generally mapped to the
+            *previous* position.
+
+
+        Parameters
+        ----------
+        time : :class:`int` | :class:`list` | :class:`numpy.ndarray`
+            Time(s) a position is requested for.
+
+        Returns
+        -------
+        positions : :class:`numpy.ndarray`
+            Position(s) corresponding to the timestamp(s) given.
+
+        """
+        time = np.asarray(time)
+        time = np.where(time < 0, self.data[0], time)
+        idx = np.digitize(time, self.data)
+        return self.positions[idx - 1]
 
 
 class NonnumericChannelData(ChannelData):

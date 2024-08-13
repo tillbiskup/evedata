@@ -312,12 +312,12 @@ class HDF5Item:
             try:
                 self.attributes = {
                     key: value[0].decode()
-                    for key, value in file[self.name].attrs.items()
+                    for key, value in file[self.name].attrs.items()  # noqa
                 }
             except UnicodeDecodeError:
                 self.attributes = {
                     key: value[0].decode(encoding="iso8859")
-                    for key, value in file[self.name].attrs.items()
+                    for key, value in file[self.name].attrs.items()  # noqa
                 }
 
     @contextmanager
@@ -334,6 +334,7 @@ class HDF5Item:
         -------
         hdf5_filehandle : :class:`h5py.File`
             (Open) file object of an HDF5 file to read from.
+
         """
         close_file = False
         if not self._hdf5_filehandle:
@@ -842,7 +843,7 @@ class HDF5File(HDF5Group):
         """
         for name, node_type in self._hdf5_items.items():
             item = node_type(filename=self.filename, name=f"/{name}")
-            item._hdf5_filehandle = self._hdf5_filehandle
+            item._hdf5_filehandle = self._hdf5_filehandle  # noqa
             if self.read_attributes:
                 item.get_attributes()
             if "/" not in name:

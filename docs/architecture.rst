@@ -206,6 +206,9 @@ Some comments (not discussions any more, though):
 
   As for axes without encoder, the RBV does not change after the axis has arrived at its position, additionally reading these axes RBVs would not make sense, as this would suggest real values.
 
+* Sorting non-monotonic positions in eveH5 datasets
+
+  Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, positions need to be sorted monotonically, and this is done during data import.
 
 
 Array channels
@@ -377,7 +380,13 @@ For each eveH5 schema version, there exists an individual ``VersionMapperVx`` cl
 Mapping timestamps to position counts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For a detailed discussion/summary of the current state of affairs regarding the algorithm and its specification, see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_.
+For a detailed discussion/summary of the current state of affairs regarding the algorithm and its specification, see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_. In short:
+
+* Monitors corresponding to motor axes should be mapped to the *next* position.
+* Monitors corresponding to detector channels should be mapped to the *previous* position.
+* For monitors corresponding to devices, there is no sensible decision possible.
+
+Just to make things slightly more entertaining, up to eveH5 v7, monitor datasets do *not* provide any hint which type (axis, channel, device) they belong to. Hence, this decision can not be made sensibly. For safety reasons, mapping monitors to the previous position seems sensible, as the event could have occurred in the readout phase of the detectors (the position is incremented after moving the axes and before triggering the detector readout and start of nested scan modules).
 
 The ``TimestampData`` class got a method :meth:`get_position` to return position counts for given timestamps. Currently, the idea is to have one method handling both, scalars and lists/arrays of values, returning the same data type, respectively.
 
@@ -412,16 +421,6 @@ Separating datasets for redefined channels
 
 Given the data model to not correspond to the current eveH5 structure (v7), it makes sense to split datasets for channels redefined within one scan on this level. A more detailed discussion of how to handle these datasets can be found above in the section on the data model.
 
-
-Sorting non-monotonic positions in eveH5 datasets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, positions need to be sorted monotonically.
-
-
-.. note::
-
-    Given that monitor datasets can contain several data points with identical time ``-1`` that shall not be changed in their sorting, use "stable" as "kind" parameter to choose the sorting algorithm in :func:`numpy.argsort`.
 
 
 Extract set values for axes
