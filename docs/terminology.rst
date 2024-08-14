@@ -127,6 +127,9 @@ IOC
 MCA
     multichannel analyzer
 
+measurement station
+    The actual setup (at a beamline) used to perform experiments and record data.
+
 monitor (section)
     Section of the measurement data for everything that is not changed or read during a scan, but still of interest.
 
@@ -166,13 +169,6 @@ section
 
     Possible sections are: standard, snapshot, monitor, timestamp
 
-SCML
-    Scan Markup Language, ScanML, definition of a scan in XML format.
-
-    Used (and required) by the engine to perform a scan.
-
-    Consists of several parts, mainly a scan description and a description of the physical setup (measurement station)
-
 scan module
     SM, unit of abstraction to structure a scan.
 
@@ -185,6 +181,13 @@ scan module
     * channel snapshot (dynamic)
 
     For static snapshots, the list of axes/channels to store values for can be selected by the user, while dynamic snapshots determine their list of axes/channels automatically based on the current scan description.
+
+SCML
+    Scan Markup Language, ScanML, definition of a scan in XML format.
+
+    Used (and required) by the engine to perform a scan.
+
+    Consists of several parts, mainly a scan description and a description of the physical setup (measurement station)
 
 SM
     Scan module
