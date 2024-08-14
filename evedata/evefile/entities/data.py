@@ -215,6 +215,14 @@ store those values in an array rather than having three individual fields
 each. In case of temperature (and humidity) readings for each individual
 image, the array would become a 2D array.
 
+Generally: How to deal with image filenames/paths and actual data?
+Currently, the mapper maps the HDF5 dataset, hence puts the filenames as
+array of strings into the :attr:`Data.data` attribute. Shall all images be
+loaded at once when the data are imported? Or shall loading of images be
+deferred as well for the individual images? At least regarding the time
+necessary to load images, this would be negligible (<1 ms per image).
+
+
 
 Individual classes
 ------------------

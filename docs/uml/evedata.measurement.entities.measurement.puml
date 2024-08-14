@@ -10,8 +10,6 @@ class Measurement {
     scan : Scan
     setup : Setup
     log_messages[] : LogMessage
-
-    import_from(Importer)
 }
 
 Measurement *-- Metadata

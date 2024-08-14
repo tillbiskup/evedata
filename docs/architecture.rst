@@ -379,34 +379,6 @@ Being version agnostic with respect to eveH5 and SCML schema versions is a centr
 For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. That part of the mapping common to all versions of the eveH5 schema takes place in the :class:`VersionMapper  <evedata.evefile.controllers.version_mapping.VersionMapper>` parent class, *e.g.* removing the chain. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
 
 
-Mapping timestamps to position counts
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For a detailed discussion/summary of the current state of affairs regarding the algorithm and its specification, see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_. In short:
-
-* Monitors corresponding to motor axes should be mapped to the *next* position.
-* Monitors corresponding to detector channels should be mapped to the *previous* position.
-* For monitors corresponding to devices, there is no sensible decision possible.
-
-Just to make things slightly more entertaining, up to eveH5 v7, monitor datasets do *not* provide any hint which type (axis, channel, device) they belong to. Hence, this decision can not be made sensibly. For safety reasons, mapping monitors to the previous position seems sensible, as the event could have occurred in the readout phase of the detectors (the position is incremented after moving the axes and before triggering the detector readout and start of nested scan modules).
-
-The :class:`TimestampData <evedata.evefile.entities.data.TimestampData>` class got a method :meth:`get_position() <evedata.evefile.entities.data.TimestampData.get_position>` to return position counts for given timestamps. Currently, the idea is to have one method handling both, scalars and lists/arrays of values, returning the same data type, respectively.
-
-This means that for a given :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object, the controller carrying out the mapping knows to ask the :obj:`TimestampData <evedata.evefile.entities.data.TimestampData>` object via its :meth:`get_position() <evedata.evefile.entities.data.TimestampData.get_position>` method for the position counts corresponding to a given timestamp.
-
-Special cases that need to be addressed either here or during import of the data of a monitor:
-
-* Multiple values with timestamp ``-1``, *i.e.* *before* the scan has been started.
-
-  Probably the best solution here would be to skip all values except of the last (newest) with the special timestamp ``-1``. See `#7688, note 10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_ for details.
-
-* Multiple (identical) values with identical timestamp
-
-  Not clear whether this situation can actually occur, but if so, most probably in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
-
-Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>` object. This is the case for the additional :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` class as subclass of :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>`. The next question: Where to place these new objects in the :class:`File <evedata.evefile.entities.file.File>` class of the :mod:`evedata.evefile.entities.file` module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
-
-
 Converting MPSKIP scans into average detector channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -543,9 +515,9 @@ Generally, the measurement subpackage, as mentioned already in the :doc:`Concept
     The mapping of the information contained in both, the HDF5 and SCML layers of an eveH5 file, to the measurement is far from being properly modelled or understood. This is partly due to the step-wise progress in understanding. On a rather fundamental level, it remains to be decided whether a ``Measurement`` should allow for reconstructing how a measurement has actually been carried out (*i.e.*, provide access to the SCML and hence the anatomy of the scan).
 
 
-What is the main difference between the ``evefile`` and the ``measurement`` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the ``evefile`` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the ``measurement`` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
+What is the main difference between the :mod:`evefile <evedata.evefile>` and the :mod:`measurement <evedata.measurement>` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the :mod:`evefile <evedata.evefile>` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the :mod:`measurement <evedata.measurement>` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
 
-However, the ``measurement`` subpackage is still general enough to cope with all the different kinds of measurements the eve measurement program can deal with. Hence, it may be a wise idea to create dedicated dataset classes in the ``radiometry`` package for different types of experiments. The NeXus file format may be a good source of inspiration here, particularly their `application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. The ``evedataviewer`` package in contrast aims at displaying whatever kind of measurement has been performed using the eve measurement program. Hence it will deal directly with ``Measurement`` objects of the ``measurement`` subpackage.
+However, the :mod:`measurement <evedata.measurement>` subpackage is still general enough to cope with all the different kinds of measurements the eve measurement program can deal with. Hence, it may be a wise idea to create dedicated dataset classes in the ``radiometry`` package for different types of experiments. The NeXus file format may be a good source of inspiration here, particularly their `application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. The ``evedataviewer`` package in contrast aims at displaying whatever kind of measurement has been performed using the eve measurement program. Hence it will deal directly with ``Measurement`` objects of the :mod:`measurement <evedata.measurement>` subpackage.
 
 
 
@@ -563,17 +535,22 @@ However, the ``measurement`` subpackage is still general enough to cope with all
 
 A few ideas/comments for further modelling this subpackage:
 
-* ``evefile`` represents the eveH5 file, while ``measurement`` maps the different datasets to more sensible abstractions.
+* :mod:`evefile <evedata.evefile>` represents the eveH5 file, while :mod:`measurement <evedata.measurement>` maps the different datasets to more sensible abstractions.
 
-  * Not all abstractions will necessarily be reflected in the future in the eveH5 file. Currently (eveH5 v7), most of the abstractions are clearly not visible there. How to deal with this situation? The entities in the ``evefile`` subpackage should reflect the future eveH5 scheme and abstractions therein, with the version mapping from the controller technical layer responsible for the mapping of older eveH5 schemata to the entities.
-
-* Options seem to exist in different "flavours": options that are recorded for each PosCount (predominantly currently for area detectors) should be mapped to something similar to ``MeasureData`` objects, and options that are recorded in snapshots should be set as scalar attributes of the corresponding ``Data`` objects. How to deal with options that are monitored? Check whether they change for a given channel/axis and if so, expand them ("fill") for each PosCount of the corresponding channel/axis, and otherwise set as scalar attribute?
-* Deal with the situation that not all actual data read from eveH5 are numeric. Of course, non-numeric data cannot be plotted. But how to distinguish sensibly? Probably we need a method returning all plottable axes and channels.
-* Map pseudo-detectors with RBV from axes to ``AxisData`` objects?
+  * Not all abstractions will necessarily be reflected in the future in the eveH5 file. Currently (eveH5 v7), most of the abstractions are clearly not visible there. How to deal with this situation? The entities in the :mod:`evefile <evedata.evefile>` subpackage should reflect the future eveH5 scheme and abstractions therein, with the version mapping from the controller technical layer responsible for the mapping of older eveH5 schemata to the entities.
 
 
 Entities
 --------
+
+A few general remarks:
+
+* ``Measurement`` will probably still be distinct from the "dataset" concept used in the ``evedataviewer`` and ``radiometry`` packages.
+* Metadata need to be attached to the individual data objects, as is the case in the :mod:`evedata.evefile.entities` subpackage.
+* Clear differences between the :mod:`measurement <evedata.measurement>` and :mod:`evefile <evedata.evefile>` subpackages:
+
+  * :mod:`measurement <evedata.measurement>` takes care of filling, subscans, and probably mapping of monitors to datasets with positions.
+  * The distinction between "main", "snapshot", and "monitor" may be discarded in favour of more useful abstractions. This requires, however, a thorough discussion of the concepts of monitors and snapshots, how they are currently used and how they should be used (and mapped) in the future.
 
 
 
@@ -595,12 +572,13 @@ Entities
 measurement module
 ~~~~~~~~~~~~~~~~~~
 
+A measurement generally reflects all the data obtained during a measurement. However, to plot data or to perform some analysis, usually we need data together with an axis (or multiple axes for *n*\D data), where data ("intensity values") and axis values come from different HDF5 datasets. Furthermore, there may generally be the need/interest to plot arbitrary data against each other, *i.e.* channel data *vs.* channel data and axis data *vs.* axis data, not only channel data *vs.* axis data. This may be the decisive difference between the "measurement" entity and the "measurement" facade, with the latter having the additional attributes for storing the data to work on.
 
 
 .. figure:: uml/evedata.measurement.entities.measurement.*
     :align: center
 
-    Class hierarchy of the ``measurement.entities.measurement`` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage.
+    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. It may be that ``Detector`` and ``Motor`` are still modelled as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` and :class:`AxisData <evedata.evefile.entities.data.AxisData>`, with the latter being extended towards coupled axes (as in case of a slit that can be opened/closed as well as moved in its position). Distinguishing between detectors, motors, beamline, and machine can (at least partially) happen based on the data type: detectors are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motors are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Most probably, the machine parameters are :class:`DeviceData <evedata.evefile.entities.data.DeviceData>`, and the beamline parameters partly, and partly from the original snapshot section, hence different types.
 
 
 
@@ -665,12 +643,14 @@ What may be in here:
 
 * Fill modes
 * Mapping monitor time stamps to position counts
+
+  * Results probably in :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` objects.
+
 * Converting scan with subscans into appropriate subscan data structure
-* Mapping between ``EveFile`` and ``Dataset`` objects, *i.e.* low-level and high-level interface
+* Mapping between :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` and :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` objects, *i.e.* low-level and high-level interface
 
-  * Assumes a 1:1 mapping between files and datasets (for the time being)
-
-* mapping the eveH5 and SCML contents to the data structures of the evefile subpackage
+  * Assumes a 1:1 mapping between files and measurements.
+  * While there may be several datasets (one for each sample) created from one measurement (*i.e.*, eveH5 file), the 1:1 relation between measurement and file should hold.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -766,6 +746,40 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
 
 
 If filling is an operation on an :obj:`evefile.evefile.EveFile` object returning a :obj:`dataset.dataset.Dataset` object, how to call this operation and from where? One possibility would be to have a :meth:`evefile.evefile.EveFile.fill` method that takes an appropriate argument for the fill mode, another option would be a method of the :class:`dataset.dataset.Dataset` class or an implicit call when getting data from a file (via an :obj:`evefile.evefile.EveFile` object).
+
+
+
+Mapping timestamps to position counts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    This has been discussed as part of the ``evefile.controllers`` subpackage before and was recently moved here to the ``measurement.controllers`` subpackage.
+
+
+For a detailed discussion/summary of the current state of affairs regarding the algorithm and its specification, see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_. In short:
+
+* Monitors corresponding to motor axes should be mapped to the *next* position.
+* Monitors corresponding to detector channels should be mapped to the *previous* position.
+* For monitors corresponding to devices, there is no sensible decision possible.
+
+Just to make things slightly more entertaining, up to eveH5 v7, monitor datasets do *not* provide any hint which type (axis, channel, device) they belong to. Hence, this decision can not be made sensibly. For safety reasons, mapping monitors to the previous position seems sensible, as the event could have occurred in the readout phase of the detectors (the position is incremented after moving the axes and before triggering the detector readout and start of nested scan modules).
+
+The :class:`TimestampData <evedata.evefile.entities.data.TimestampData>` class got a method :meth:`get_position() <evedata.evefile.entities.data.TimestampData.get_position>` to return position counts for given timestamps. Currently, the idea is to have one method handling both, scalars and lists/arrays of values, returning the same data type, respectively.
+
+This means that for a given :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object, the controller carrying out the mapping knows to ask the :obj:`TimestampData <evedata.evefile.entities.data.TimestampData>` object via its :meth:`get_position() <evedata.evefile.entities.data.TimestampData.get_position>` method for the position counts corresponding to a given timestamp.
+
+Special cases that need to be addressed either here or during import of the data of a monitor:
+
+* Multiple values with timestamp ``-1``, *i.e.* *before* the scan has been started.
+
+  Probably the best solution here would be to skip all values except of the last (newest) with the special timestamp ``-1``. See `#7688, note 10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_ for details.
+
+* Multiple (identical) values with identical timestamp
+
+  Not clear whether this situation can actually occur, but if so, most probably in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
+
+Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>` object. This is the case for the additional :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` class as subclass of :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>`. The next question: Where to place these new objects in the :class:`File <evedata.evefile.entities.file.File>` class of the :mod:`evedata.evefile.entities.file` module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
 
 
 Boundaries

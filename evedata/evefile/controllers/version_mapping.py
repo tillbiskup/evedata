@@ -95,6 +95,20 @@ What follows is a summary of the different aspects, for the time being
       <evedata.evefile.entities.data.AxisData>` objects. |check|
 
       * How to distinguish between axes with and without encoders? |cross|
+      * Read channels with RBV and replace axis values with RBV.
+
+        * Most probably, the corresponding channel has the same *name*
+          (not XML-ID, though!) as the axis, but with suffix ``_RBV``,
+          and can thus be identified.
+        * In case of axes with encoders, there may be additional datasets
+          present, *e.g.*, those with suffix ``_Enc``.
+        * In this case, instead of :obj:`NonencodedAxisData
+          <evedata.evefile.entities.data.NonecodedAxisData>`,
+          an :obj:`AxisData <evedata.evefile.entities.data.AxisData>`
+          object needs to be created. (Currently, only :obj:`AxisData
+          <evedata.evefile.entities.data.AxisData>` objects are created,
+          what is a mistake as well...)
+
       * How to deal with pseudo-axes used as options in channel datasets? Do
         we need to deal with axes later? |cross|
 
@@ -183,6 +197,21 @@ Other tasks not in the realm of the version mappers, but part of the
 .. admonition:: Questions to address
 
     * How were the log messages/live comments saved before v5?
+
+    * How to deal with options that are monitored? Check whether they change
+      for a given channel/axis and if so, expand them (“fill”) for each
+      PosCount of the corresponding channel/axis, and otherwise set as
+      scalar attribute?
+
+    * How to deal with the situation that not all actual data read from eveH5
+      are numeric. Of course, non-numeric data cannot be plotted. But how
+      to distinguish sensibly?
+
+      * The :mod:`evedata.evefile.entities.data` module provides some
+        distinct classes for this, at least for now
+        :class:`NonnumericChannelData
+        <evedata.evefile.entities.data.NonnumericChannelData>`.
+
 
 
 Notes on mapping MCA datasets
