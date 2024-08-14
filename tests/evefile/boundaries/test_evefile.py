@@ -24,16 +24,31 @@ class DummyHDF5File:
             c1 = file.create_group("c1")
             main = c1.create_group("main")
             meta = c1.create_group("meta")
-            test = main.create_dataset(
-                "test",
+            simmot = main.create_dataset(
+                "SimMot:01",
                 data=np.ones(
                     [5, 2],
-                    dtype=np.dtype([("PosCounter", "<i4"), ("fooo", "<f8")]),
+                    dtype=np.dtype(
+                        [("PosCounter", "<i4"), ("SimMot:01", "<f8")]
+                    ),
                 ),
             )
-            test.attrs["Name"] = np.bytes_(["foo"])
-            test.attrs["Access"] = np.bytes_(["ca:foobar"])
-            test.attrs["DeviceType"] = np.bytes_(["Axis"])
+            simmot.attrs["Name"] = np.bytes_(["foo"])
+            simmot.attrs["Access"] = np.bytes_(["ca:foobar"])
+            simmot.attrs["DeviceType"] = np.bytes_(["Axis"])
+            simchan = main.create_dataset(
+                "SimChan:01",
+                data=np.ones(
+                    [5, 2],
+                    dtype=np.dtype(
+                        [("PosCounter", "<i4"), ("SimChan:01", "<f8")]
+                    ),
+                ),
+            )
+            simchan.attrs["Name"] = np.bytes_(["bar"])
+            simchan.attrs["Access"] = np.bytes_(["ca:barbaz"])
+            simchan.attrs["DeviceType"] = np.bytes_(["Channel"])
+            simchan.attrs["Detectortype"] = np.bytes_(["Standard"])
             data = np.ndarray(
                 [],
                 dtype=np.dtype(
@@ -99,3 +114,24 @@ class TestEveFile(unittest.TestCase):
         for key, value in root_mappings.items():
             with self.subTest(key=key, val=value):
                 self.assertEqual(getattr(self.evefile.metadata, key), value)
+
+    def test_init_with_filename_sets_metadata_filename(self):
+        file = evefile.EveFile(filename=self.filename)
+        self.assertEqual(self.filename, file.metadata.filename)
+
+    def test_get_data_returns_data_by_name(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.evefile.load(filename=self.filename)
+        self.assertEqual(
+            self.evefile.data["SimMot:01"], self.evefile.get_data("foo")
+        )
+
+    def test_get_data_list_returns_data_by_name_as_array(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.evefile.load(filename=self.filename)
+        self.assertEqual(
+            self.evefile.data["SimMot:01"],
+            self.evefile.get_data(["foo", "bar"])[0],
+        )

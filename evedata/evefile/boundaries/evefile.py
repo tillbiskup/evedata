@@ -40,7 +40,8 @@ hierarchy is given in the UML diagram below.
     providing the facade (user-facing interface) for an eveH5 file.
     Basically, it inherits from :class:`evedata.evefile.entities.file.File`
     and adds behaviour. Most of this behaviour is contributed by the various
-    modules of the :mod:`controllers <evedata.evefile.controllers>` subpackage.
+    modules of the :mod:`controllers <evedata.evefile.controllers>`
+    subpackage.
 
 
 Key aspects
@@ -197,6 +198,13 @@ class EveFile(File):
         provides a mapping between timestamps and positions and can be used
         to map monitor data to positions.
 
+
+    Parameters
+    ----------
+    filename : :class:`str`
+        Name of the file to be loaded.
+
+
     Raises
     ------
     exception
@@ -209,7 +217,7 @@ class EveFile(File):
 
     .. code-block::
 
-        evefile = File()
+        evefile = EveFile()
         evefile.load(filename="my_measurement_file.h5")
 
     Of course, you could alternatively set the filename first,
@@ -217,12 +225,23 @@ class EveFile(File):
 
     .. code-block::
 
-        evefile = File()
+        evefile = EveFile()
         evefile.filename = "my_measurement_file.h5"
+        evefile.load()
+
+    A third option would be to set the filename upon initialising the object:
+
+    .. code-block::
+
+        evefile = EveFile(filename="my_measurement_file.h5")
         evefile.load()
 
 
     """
+
+    def __init__(self, filename=""):
+        super().__init__()
+        self.filename = filename
 
     @property
     def filename(self):
@@ -269,18 +288,50 @@ class EveFile(File):
         mapper.map(source=eveh5, destination=self)
         eveh5.close()
 
+    def get_data(self, name=None):
+        """
+        Retrieve data objects by name.
+
+        While generally, you can get the data objects by accessing the
+        :attr:`data` attribute directly, there, they are stored using
+        their HDF5 dataset name as key. Usually, however, data are
+        accessed by their "given" name.
+
+        Parameters
+        ----------
+        name : :class:`str` | :class:`list`
+            Name or list of names of data to retrieve
+
+        Returns
+        -------
+        data : :class:`evedata.evefile.entities.Data` | :class:`list`
+            Data object(s) corresponding to the name(s).
+
+            In case of a list of data objects, each object is of type
+            :class:`evedata.evefile.entities.Data`.
+
+        """
+        names = {item.metadata.name: key for key, item in self.data.items()}
+        if isinstance(name, (list, tuple)):
+            data = []
+            for item in name:
+                data.append(self.data[names[item]])
+        else:
+            data = self.data[names[name]]
+        return data
+
 
 if __name__ == "__main__":
     import timeit
 
-    number = 10
+    NUMBER = 10
     file = EveFile()
-    filename_ = "/messung/euvr/daten/2024/KW32_24/TOPPAN/00092.h5"
+    FILENAME = "/messung/euvr/daten/2024/KW32_24/TOPPAN/00092.h5"
     time = timeit.timeit(
-        "file.load(filename_)", number=number, globals=globals()
+        "file.load(FILENAME)", number=NUMBER, globals=globals()
     )
-    print(time / number)
+    print(time / NUMBER)
 
     import cProfile
 
-    cProfile.run("file.load(filename_)")
+    cProfile.run("file.load(FILENAME)")

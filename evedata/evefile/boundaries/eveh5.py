@@ -873,16 +873,16 @@ class HDF5File(HDF5Group):
 if __name__ == "__main__":
     import timeit
 
-    number = 10
+    NUMBER = 10
     h5 = HDF5File()
     h5.read_attributes = True
     h5.close_file = False
-    filename_ = "/messung/euvr/daten/2024/KW32_24/TOPPAN/00092.h5"
+    FILENAME = "/messung/euvr/daten/2024/KW32_24/TOPPAN/00092.h5"
     time = timeit.timeit(
-        "h5.read(filename_); h5.close()", number=number, globals=globals()
+        "h5.read(FILENAME); h5.close()", number=NUMBER, globals=globals()
     )
-    print(time / number)
+    print(time / NUMBER)
 
     import cProfile
 
-    cProfile.run("h5.read(filename_); h5.close()")
+    cProfile.run("h5.read(FILENAME); h5.close()")
