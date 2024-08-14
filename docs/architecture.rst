@@ -354,27 +354,29 @@ Code in the controllers technical layer operate on the entities and provide the 
 
 What may be in here:
 
-* mapping different versions of eveH5 files to the entities
-* mapping timestamps to position counts
-* Converting MPSKIP scans into average detector channel with adaptive number of recorded points
+* Mapping different versions of eveH5 files to the entities
+* Mapping timestamps to position counts (=> move to measurement subpackage)
+* Converting MPSKIP scans into average detector channel with adaptive number of recorded points (=> move to measurement subpackage?)
 * Separating datasets for channels redefined within one scan and currently (up to eveH5 v7) stored in *one* HDF5 dataset
-* Sorting non-monotonic positions in eveH5 datasets
+* Extract set values for axes (requires access to SCML)
 * Correct mapping of file numbers for external files
 
 
 version_mapping module
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Being version agnostic with respect to eveH5 and SCML schema versions is a central aspect of the evedata package. This requires facilities mapping the actual eveH5 files to the data model provided by the entities technical layer of the evefile subpackage. The ``EveFile`` facade obtains the correct ``VersionMapper`` object via the ``VersionMapperFactory``, providing an ``HDF5File`` resource object to the factory. It is the duty of the factory to obtain the "version" attribute from the ``HDF5File`` object (possibly requiring to explicitly get the attributes of the root group of the ``HDF5File`` object).
+For details, see the documentation of the :mod:`version_mapping <evedata.evefile.controllers.version_mapping>` module.
+
+Being version agnostic with respect to eveH5 and SCML schema versions is a central aspect of the evedata package. This requires facilities mapping the actual eveH5 files to the data model provided by the entities technical layer of the evefile subpackage. The :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` facade obtains the correct :class:`VersionMapper <evedata.evefile.controllers.version_mapping.VersionMapper>` object via the :class:`VersionMapperFactory  <evedata.evefile.controllers.version_mapping.VersionMapperFactory>`, providing an :class:`HDF5File  <evedata.evefile.boundaries.eveh5.HDF5File>` resource object to the factory. It is the duty of the factory to obtain the "version" attribute from the :class:`HDF5File  <evedata.evefile.boundaries.eveh5.HDF5File>` object (possibly requiring to explicitly get the attributes of the root group of the :class:`HDF5File  <evedata.evefile.boundaries.eveh5.HDF5File>` object).
 
 
 .. figure:: uml/evedata.evefile.controllers.version_mapping.*
     :align: center
 
-    Class hierarchy of the evefile.controllers.version_mapping module, providing the functionality to map different eveH5 file schemas to the data structure provided by the ``EveFile`` class. The factory will be used to get the correct mapper for a given eveH5 file. For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that need not be hard-coded and can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
+    Class hierarchy of the evefile.controllers.version_mapping module, providing the functionality to map different eveH5 file schemas to the data structure provided by the :class:`HDF5File  <evedata.evefile.boundaries.eveh5.HDF5File>` class. The :class:`VersionMapperFactory  <evedata.evefile.controllers.version_mapping.VersionMapperFactory>` is used to get the correct mapper for a given eveH5 file. For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that need not be hard-coded and can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
 
 
-For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. That part of the mapping common to all versions of the eveH5 schema takes place in the ``VersionMapper`` parent class, *e.g.* removing the chain. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
+For each eveH5 schema version, there exists an individual ``VersionMapperVx`` class dealing with the version-specific mapping. That part of the mapping common to all versions of the eveH5 schema takes place in the :class:`VersionMapper  <evedata.evefile.controllers.version_mapping.VersionMapper>` parent class, *e.g.* removing the chain. The idea behind the ``Mapping`` class is to provide simple mappings for attributes and alike that can be stored externally, *e.g.* in YAML files. This would make it easier to account for (simple) changes.
 
 
 Mapping timestamps to position counts
@@ -388,9 +390,9 @@ For a detailed discussion/summary of the current state of affairs regarding the 
 
 Just to make things slightly more entertaining, up to eveH5 v7, monitor datasets do *not* provide any hint which type (axis, channel, device) they belong to. Hence, this decision can not be made sensibly. For safety reasons, mapping monitors to the previous position seems sensible, as the event could have occurred in the readout phase of the detectors (the position is incremented after moving the axes and before triggering the detector readout and start of nested scan modules).
 
-The ``TimestampData`` class got a method :meth:`get_position` to return position counts for given timestamps. Currently, the idea is to have one method handling both, scalars and lists/arrays of values, returning the same data type, respectively.
+The :class:`TimestampData <evedata.evefile.entities.data.TimestampData>` class got a method :meth:`get_position() <evedata.evefile.entities.data.TimestampData.get_position>` to return position counts for given timestamps. Currently, the idea is to have one method handling both, scalars and lists/arrays of values, returning the same data type, respectively.
 
-This means that for a given ``EveFile`` object, the controller carrying out the mapping knows to ask the ``TimestampData`` object via its :meth:`get_position` method for the position counts corresponding to a given timestamp.
+This means that for a given :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object, the controller carrying out the mapping knows to ask the :obj:`TimestampData <evedata.evefile.entities.data.TimestampData>` object via its :meth:`get_position() <evedata.evefile.entities.data.TimestampData.get_position>` method for the position counts corresponding to a given timestamp.
 
 Special cases that need to be addressed either here or during import of the data of a monitor:
 
@@ -402,7 +404,7 @@ Special cases that need to be addressed either here or during import of the data
 
   Not clear whether this situation can actually occur, but if so, most probably in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
 
-Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new ``MeasureData`` object. This is the case for the additional ``DeviceData`` class as subclass of ``MeasureData``. The next question: Where to place these new objects in the ``File`` class of the evefile.entities.file module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
+Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>` object. This is the case for the additional :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` class as subclass of :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>`. The next question: Where to place these new objects in the :class:`File <evedata.evefile.entities.file.File>` class of the :mod:`evedata.evefile.entities.file` module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
 
 
 Converting MPSKIP scans into average detector channel

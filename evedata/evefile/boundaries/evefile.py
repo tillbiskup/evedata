@@ -87,7 +87,9 @@ Loading the contents of a data file of a measurement may be as simple as:
 
 .. code-block::
 
-    evefile = File()
+    from evedata.evefile.boundaries.evefile import EveFile
+
+    evefile = EveFile()
     evefile.load(filename="my_measurement_file.h5")
 
 Of course, you could alternatively set the filename first,
@@ -95,9 +97,21 @@ thus shortening the :meth:`load` method call:
 
 .. code-block::
 
-    evefile = File()
+    evefile = EveFile()
     evefile.filename = "my_measurement_file.h5"
     evefile.load()
+
+There is even a third way now: Instantiating the class already with a
+given filename:
+
+.. code-block::
+
+    evefile = EveFile(filename="my_measurement_file.h5")
+    evefile.load()
+
+And yes, you can of course chain the object creation and loading the file
+if you like. However, this leads to harder to read code and is therefore
+*not* suggested.
 
 
 Internals: What happens when reading an eveH5 file?
@@ -106,7 +120,7 @@ Internals: What happens when reading an eveH5 file?
 Reading an eveH5 file is not as simple as reading contents of an HDF5 file
 and present its contents as Python object hierarchy. At least, if you would
 like to view, process, and analyse your data more conveniently, you should
-not stop here. The idea behind the ``evedata`` package, an in parts behind
+not stop here. The idea behind the ``evedata`` package, and in parts behind
 the :class:`EveFile` class, is to provide you as consumer of the data with
 powerful abstractions and structured information. To this end, a series of
 steps are necessary:

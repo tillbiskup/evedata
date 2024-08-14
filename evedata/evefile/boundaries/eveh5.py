@@ -53,6 +53,26 @@ generic HDF5 interface, as it does make some assumptions based on the
 eveH5 file structure and format.
 
 
+Key aspects
+===========
+
+Despite being a low-level interface to eveH5 HDF5 files, the eveh5 module
+provides a series of abstractions and special behaviour summarised below:
+
+* Each :obj:`HDF5Item` object is independent, carrying the entire
+  information necessary to obtain both, attributes and data.
+* Data (and attributes) are only loaded on demand, speeding up reading a
+  file and saving resources.
+* :obj:`HDF5Group` objects are iterable: you can iterate over the items in
+  the group. As :class:`HDF5File` inherits from :class:`HDF5Group`, this is
+  true for :obj:`HDF5File` objects as well.
+* To speed up reading an HDF5 file, the file is once opened and will be
+  closed only after reading the entire hierarchy of HDF5 items. Similarly,
+  when using the :class:`HDF5File` in other code, closing the HDF file in
+  between can be prevented. In this case, call the :meth:`HDF5File.close`
+  method manually once you're done.
+
+
 Usage
 =====
 

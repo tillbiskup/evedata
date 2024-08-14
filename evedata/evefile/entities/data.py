@@ -86,7 +86,7 @@ Array channels in their general form are channels collecting 1D data.
 Typical devices used here are MCAs, but oscilloscopes and vector signal
 analysers (VSA) would be other typical array channels. Hence, for these
 quite different types of array channels, distinct subclasses of the
-generic ``ArrayChannelData`` class exist, see
+generic :class:`ArrayChannelData` class exist, see
 :numref:`Fig. %s <fig-uml_arraychannel_api>`.
 
 
@@ -136,7 +136,7 @@ Note: The scalar attributes for ArrayChannelROIs will currently be saved
 as snapshots regardless of whether the actual ROI has been defined/used.
 Hence, the evedata package needs to decide based on the existence of the
 actual data whether to create a ROI object and attach it to
-``ArrayChannelData``.
+:class:`ArrayChannelData`.
 
 The calibration parameters are needed to convert the *x* axis of the MCA
 spectrum into a real energy axis. Hence,
@@ -265,6 +265,36 @@ documentation:
             * :class:`ScientificCameraStatisticsData`
 
           * :class:`SampleCameraData`
+
+
+Special aspects
+===============
+
+There is a number of special aspects that need to be taken into account
+when reading data. These are detailed below.
+
+
+Sorting non-monotonic positions
+-------------------------------
+
+For :class:`MeasureData`, positions ("PosCounts") need not be
+monotonically increasing. This is due to the way the engine handles the
+different scan modules and writes data. However, this will usually be a
+problem for the analysis. Therefore, positions need to be sorted
+monotonically, and this is done during data import.
+
+
+Handling duplicate positions
+----------------------------
+
+Although technically speaking a bug, some (older) measurement files
+contain duplicate positions ("PosCounts"). Here, the handling is different
+for :class:`AxisData` and :class:`ChannelData`, but in both cases taken
+care of during data import:
+
+* For :class:`AxisData`, only the *last* position is taken.
+* For :class:`ChannelData`, only the *first* position is taken.
+
 
 Module documentation
 ====================
@@ -580,7 +610,7 @@ class AxisData(MeasureData):
         .. note::
 
             The only difference to the superclass method is its handling of
-            double position values: in this case, only the *last* position
+            duplicate position values: in this case, only the *last* position
             is taken.
 
         Parameters
@@ -635,8 +665,8 @@ class ChannelData(MeasureData):
         .. note::
 
             The only difference to the superclass method is its handling of
-            double position values: in this case, only the *first* position
-            is taken.
+            duplicate position values: in this case, only the *first*
+            position is taken.
 
         Parameters
         ----------
