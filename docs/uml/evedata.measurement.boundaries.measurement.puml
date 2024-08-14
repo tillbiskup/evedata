@@ -1,7 +1,7 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Measurement {
+class Measurement extends measurement.entities.measurement.Measurement {
     detectors{} : ChannelData
     motors{} : AxisData
     machine{} : DeviceData
@@ -10,19 +10,16 @@ class Measurement {
     scan : Scan
     setup : Setup
     log_messages[] : LogMessage
+    data : Data
+
+    load(filename)
+    set_data(name, field)
+    set_axes(name[])
 }
 
-Measurement *-- Metadata
+Measurement *-- measurement.entities.metadata.Metadata
 Measurement *-- Scan
 Measurement *-- Setup
-
-class Metadata {
-}
-
-note bottom of Metadata
-    See separate diagram.
-endnote
-
 
 class evefile.entities.file.Scan {
 }
@@ -34,13 +31,13 @@ class Scan extends evefile.entities.file.Scan
 
 class Setup extends evefile.entities.file.Setup
 
-class Data {
+class measurement.entities.measurement.Data {
     data : np.ndarray
     axes[]: AxisData
     metadata : DeviceMetadata
 }
 
-class Axis {
+class measurement.entities.measurement.Axis {
     data : np.ndarray
     label: string
     measure : string
@@ -48,6 +45,12 @@ class Axis {
     unit : string
 }
 
-Data *--"n" Axis
+Data *-"n" Axis
+
+Data -* Measurement
+
+measurement.entities.metadata.Metadata -[hidden]-> Measurement
+
+measurement.entities.measurement.Data -[hidden]> Measurement
 
 @enduml

@@ -1,0 +1,23 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Metadata extends evefile.entitites.file.Metadata {
+    sample[] : Sample
+    machine : Machine
+    beamline : Beamline
+}
+
+class Sample {
+}
+
+class Machine {
+}
+
+class Beamline {
+}
+
+Metadata *- Sample
+Metadata *-- Machine
+Beamline -* Metadata
+
+@enduml

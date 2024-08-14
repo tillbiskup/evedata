@@ -578,21 +578,10 @@ A measurement generally reflects all the data obtained during a measurement. How
 .. figure:: uml/evedata.measurement.entities.measurement.*
     :align: center
 
-    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. It may be that ``Detector`` and ``Motor`` are still modelled as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` and :class:`AxisData <evedata.evefile.entities.data.AxisData>`, with the latter being extended towards coupled axes (as in case of a slit that can be opened/closed as well as moved in its position). Distinguishing between detectors, motors, beamline, and machine can (at least partially) happen based on the data type: detectors are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motors are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Most probably, the machine parameters are :class:`DeviceData <evedata.evefile.entities.data.DeviceData>`, and the beamline parameters partly, and partly from the original snapshot section, hence different types.
+    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Detectors and motors are still modelled as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` and :class:`AxisData <evedata.evefile.entities.data.AxisData>`, with the latter being extended towards coupled axes (as in case of a slit that can be opened/closed as well as moved in its position), but in the :mod:`evefile.entities.data <evedata.evefile.entities.data>` module. Distinguishing between detectors, motors, beamline, and machine can (at least partially) happen based on the data type: detectors are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motors are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Most probably, the machine parameters are :class:`DeviceData <evedata.evefile.entities.data.DeviceData>`, and the beamline parameters partly, and partly from the original snapshot section, hence different types. :class:`Scan` and :class:`Setup` inherit directly from their counterpats in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data` and :class:`Axis` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
 
 
 
-
-Currently, the idea is to model the dataset close to the dataset in the ASpecD framework, as the core interface to all processing, analysis, and plotting routines in the ``radiometry`` package, and with a clear focus on automatically writing a full history of each processing and analysis step. Reproducibility and history are concerns of the ``radiometry`` package, the ``dataset.dataset`` module should nevertheless allow for a rather straight-forward mapping to the ASpecD-inspired dataset structure.
-
-
-.. figure:: uml/evedata.dataset.dataset.*
-    :align: center
-
-    Class hierarchy of the dataset.dataset module, closely resembling the dataset concept of the ASpecD framework (while lacking the history component). For the corresponding metadata class see the dataset.metadata module.
-
-
-Furthermore, the dataset should provide appropriate abstractions for things such as subscans and detector channels with adaptive averaging (*i.e.* ragged arrays as data arrays). Thus, scans currently recorded using MPSKIP could be represented as what they are (adaptive average detector channels saving the individual measured data points). Similarly, the famous subscans could be represented as true 2D datasets (as long as the individual subscans all have the same length).
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -624,11 +613,11 @@ metadata module
 The (original) idea behind this module stems from the ASpecD framework and its representation of a dataset. There, a dataset contains data (with corresponding axes), metadata (of different kind, such as measurement metadata and device metadata), and a history.
 
 
-.. figure:: uml/evedata.dataset.metadata.*
+.. figure:: uml/evedata.measurement.entities.metadata.*
     :align: center
-    :width: 750px
 
-    Class hierarchy of the dataset.metadata module, closely resembling the dataset concept of the ASpecD framework and the current rough implementation in the evedataviewer package. For the corresponding dataset class see the dataset.dataset module.
+    While the :class:`Metadata` class inherits directly from its counterpart from the :mod:`evedata.evefile.entities.file` module, it is extended in crucial ways, reflecting the aim for more reproducible measurements and having datasets containing all crucial information in one place. This involves information on both, the machine (BESSY-II, MLS) and the beamline, but on the sample(s) as well. Perhaps the ``sample`` attribute should be a dictionary rather than a plain list, with (unique) labels for each sample as keys.
+
 
 
 In the given context of the evedata package, this would mean to separate data and metadata for the different datasets as represented in the eveH5 file, and store the data (as "device data") in the dataset, the "primary" data as data, and the corresponding metadata as a composition of metadata classes in the Dataset.metadata attribute. Not yet sure whether this makes sense.
@@ -787,20 +776,24 @@ Boundaries
 
 What may be in here:
 
-* facade: dataset
+* facade: Measurement
 
   * Interface towards users (*i.e.*, mainly the ``radiometry`` and ``evedataviewer`` packages)
-  * Given a filename of an eveH5 file, returns a ``Dataset`` object.
+  * Given a filename of an eveH5 file, returns a ``Measurement`` object.
+
 
 
 measurement module (facade)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-.. figure:: uml/evedata.dataset.boundaries.dataset.*
+
+.. _fig-uml_evedata.measurement.boundaries.measurement:
+
+.. figure:: uml/evedata.measurement.boundaries.measurement.*
     :align: center
 
-    Class hierarchy of the dataset.boundaries.dataset module, providing the facade for a dataset. Currently, the basic idea is to inherit from the ``Dataset`` entity and extend it accordingly, adding behaviour.
+    Class hierarchy of the :mod:`measurement.boundaries.measurement <evedata.measurement.entities.measurement>` module. The :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade inherits directly from its entities counterpart. The crucial extension here is the ``data`` attribute. This contains the actual data that should be plotted or processed further. Thus, the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade resembles the datasset concept known from the ASpecD framework and underlying, *i.a.*, the ``radiometry`` package.
 
 
 Scan
