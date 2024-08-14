@@ -26,5 +26,7 @@ There are **two layers of organisation: functional layers and** within those **t
     :maxdepth: 2
 
     evefile/index
+    measurement/index
+
 
 

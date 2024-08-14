@@ -616,7 +616,7 @@ The (original) idea behind this module stems from the ASpecD framework and its r
 .. figure:: uml/evedata.measurement.entities.metadata.*
     :align: center
 
-    While the :class:`Metadata` class inherits directly from its counterpart from the :mod:`evedata.evefile.entities.file` module, it is extended in crucial ways, reflecting the aim for more reproducible measurements and having datasets containing all crucial information in one place. This involves information on both, the machine (BESSY-II, MLS) and the beamline, but on the sample(s) as well. Perhaps the ``sample`` attribute should be a dictionary rather than a plain list, with (unique) labels for each sample as keys.
+    While the :class:`Metadata <evedata.measurement.entities.metadata.Metadata>` class inherits directly from its counterpart from the :mod:`evedata.evefile.entities.file` module, it is extended in crucial ways, reflecting the aim for more reproducible measurements and having datasets containing all crucial information in one place. This involves information on both, the machine (BESSY-II, MLS) and the beamline, but on the sample(s) as well. Perhaps the ``sample`` attribute should be a dictionary rather than a plain list, with (unique) labels for each sample as keys.
 
 
 
