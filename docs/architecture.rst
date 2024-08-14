@@ -97,13 +97,13 @@ Entities are the innermost technical layer: everything depends on the entities, 
 file module
 ~~~~~~~~~~~
 
-Despite the opposite chain of dependencies, starting with the ``file`` module seems sensible, as its ``File`` class represents a single eveH5 file and provides kind of an entry point.
+Despite the opposite chain of dependencies, starting with the :mod:`file <evedata.evefile.entities.file>` module seems sensible, as its :class:`File <evedata.evefile.entities.file.File>` class represents a single eveH5 file and provides kind of an entry point.
 
 
 .. figure:: uml/evedata.evefile.entities.file.*
     :align: center
 
-    Class hierarchy of the evefile.file module. The File class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage. Furthermore, "Scan" inherits from the identically named facade of the scan functional layer and contains the full information of the SCML file.
+    Class hierarchy of the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. The :class:`File <evedata.evefile.entities.file.File>` class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage. Furthermore, "Scan" inherits from the identically named facade of the scan functional layer and contains the full information of the SCML file.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -545,7 +545,7 @@ Entities
 
 A few general remarks:
 
-* ``Measurement`` will probably still be distinct from the "dataset" concept used in the ``evedataviewer`` and ``radiometry`` packages.
+* :class:`Measurement <evedata.measurement.entities.measurement.Measurement>` will probably still be distinct from the "dataset" concept used in the ``evedataviewer`` and ``radiometry`` packages.
 * Metadata need to be attached to the individual data objects, as is the case in the :mod:`evedata.evefile.entities` subpackage.
 * Clear differences between the :mod:`measurement <evedata.measurement>` and :mod:`evefile <evedata.evefile>` subpackages:
 
@@ -604,7 +604,7 @@ A measurement generally reflects all the data obtained during a measurement. How
 
     * How to deal with monitors?
 
-      * Add an ``events`` attribute to the ``Dataset`` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
+      * Add an ``events`` attribute to the ``Measurement`` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
 
 
 metadata module
@@ -829,19 +829,19 @@ Entities
 file module
 ~~~~~~~~~~~
 
-This module contains the main ``SCML`` class and probably as well the ``Plugin`` class and its dependencies. Generally an SCML file can be split in two (three) parts: a description of the setup/instrumentation used for a scan (module ``scml.setup``) and a description of the actual scan/measurement (module ``scml.scan``). The plugins would be the third part.
+This module contains the main :class:`File <evedata.scan.entities.file.File>` class and probably as well the :class:`Plugin <evedata.scan.entities.file.Plugin>` class and its dependencies. Generally an SCML file can be split in two (three) parts: a description of the setup/instrumentation used for a scan (module :mod:`scan.entities.setup <evedata.scan.entities.setup>`) and a description of the actual scan/measurement (module :mod:`scan.entities.scan <evedata.scan.entities.scan>`). The plugins would be the third part.
 
 
-.. figure:: uml/evedata.scml.file.*
+.. figure:: uml/evedata.scan.entities.file.*
     :align: center
 
-    Class hierarchy of the scml.file module, closely resembling the schema of the SCML file. Currently, the location of the "Plugin" class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped. For a class diagram see the separate figure below.
+    Class hierarchy of the :mod:`scan.entities.file <evedata.scan.entities.file>` module, closely resembling the schema of the SCML file. Currently, the location of the :class:`Plugin` class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped. For a class diagram see the separate figure below.
 
 
-.. figure:: uml/evedata.scml.plugin.*
+.. figure:: uml/evedata.scan.entities.plugin.*
     :align: center
 
-    Class hierarchy of the "Plugin" class, probably located in the scml.scml module and closely resembling the schema of the SCML file. Currently, the location of the "Plugin" class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped.
+    Class hierarchy of the :class:`Plugin` class, probably located in the module :mod:`scan.entities.file <evedata.scan.entities.file>` module and closely resembling the schema of the SCML file. Currently, the location of the :class:`Plugin` class and its dependencies is not decided, as it is not entirely clear whether this information is relevant enough to be mapped.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -863,11 +863,11 @@ This module contains all classes storing information on the actual scan. An SCML
 To slightly reduce the already rather complex list of classes, plots, events, and pause conditions have been outsourced into separate modules, with the latter two together in one module. These modules are described separately below.
 
 
-.. figure:: uml/evedata.scml.scan.*
+.. figure:: uml/evedata.scan.entities.scan.*
     :align: center
     :width: 750px
 
-    Class hierarchy of the scml.scan module, closely resembling the schema of the SCML file. As the scan module is already quite complicated, event and plot-related classes have been separated into their own modules and are described below. Hint: For a larger view, you may open the image in a separate tab. As it is vectorised (SVG), it scales well.
+    Class hierarchy of the :mod:`scan.entities.scan <evedata.scan.entities.scan>` module, closely resembling the schema of the SCML file. As the scan module is already quite complicated, event and plot-related classes have been separated into their own modules and are described below. Hint: For a larger view, you may open the image in a separate tab. As it is vectorised (SVG), it scales well.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -881,31 +881,31 @@ plot module
 ~~~~~~~~~~~
 
 
-.. figure:: uml/evedata.scml.plot.*
+.. figure:: uml/evedata.scan.entities.plot.*
     :align: center
 
-    Class hierarchy of the scml.plot module, closely resembling the schema of the SCML file. One ClassicScanModule class can have *n* plots. For the context of the ClassicScanModule, see the "scml.scan" module.
+    Class hierarchy of the :mod:`scan.entities.plot <evedata.scan.entities.plot>` module, closely resembling the schema of the SCML file. One ClassicScanModule class can have *n* plots. For the context of the ClassicScanModule, see the :mod:`scan.entities.scan <evedata.scan.entities.scan>` module.
 
 
 event module
 ~~~~~~~~~~~~
 
 
-.. figure:: uml/evedata.scml.event.*
+.. figure:: uml/evedata.scan.entities.event.*
     :align: center
 
-    Class hierarchy of the scml.event module, closely resembling the schema of the SCML file. The "Event" and "PauseCondition" classes have both close ties with the "scml.scan" module. Grouping them in one module seems justified, as eventually, a "PauseCondition" could be understood as an event, too.
+    Class hierarchy of the :mod:`scan.entities.event <evedata.scan.entities.event>` module, closely resembling the schema of the SCML file. The "Event" and "PauseCondition" classes have both close ties with the "scml.scan" module. Grouping them in one module seems justified, as eventually, a "PauseCondition" could be understood as an event, too.
 
 
 setup module
 ~~~~~~~~~~~~
 
 
-.. figure:: uml/evedata.scml.setup.*
+.. figure:: uml/evedata.scan.entities.setup.*
     :align: center
     :width: 750px
 
-    Class hierarchy of the scml.setup module, closely resembling the schema of the SCML file. Differing from the SCML schema definition, an additional class ``Setup`` is introduced here containing objects of the subclasses "Detector, "Motor", and "Device" of "AbstractDevice". The SCML schema contains these three at the same level as "Scan" and "Plugins".
+    Class hierarchy of the :mod:`scan.entities.setup <evedata.scan.entities.setup>` module, closely resembling the schema of the SCML file. Differing from the SCML schema definition, an additional class :class:`Setup <evedata.scan.entities.setup.Scan>` is introduced here containing objects of the subclasses "Detector, "Motor", and "Device" of "AbstractDevice". The SCML schema contains these three at the same level as "Scan" and "Plugins".
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -957,7 +957,7 @@ scan module (facade)
 .. figure:: uml/evedata.scan.boundaries.scan.*
     :align: center
 
-    Class hierarchy of the scan.boundaries.scan module, providing the facade for the scan description (including the setup). Currently, the basic idea is to inherit from the ``File`` entity and extend it accordingly, adding behaviour.
+    Class hierarchy of the :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` module, providing the facades for the scan and setup descriptions. Currently, the basic idea is to inherit from the :class:`Scan <evedata.scan.entities.scan.Scan>` and :class:`Setup <evedata.scan.entities.setup.Setup>` entities and extend them accordingly, adding behaviour and implementing the :class:`File <evedata.scan.boundaries.scan.File>` interface.
 
 
 scml module (resource)

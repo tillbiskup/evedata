@@ -39,8 +39,8 @@ package evedata {
             evefile -> eveh5
         }
         package evedata.evefile.controllers {
-            package version_mapping {}
             package transforming {}
+            package version_mapping {}
         }
         package evedata.evefile.entities {
             package evedata.evefile.entities.file {
@@ -66,8 +66,9 @@ package evedata {
             package filling {}
         }
         package evedata.measurement.entities {
-            package data {}
+            package measurement {}
             package metadata {}
+            measurement -down-> metadata
         }
 
         evedata.measurement.boundaries --> evedata.measurement.controllers

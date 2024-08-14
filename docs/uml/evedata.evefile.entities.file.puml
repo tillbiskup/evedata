@@ -33,14 +33,20 @@ class LogMessage {
     message : string
 }
 
-class Scan extends scan.boundaries.Scan {
+class Scan extends scan.boundaries.scan.Scan {
     author : string
     filename : string
 }
-note left: See diagrams for\nscan subpackage.
+'note left: See diagrams for\nscan subpackage.
+
+class Setup extends scan.boundaries.setup.Setup {
+    author : string
+    filename : string
+}
 
 File *-- Metadata
 File "1" *-- "n" LogMessage
 File *-- Scan
+File *-- Setup
 
 @enduml

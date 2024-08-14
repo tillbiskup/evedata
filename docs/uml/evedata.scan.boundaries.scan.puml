@@ -1,8 +1,15 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class Scan extends scan.entities.File {
+interface File {
+    version
     load()
+}
+
+class Scan extends scan.entities.scan.Scan implements File {
+}
+
+class Setup extends scan.entities.setup.Setup implements File {
 }
 
 @enduml
