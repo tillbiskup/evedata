@@ -4,8 +4,8 @@
 class Measurement {
     detectors{} : ChannelData
     motors{} : AxisData
-    machine{} : DeviceData
-    beamline{} : DeviceData
+    machine{} : MeasureData | MonitorData
+    beamline{} : MeasureData | MonitorData
     metadata : Metadata
     scan : Scan
     setup : Setup

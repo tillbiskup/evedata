@@ -41,7 +41,6 @@ class Scan extends scan.boundaries.scan.Scan {
 'note left: See diagrams for\nscan subpackage.
 
 class Setup extends scan.boundaries.setup.Setup {
-    author : string
     filename : string
 }
 

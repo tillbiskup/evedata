@@ -3,6 +3,12 @@
 
 *Mapping eveH5 contents to the data structures of the evedata package.*
 
+.. sidebar:: Contents
+
+    .. contents::
+        :local:
+        :depth: 2
+
 There are different versions of the schema underlying the eveH5 files.
 Hence, mapping the contents of an eveH5 file to the data model of the
 evedata package requires to get the correct mapper for the specific
