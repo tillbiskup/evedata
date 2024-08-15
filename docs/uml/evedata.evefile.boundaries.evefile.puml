@@ -3,6 +3,7 @@
 
 class EveFile extends evefile.entities.file.File {
     load()
+    get_data()
 }
 
 @enduml

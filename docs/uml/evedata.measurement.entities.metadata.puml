@@ -16,8 +16,8 @@ class Machine {
 class Beamline {
 }
 
-Metadata *- Sample
-Metadata *-- Machine
-Beamline -* Metadata
+Metadata *- Beamline
+Metadata *-- "n" Sample
+Machine -* Metadata
 
 @enduml

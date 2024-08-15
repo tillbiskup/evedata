@@ -4,6 +4,7 @@ class File {
     metadata : Metadata
     log_messages : LogMessage[]
     scan : Scan
+    setup : Setup
     data : Data{}
     snapshots : Data{}
     monitors : Data{}
