@@ -52,6 +52,9 @@ Some questions to address
 -------------------------
 
 * Do we need ``PV`` and ``AccessMode`` attributes on the HDF5 dataset level? Using the name/XMLID attribute should allow for obtaining the relevant information from the SCML/XML files stored as individual datasets in the ``meta`` section.
+
+    * Having the information available from within the HDF5 file does not hurt, but allows other programs only reading the HDF5 file to access this information (and set the respective EPICS PV if desired).
+
 * Do we still need snapshots, although options for devices are either added as static attributes or additional columns to the HDF5 datasets of the respective devices?
 
     * Snapshots of axes and devices, but not channels, that are not actively used during a scan, may be a conceptually valid scenario, though. In any case, snapshots should contain HDF5 datasets representing (abstract) devices (together with their options, if available), but not bare options, as in eveH5 v7.
@@ -60,3 +63,10 @@ Some questions to address
 
     * Monitors for events that are not controlled by the engine, *e.g.* from the machine itself, may be a conceptually valid scenario, though. In any case, monitors should contain HDF5 datasets representing (abstract) devices (together with their options, if available), but not bare options, as in eveH5 v7.
 
+* How to deal with pre-/postscan and positioning phases of a scan module? At least pre-/postscan devices are currently automatically registered as monitors, although this is not very intuitive and contradicts the original idea of monitors.
+
+    * Adding groups, one for pre-/postscan and one for positioning, and give the former distinct position counts?
+
+    * Pre-/postscan devices are either "dumb" devices or options of devices. In the latter case, they are obviously variable options where all values need to be stored as an array in the data model. However, as these options do *not* have values for each position values for the device they belong to are stored, these pre-/postscan options need to be stored in separate datasets on the HDF5 level, and probably as an ``option`` object containing both, positions and values, in a dict or list in the corresponding device class in ``evedata``.
+
+    * Positionings are clearly motor axes, and they get their own position count added to the axis dataset (checked and confirmed). However, as there is no detector value for this position count(s), these positions are usually not plotted and ignored in the analysis. If separating the positionings into a separate HDF5 group and datasets, one could even think of storing the information how the positioning has been done (the name of the function used to calculate the position) as an additional column. Of course, this could theoretically be inferred from the SCML file stored in the HDF5 file as well, but why not have it directly accessible?

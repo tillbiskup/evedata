@@ -41,7 +41,7 @@ class Data {
 }
 
 class Axis {
-    data : np.ndarray
+    values : np.ndarray
     label: string
     measure : string
     symbol : string
