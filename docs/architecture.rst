@@ -586,6 +586,12 @@ A measurement generally reflects all the data obtained during a measurement. How
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
+    * Combine ``detectors`` and ``motors`` to one section ``devices`` or similar?
+
+      The distinction between detector(channel)s and motor(axe)s is somewhat blurred when we start allowing options to be handled like currently only axes, *i.e.* to record detector channel data as function of an option value (exposure/acquisition time and similar).
+
+      On the other hand, there still is a clear distinction between motor axes and detector channels, but this is apparent by the type of the individual objects. Furthermore, the difference between ``devices`` on one side and ``beamline`` and ``machine`` on the other side would more clearly reflect the current distinction between ``main`` and ``snapshot``/``monitor``.
+
     * How to deal with monitors?
 
       * Add an ``events`` attribute to the ``Measurement`` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
