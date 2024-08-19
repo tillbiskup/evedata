@@ -592,6 +592,8 @@ A measurement generally reflects all the data obtained during a measurement. How
 
       On the other hand, there still is a clear distinction between motor axes and detector channels, but this is apparent by the type of the individual objects. Furthermore, the difference between ``devices`` on one side and ``beamline`` and ``machine`` on the other side would more clearly reflect the current distinction between ``main`` and ``snapshot``/``monitor``.
 
+      The name ``devices`` may somewhat collide with the current use of the term for devices that are neither motor axes nor detector channels.
+
     * How to deal with snapshots and monitors?
 
       Snapshots and monitors mostly provide information ("metadata") on the state of beamline and machine. As such, usually they are *not* used in plots. This would mean that the current/energy that is used as the one standard detector in (nearly) every measurement shall *not* be part of the ``machine`` section, but rather ``detectors`` (or whatever this section may be named eventually).
@@ -623,7 +625,7 @@ Some comments (not discussions any more, though):
 metadata module
 ~~~~~~~~~~~~~~~
 
-The (original) idea behind this module stems from the ASpecD framework and its representation of a dataset. There, a dataset contains data (with corresponding axes), metadata (of different kind, such as measurement metadata and device metadata), and a history.
+Metadata are a crucial part of reproducibility. Furthermore, metadata allow analysis routines to gain a "semantic" understanding of the data and hence perform (at least some) actions unattended and fully automatically. While all metadata corresponding to the individual devices used in recording data are stored in the :attr:`metadata <evedata.evefile.entities.data.Data.metadata>` attribute of the :class:`Data <evedata.evefile.entities.data.Data>` class (and its descendants), there are other types of metadata that belong to the measurement as such itself. These are modelled in the :mod:`metadata <evedata.measurement.entities.metadata>` module in the :class:`Metadata <evedata.measurement.entities.metadata.Metadata>` class.
 
 
 .. figure:: uml/evedata.measurement.entities.metadata.*
@@ -632,10 +634,9 @@ The (original) idea behind this module stems from the ASpecD framework and its r
     While the :class:`Metadata <evedata.measurement.entities.metadata.Metadata>` class inherits directly from its counterpart from the :mod:`evedata.evefile.entities.file` module, it is extended in crucial ways, reflecting the aim for more reproducible measurements and having datasets containing all crucial information in one place. This involves information on both, the machine (BESSY-II, MLS) and the beamline, but on the sample(s) as well. Perhaps the ``sample`` attribute should be a dictionary rather than a plain list, with (unique) labels for each sample as keys.
 
 
+As of now, the eveH5 files do not contain any metadata regarding machine, beamline, or sample(s). The names of the machine and beamline can most probably be inferred, having the name of the beamline obviously allows to assign the machine as well.
 
-In the given context of the evedata package, this would mean to separate data and metadata for the different datasets as represented in the eveH5 file, and store the data (as "device data") in the dataset, the "primary" data as data, and the corresponding metadata as a composition of metadata classes in the Dataset.metadata attribute. Not yet sure whether this makes sense.
-
-The contents of the SCML file could be represented in the ``Metadata`` class as well, probably/perhaps split into separate fields for the different areas of an SCML file (setup, aka devices, and scan). Whether to directly use the classes representing the SCML file contents or to further abstract needs to be decided at some point.
+Given that one measurement (*i.e.* one scan resulting in one eveH5 file) can span multiple samples, and will often do, in the future, at least some basic information regarding the sample(s) should be added to the eveH5 file and read and mapped accordingly to instances of the :class:`Sample <evedata.measurement.entities.metadata.Sample>` class, one instance per sample. Potentially, this allows to assign parts of the measured data to individual samples and hence automate data processing and analysis, *e.g.* splitting the data for the different samples into separate datasets/files.
 
 
 Controllers
