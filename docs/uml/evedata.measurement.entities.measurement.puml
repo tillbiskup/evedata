@@ -2,8 +2,7 @@
 'https://plantuml.com/class-diagram
 
 class Measurement {
-    detectors{} : ChannelData
-    motors{} : AxisData
+    devices{} : MeasureData
     machine{} : MeasureData | MonitorData
     beamline{} : MeasureData | MonitorData
     metadata : Metadata
@@ -43,7 +42,7 @@ class Data {
 class Axis {
     values : np.ndarray
     label: string
-    measure : string
+    quantity : string
     symbol : string
     unit : string
 }

@@ -578,21 +578,13 @@ A measurement generally reflects all the data obtained during a measurement. How
 .. figure:: uml/evedata.measurement.entities.measurement.*
     :align: center
 
-    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Detectors and motors are still modelled as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` and :class:`AxisData <evedata.evefile.entities.data.AxisData>`, with the latter being extended towards coupled axes (as in case of a slit that can be opened/closed as well as moved in its position), but in the :mod:`evefile.entities.data <evedata.evefile.entities.data>` module. Distinguishing between detectors, motors, beamline, and machine can (at least partially) happen based on the data type: detectors are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motors are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Setup` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data` and :class:`Axis` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
+    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Devices are all the detector(channel)s and motor(axe)s used in a scan. Distinguishing between detector(channel)s/motor(axe)s, beamline, and machine can (at least partially) happen based on the data type: detector(channel)s are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Setup` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data` and :class:`Axis` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
 
 
 
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
-
-    * Combine ``detectors`` and ``motors`` to one section ``devices`` or ``measurement`` or similar?
-
-      The distinction between detector(channel)s and motor(axe)s is somewhat blurred when we start allowing options to be handled like currently only axes, *i.e.* to record detector channel data as function of an option value (exposure/acquisition time and similar).
-
-      On the other hand, there still is a clear distinction between motor axes and detector channels, but this is apparent by the type of the individual objects. Furthermore, the difference between ``devices`` on one side and ``beamline`` and ``machine`` on the other side would more clearly reflect the current distinction between ``main`` and ``snapshot``/``monitor``.
-
-      The name ``devices`` may somewhat collide with the current use of the term for devices that are neither motor axes nor detector channels.
 
     * How to deal with snapshots and monitors?
 
@@ -608,6 +600,14 @@ A measurement generally reflects all the data obtained during a measurement. How
 
 
 Some comments (not discussions any more, though):
+
+* Combine ``detectors`` and ``motors`` to one section ``devices``.
+
+  The distinction between detector(channel)s and motor(axe)s is somewhat blurred when we start allowing options to be handled like currently only axes, *i.e.* to record detector channel data as function of an option value (exposure/acquisition time and similar).
+
+  On the other hand, there still is a clear distinction between motor axes and detector channels, but this is apparent by the type of the individual objects. Furthermore, the difference between ``devices`` on one side and ``beamline`` and ``machine`` on the other side would more clearly reflect the current distinction between ``main`` and ``snapshot``/``monitor``.
+
+  The name ``devices`` may somewhat collide with the current use of the term for devices that are neither motor axes nor detector channels. However, this collision may be leveraged in the future, when the concepts and abstractions available in the measurement program change as well.
 
 * Reproducibility, *i.e.* history of tasks performed on the data.
 
