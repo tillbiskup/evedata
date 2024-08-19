@@ -1,6 +1,5 @@
-"""
+r"""
 *Entities representing a measurement, typically read from an eveH5 file.*
-
 
 .. sidebar:: Contents
 

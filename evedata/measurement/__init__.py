@@ -1,0 +1,1 @@
+"""An interface towards measurements."""

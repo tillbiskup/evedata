@@ -8,6 +8,8 @@ class Metadata extends evefile.entitites.file.Metadata {
 }
 
 class Sample {
+    name
+    id
 }
 
 class Machine {
