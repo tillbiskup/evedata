@@ -90,9 +90,14 @@ logger = logging.getLogger(__name__)
 
 class Measurement:
     """
-    One sentence (on one line) describing the class.
+    Representation of all information available for a given measurement.
 
-    More description comes here...
+    Individual measurements are saved in HDF5 files using a particular
+    schema (eveH5). Besides file-level metadata, there are log messages,
+    a scan description (originally an XML/SCML file), and the actual data.
+
+    The data are organised in three functionally different sections: devices,
+    machine, and beamline.
 
 
     Attributes
@@ -126,6 +131,9 @@ class Measurement:
 
     scan : :class:`Scan`
         Description of the actual scan.
+
+    setup : :class:`Setup`
+        Description of the actual setup.
 
     Raises
     ------
