@@ -682,7 +682,7 @@ Note that none of the fill modes guarantees that there are no NaNs (or comparabl
     Shall fill modes be something to change in a viewer? And which fill modes are used in practice (and do we have any chance to find this out)?
 
 
-For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:`numpy.union1d`. Operating on more than two arrays can be done using :func:`functools.reduce`, as mentioned in the numpy documentation (with examples).
+For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:`numpy.union1d`. Operating on more than two arrays can be done using :func:`functools.reduce`, as mentioned in the numpy documentation (with examples). Helpful may be :func:`numpy.digitize` as well.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)

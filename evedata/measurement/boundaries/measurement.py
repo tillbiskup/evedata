@@ -162,7 +162,8 @@ class, these are:
   <evedata.evefile.entities.file.Metadata.preferred_channel>`
   attributes of the eveH5 file, if present. |check|
 
-  * Set axis metadata (measure, unit) |cross|
+  * Set axis metadata (measure, unit). |check|
+  * Fill data accordingly if necessary. |cross|
 
 * Copy the :attr:`EveFile.scan
   <evedata.evefile.boundaries.evefile.EveFile.setup>` attribute to the
@@ -196,7 +197,7 @@ Questions to address
   * Could we deal with it internally, as we have a representation of the
     :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object?
 
-* Where to get metadata from machine, beamline, and samples from?
+* Where to get metadata for machine, beamline, and samples from?
 
 
 Module documentation
