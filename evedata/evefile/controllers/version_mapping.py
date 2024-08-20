@@ -626,6 +626,8 @@ class VersionMapper:
         dataset.metadata.access_mode, dataset.metadata.pv = (  # noqa
             hdf5_item.attributes
         )["Access"].split(":", maxsplit=1)
+        if "Unit" in hdf5_item.attributes:
+            dataset.metadata.unit = hdf5_item.attributes["Unit"]
 
     def _check_prerequisites(self):
         if not self.source:

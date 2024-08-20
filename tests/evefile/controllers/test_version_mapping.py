@@ -391,6 +391,7 @@ class MockEveH5v4(MockEveH5):
                 "DeviceType": "Channel",
                 "Access": f"ca:{name}",
                 "Name": name,
+                "Unit": "mA",
                 "Detectortype": "Standard",
             }
             data_ = np.ndarray(
@@ -418,6 +419,7 @@ class MockEveH5v4(MockEveH5):
                 "DeviceType": "Channel",
                 "Access": f"ca:{name}",
                 "Name": name,
+                "Unit": "mA",
                 "Detectortype": "Standard",
                 "channel": name,
                 "normalizeId": normalized,
@@ -1349,12 +1351,14 @@ class TestVersionMapperV5(unittest.TestCase):
         axis1 = MockHDF5Dataset(name="/c1/main/axis1")
         axis1.attributes = {
             "Name": "myaxis1",
+            "Unit": "eV",
             "Access": "ca:foobar",
             "DeviceType": "Axis",
         }
         axis2 = MockHDF5Dataset(name="/c1/main/axis2")
         axis2.attributes = {
             "Name": "myaxis2",
+            "Unit": "nm",
             "Access": "ca:barbaz",
             "DeviceType": "Axis",
         }
@@ -1376,6 +1380,10 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertEqual(
             axis1.attributes["Name"],
             evefile.data["axis1"].metadata.name,
+        )
+        self.assertEqual(
+            axis1.attributes["Unit"],
+            evefile.data["axis1"].metadata.unit,
         )
         self.assertEqual(
             axis1.attributes["Access"].split(":", maxsplit=1)[1],
@@ -1754,6 +1762,10 @@ class TestVersionMapperV5(unittest.TestCase):
             self.assertEqual(
                 h5_dataset.attributes["Name"],
                 evefile.data[dataset].metadata.name,
+            )
+            self.assertEqual(
+                h5_dataset.attributes["Unit"],
+                evefile.data[dataset].metadata.unit,
             )
             self.assertEqual(
                 h5_dataset.attributes["Access"].split(":", maxsplit=1)[1],

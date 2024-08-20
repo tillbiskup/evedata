@@ -106,7 +106,7 @@ class Measurement:
         Data recorded from the devices involved in a measurement.
 
         Each item is an instance of
-        :class:`evedata.evefile.entities.data.MeasurementData`.
+        :class:`evedata.evefile.entities.data.MeasureData`.
 
     machine : :class:`dict`
         Data recorded from the machine involved in a measurement.
