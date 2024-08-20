@@ -500,13 +500,6 @@ Measurement
 Generally, the measurement subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages. However, besides these two Python packages, human users will want to use the ``evedata`` package as well. Hence, it should be as human-friendly as possible.
 
 
-.. note::
-
-    The name of this subpackage has changed and oscillated somewhat. The reason for (currently) preferring ``measurement`` over ``dataset`` is the quite different concepts of the entities provided in this subpackage with the  dataset concept of the `ASpecD framework <https://docs.aspecd.de/>`_. Not naming it ``scan`` simply prevents name clashes with the ``scan`` subpackage concerned with the actual scan (and setup) description.
-
-    In any case, as the facade(s) provide probably the main entry point to the entire evedata package, importing the corresponding modules into the global ``evedata`` namespace may be a sensible idea. This would reduce *e.g.* ``evedata.measurement.boundaries.measurement.Measurement`` to ``evedata.measurement.Measurement`` or even ``evedata.Measurement``.
-
-
 The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the measurement subpackage are shown below, reflecting the current state of affairs (and thinking).
 
 
@@ -696,9 +689,9 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
 
     * How to handle data filling?
 
-      * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data (*i.e.* axes) need to be made compatible.
+      * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data dimensions need to be made compatible.
       * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
-      * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other? -- Yes, that should be always the case.
+      * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other? -- Yes, that should always be the case.
 
     * Which fill modes are relevant/needed?
 
