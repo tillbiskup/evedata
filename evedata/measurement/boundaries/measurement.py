@@ -48,14 +48,14 @@ hierarchy is given in the UML diagram below.
     :class:`Measurement
     <evedata.measurement.boundaries.measurement.Measurement>` facade inherits
     directly from its entities counterpart. The crucial extension here is
-    the ``data`` attribute. This contains the actual data that should be
-    plotted or processed further. Thus, the :class:`Measurement
+    the :attr:`data <Measurement.data>` attribute. This contains the actual
+    data that should be plotted or processed further. Thus, the
+    :class:`Measurement
     <evedata.measurement.boundaries.measurement.Measurement>` facade
     resembles the dataset concept known from the ASpecD framework and
     underlying, *i.a.*, the ``radiometry`` package. The
-    :meth:`Measurement.set_data()
-    <evedata.measurement.boundaries.measurement.Measurement.set_data>` method
-    takes care of filling (of the axes) if necessary. Furthermore, you can
+    :meth:`Measurement.set_axes() <Measurement.set_axes>` method
+    takes care of "filling" (of the axes) if necessary. Furthermore, you can
     set the attribute of the underlying data object to obtain the data from,
     if it is not ``data``, but, *e.g.*, ``std`` or an option.
 
@@ -71,23 +71,55 @@ the :mod:`evefile <evedata.evefile.boundaries.evefile>` module in the
 module are:
 
 * Stable interface to eveH5 files, regardless of their version.
+
+  * Some features may only be available for newer eveH5 versions, though.
+
 * Powerful abstractions on and beyond the device level.
 
-    * Options to devices appear as attributes of the device objects, not as
-      separate datasets.
-    * Devices have clear, recognisable types, such as "multimeter", "MCA",
-      "scientific camera", to name but a few.
+  * Options to devices appear as attributes of the device objects, not as
+    separate datasets.
+  * Devices have clear, recognisable types, such as "multimeter", "MCA",
+    "scientific camera", to name but a few.
 
 * Access to the complete information contained in an eveH5 (and SCML) file,
   *i.e.*, data and scan description.
-* **Data filling** for ready-to-plot datasets.
+* Distinction between :attr:`data <Measurement.data>` and :attr:`devices
+  <Measurement.devices>`:
+
+  * Devices are all available devices used in the scan modules that
+    produced some data.
+  * Data is the current selection of devices to plot, process, or analyse
+    data for.
+  * Data always contains a *n*\D array with intensity values and
+    corresponding axes.
+
+* Distinction between :attr:`devices <Measurement.devices>` (setup),
+  :attr:`beamline <Measurement.beamline>`, and :attr:`machine
+  <Measurement.machine>`:
+
+  * Devices are all available devices used in the scan modules that
+    produced some data.
+  * Beamline contains information from all devices that are part of the
+    beamline, such as shutters, valves, and alike. Usually, only a few
+    data points per scan are recorded for those devices, typically by
+    means of snapshots.
+  * Machine contains information regarding the actual synchrotron. These
+    are "read-only" devices, and they may not be controlled by the
+    measurement program, *i.e.* be actual monitors with time stamps rather
+    than positions.
+
+* **Data "filling"** for ready-to-plot datasets.
+
+  * "Filling" is only carried out for the currently selected devices in
+    the "data" attribute.
+
 * Actual **data are loaded on demand**, not when loading the file.
 
-    * This does *not* apply to the metadata of the individual datasets.
-      Those are read upon reading the file.
-    * Reading data on demand should save time and resources, particularly
-      for larger files.
-    * Often, you are only interested in a subset of the available data.
+  * This does *not* apply to the metadata of the individual datasets.
+    Those are read upon reading the file.
+  * Reading data on demand should save time and resources, particularly
+    for larger files.
+  * Often, you are only interested in a subset of the available data.
 
 
 Usage

@@ -15,7 +15,7 @@ class Measurement extends measurement.entities.measurement.Measurement {
     save(filename)
     export(filename, format)
     set_data(name, field)
-    set_axes(name[])
+    set_axes(name[], field[])
 }
 
 Measurement *-- measurement.entities.metadata.Metadata
@@ -41,7 +41,7 @@ class measurement.entities.measurement.Data {
 class measurement.entities.measurement.Axis {
     data : np.ndarray
     label: string
-    measure : string
+    quantity : string
     symbol : string
     unit : string
 }

@@ -55,29 +55,32 @@ providing a faithful representation of all information contained in an eveH5
 data files. Hence, the key characteristics of the module are:
 
 * Stable interface to eveH5 files, regardless of their version.
+
+  * Some features may only be available for newer eveH5 versions, though.
+
 * Powerful abstractions on the device level.
 
-    * Options to devices appear as attributes of the device objects, not as
-      separate datasets.
-    * Devices have clear, recognisable types, such as "multimeter", "MCA",
-      "scientific camera", to name but a few.
+  * Options to devices appear as attributes of the device objects, not as
+    separate datasets.
+  * Devices have clear, recognisable types, such as "multimeter", "MCA",
+    "scientific camera", to name but a few.
 
 * Access to the complete information contained in an eveH5 (and SCML) file,
   *i.e.*, data and scan description.
 * **No data filling**, *i.e.*, generally no ready-to-plot datasets.
 
-    * Data filling functionality is provided by the
-      :mod:`evedata.measurement` subpackage.
-    * The reason to *not* automatically fill data: being able to tell which
-      data (points) have actually been recorded.
+  * Data filling functionality is provided by the
+    :mod:`evedata.measurement` subpackage.
+  * The reason to *not* automatically fill data: being able to tell which
+    data (points) have actually been recorded.
 
 * Actual **data are loaded on demand**, not when loading the file.
 
-    * This does *not* apply to the metadata of the individual datasets.
-      Those are read upon reading the file.
-    * Reading data on demand should save time and resources, particularly
-      for larger files.
-    * Often, you are only interested in a subset of the available data.
+  * This does *not* apply to the metadata of the individual datasets.
+    Those are read upon reading the file.
+  * Reading data on demand should save time and resources, particularly
+    for larger files.
+  * Often, you are only interested in a subset of the available data.
 
 
 Usage

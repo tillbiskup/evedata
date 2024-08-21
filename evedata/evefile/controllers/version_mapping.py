@@ -78,9 +78,9 @@ What follows is a summary of the different aspects, for the time being
 * Convert monitor datasets from the ``device`` group to :obj:`MonitorData
   <evedata.evefile.entities.data.MonitorData>` objects. |check|
 
-    * We probably need to create subclasses for the different monitor
-      datasets, at least distinguishing between numeric and non-numeric
-      values.
+  * We probably need to create subclasses for the different monitor
+    datasets, at least distinguishing between numeric and non-numeric
+    values.
 
 * Map ``/c1/meta/PosCountTimer`` to :obj:`TimestampData
   <evedata.evefile.entities.data.TimestampData>` object. |check|
@@ -90,100 +90,100 @@ What follows is a summary of the different aspects, for the time being
 
 * Filter all datasets from the ``main`` section, with different goals:
 
-    * Map array data to :obj:`ArrayChannelData
-      <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
-      having an attribute ``DeviceType`` set to ``Channel``). |check|
+  * Map array data to :obj:`ArrayChannelData
+    <evedata.evefile.entities.data.ArrayChannelData>` objects (HDF5 groups
+    having an attribute ``DeviceType`` set to ``Channel``). |check|
 
-      * Distinguish between MCA and scope data (at least). |cross|
-      * Map additional datasets in main section (and snapshot). |check|
+    * Distinguish between MCA and scope data (at least). |cross|
+    * Map additional datasets in main section (and snapshot). |check|
 
-    * Map all axis datasets to :obj:`AxisData
-      <evedata.evefile.entities.data.AxisData>` objects. |check|
+  * Map all axis datasets to :obj:`AxisData
+    <evedata.evefile.entities.data.AxisData>` objects. |check|
 
-      * How to distinguish between axes with and without encoders? |cross|
-      * Read channels with RBV and replace axis values with RBV.
+    * How to distinguish between axes with and without encoders? |cross|
+    * Read channels with RBV and replace axis values with RBV.
 
-        * Most probably, the corresponding channel has the same *name*
-          (not XML-ID, though!) as the axis, but with suffix ``_RBV``,
-          and can thus be identified.
-        * In case of axes with encoders, there may be additional datasets
-          present, *e.g.*, those with suffix ``_Enc``.
-        * In this case, instead of :obj:`NonencodedAxisData
-          <evedata.evefile.entities.data.NonecodedAxisData>`,
-          an :obj:`AxisData <evedata.evefile.entities.data.AxisData>`
-          object needs to be created. (Currently, only :obj:`AxisData
-          <evedata.evefile.entities.data.AxisData>` objects are created,
-          what is a mistake as well...)
+      * Most probably, the corresponding channel has the same *name*
+        (not XML-ID, though!) as the axis, but with suffix ``_RBV``,
+        and can thus be identified.
+      * In case of axes with encoders, there may be additional datasets
+        present, *e.g.*, those with suffix ``_Enc``.
+      * In this case, instead of :obj:`NonencodedAxisData
+        <evedata.evefile.entities.data.NonecodedAxisData>`,
+        an :obj:`AxisData <evedata.evefile.entities.data.AxisData>`
+        object needs to be created. (Currently, only :obj:`AxisData
+        <evedata.evefile.entities.data.AxisData>` objects are created,
+        what is a mistake as well...)
 
-      * How to deal with pseudo-axes used as options in channel datasets? Do
-        we need to deal with axes later? |cross|
+    * How to deal with pseudo-axes used as options in channel datasets? Do
+      we need to deal with axes later? |cross|
 
-    * Distinguish between single point and area data, and map area data to
-      :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
-      objects. (|check|)
+  * Distinguish between single point and area data, and map area data to
+    :obj:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`
+    objects. (|check|)
 
-      * Distinguish between scientific and sample cameras. |check|
-      * Which dataset is the "main" dataset for scientific cameras? |cross|
+    * Distinguish between scientific and sample cameras. |check|
+    * Which dataset is the "main" dataset for scientific cameras? |cross|
 
-        * Starting with eve v1.39, it is ``TIFF1:chan1``, before, this is
-          less clear, and there might not exist a dataset containing
-          filenames with full paths, but only numbers.
+      * Starting with eve v1.39, it is ``TIFF1:chan1``, before, this is
+        less clear, and there might not exist a dataset containing
+        filenames with full paths, but only numbers.
 
-      * Map sample camera datasets. |check|
+    * Map sample camera datasets. |check|
 
-    * Figure out which single point data have been redefined between scan
-      modules, and split data accordingly. Map the data to
-      :obj:`SinglePointChannelData
-      <evedata.evefile.entities.data.SinglePointChannelData>`,
-      :obj:`AverageChannelData
-      <evedata.evefile.entities.data.AverageChannelData>`,
-      and :obj:`IntervalChannelData
-      <evedata.evefile.entities.data.IntervalChannelData>`, respectively.
+  * Figure out which single point data have been redefined between scan
+    modules, and split data accordingly. Map the data to
+    :obj:`SinglePointChannelData
+    <evedata.evefile.entities.data.SinglePointChannelData>`,
+    :obj:`AverageChannelData
+    <evedata.evefile.entities.data.AverageChannelData>`,
+    and :obj:`IntervalChannelData
+    <evedata.evefile.entities.data.IntervalChannelData>`, respectively.
 
-      Hint: Getting the shape of an HDF5 dataset is a cheap operation and
-      does *not* require reading the actual data, as the information is
-      contained in the metadata of the HDF5 dataset. This should allow for
-      additional checking whether a dataset has been redefined.
+    Hint: Getting the shape of an HDF5 dataset is a cheap operation and
+    does *not* require reading the actual data, as the information is
+    contained in the metadata of the HDF5 dataset. This should allow for
+    additional checking whether a dataset has been redefined.
 
-      If the number of (the sum of) positions differ, the channel has been
-      redefined. However, the average or interval settings may have
-      changed between scan modules as well, and this can only be figured
-      out by actually reading the data. How to handle this situation?
-      Split datasets only upon reading the data, if necessary?
+    If the number of (the sum of) positions differ, the channel has been
+    redefined. However, the average or interval settings may have
+    changed between scan modules as well, and this can only be figured
+    out by actually reading the data. How to handle this situation?
+    Split datasets only upon reading the data, if necessary?
 
-      Take care of normalized channel data and treat them accordingly.
-    * Map the additional data for average and interval channel data provided
-      in the respective HDF5 groups to :obj:`AverageChannelData
-      <evedata.evefile.entities.data.AverageChannelData>` and
-      :obj:`IntervalChannelData
-      <evedata.evefile.entities.data.IntervalChannelData>` objects,
-      respectively. |check|
-    * Map normalized channel data (and the data provided in the
-      respective HDF5 groups) to :obj:`NormalizedChannelData
-      <evedata.evefile.entities.data.NormalizedChannelData>`. |check|
-    * Map all remaining HDF5 datasets that belong to one of the already
-      mapped data objects (*i.e.*, variable options) to their respective
-      attributes. (Should have been done already)
-    * Map all HDF5 datasets remaining (if any) to data objects
-      corresponding to their respective data type. (Could there be any?)
-    * Add all data objects to the :attr:`data
-      <evedata.evefile.boundaries.evefile.EveFile.data>` attribute of the
-      :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object.
-      (Has been done during mapping already.)
+    Take care of normalized channel data and treat them accordingly.
+  * Map the additional data for average and interval channel data provided
+    in the respective HDF5 groups to :obj:`AverageChannelData
+    <evedata.evefile.entities.data.AverageChannelData>` and
+    :obj:`IntervalChannelData
+    <evedata.evefile.entities.data.IntervalChannelData>` objects,
+    respectively. |check|
+  * Map normalized channel data (and the data provided in the
+    respective HDF5 groups) to :obj:`NormalizedChannelData
+    <evedata.evefile.entities.data.NormalizedChannelData>`. |check|
+  * Map all remaining HDF5 datasets that belong to one of the already
+    mapped data objects (*i.e.*, variable options) to their respective
+    attributes. (Should have been done already)
+  * Map all HDF5 datasets remaining (if any) to data objects
+    corresponding to their respective data type. (Could there be any?)
+  * Add all data objects to the :attr:`data
+    <evedata.evefile.boundaries.evefile.EveFile.data>` attribute of the
+    :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object.
+    (Has been done during mapping already.)
 
 * Filter all datasets from the ``snapshot`` section, with different goals:
 
-    * Map all HDF5 datasets that belong to one of the data objects in the
-      :attr:`data <evedata.evefile.boundaries.evefile.EveFile.data>`
-      attribute of the :obj:`EveFile
-      <evedata.evefile.boundaries.evefile.EveFile>` object to their respective
-      attributes.
-    * Map all HDF5 datasets remaining (if any) to data objects
-      corresponding to their respective data type.
-    * Add all data objects to the :attr:`snapshots
-      <evedata.evefile.boundaries.evefile.EveFile.snapshots>` attribute of the
-      :obj:`EveFile  <evedata.evefile.boundaries.evefile.EveFile>` object.
-      |check|
+  * Map all HDF5 datasets that belong to one of the data objects in the
+    :attr:`data <evedata.evefile.boundaries.evefile.EveFile.data>`
+    attribute of the :obj:`EveFile
+    <evedata.evefile.boundaries.evefile.EveFile>` object to their respective
+    attributes.
+  * Map all HDF5 datasets remaining (if any) to data objects
+    corresponding to their respective data type.
+  * Add all data objects to the :attr:`snapshots
+    <evedata.evefile.boundaries.evefile.EveFile.snapshots>` attribute of the
+    :obj:`EveFile  <evedata.evefile.boundaries.evefile.EveFile>` object.
+    |check|
 
 
 Most probably, not all these tasks can be inferred from the contents of an
