@@ -243,6 +243,30 @@ While devices are stored with their unique XML IDs as keys in the
 ID or the more readable and pronounceable name of the device to set either
 data or axes.
 
+As devices can have different attributes that can be used as data, you can
+explicitly provide the attribute with the parameters ``field`` and
+``fields``, respectively. One generic use case would be to set the axes
+values to the positions data have been recorded for:
+
+.. code-block::
+
+    measurement.set_data(name="SimChan:01")
+    measurement.set_axes(names=["SimChan:01"], fields=["positions"])
+
+Other rather generic options would be the ``mean`` and ``std`` fields for
+:class:`AverageChannelData
+<evedata.evefile.entities.data.AverageChannelData>` and
+:class:`IntervalChannelData
+<evedata.evefile.entities.data.IntervalChannelData>`:
+
+.. code-block::
+
+    measurement.set_data(name="SimChan:01", field="mean")
+    measurement.set_axes(names=["SimChan:01"])
+
+In any case, you are responsible for setting valid attribute names a field
+names. Otherwise, an :class:`AttributeError` will result.
+
 
 Getting the names of the devices currently set as data
 ------------------------------------------------------
@@ -273,6 +297,34 @@ metadata attribute of the device object:
 
 Furthermore, the :meth:`Measurement.get_name` method can handle both,
 strings, *i.e.* single names, and lists of strings/names.
+
+
+Getting the names of all available devices
+------------------------------------------
+
+As mentioned above, the devices are stored in the
+:attr:`Measurement.devices` attribute with their unique XML IDs that are
+not necessarily readable nor pronounceable. While you can set the axes and
+data using either unique ID or name, you may sometimes be interested in
+getting an overview of the names of all available devices. This can be
+done using the :attr:`Measurement.device_names` attribute:
+
+.. code-block::
+
+    device_names = measurement.device_names  # returns a dict
+
+This would result in a dict whose keys are the names and the values the
+unique IDs. Make uss of the Python tools to get an iterable of all names.
+To print all device names:
+
+.. code-block::
+
+    for name in measurement.device_names.keys():
+        print(name)
+
+Of course, you could do the same for the unique IDs. However, in this 
+case, simply iterate over the keys of the :attr:`Measurement.devices` 
+attribute and you're done.
 
 
 Internals: What happens when reading an eveH5 file?
@@ -361,7 +413,6 @@ import logging
 from evedata.evefile.boundaries.evefile import EveFile
 from evedata.measurement.entities import measurement as entities
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -428,12 +479,6 @@ class Measurement(entities.Measurement):
         <evedata.evefile.entities.file.Metadata.preferred_channel>`
         attributes of the eveH5 file, if present. They can be set/changed
         using the :meth:`set_data` and :meth:`set_axes` methods.
-
-
-    Raises
-    ------
-    exception
-        Short description when and why raised
 
 
     Examples
@@ -631,7 +676,7 @@ class Measurement(entities.Measurement):
             value.metadata.name: key for key, value in self.devices.items()
         }
 
-    def set_data(self, name=""):
+    def set_data(self, name="", field=""):
         """
         Set data for the :attr:`data` attribute.
 
@@ -643,19 +688,28 @@ class Measurement(entities.Measurement):
         more readable and pronounceable names they are known by. In the
         latter case, they are internally translated to the unique IDs.
 
+        Some devices can have additional attributes with data that you
+        want to operate on, *i.e.* set as data. In this case, provide the
+        name of the attribute as ``field`` parameter.
+
         Parameters
         ----------
         name : :class:`str`
             Device name whose data should be set as data.
 
+        field : :class:`str`
+            Field name of the device whose data should be set as data.
+
         """
         if name not in self.devices:
             name = self.device_names[name]
-        self.data.data = self.devices[name].data
+        if not field:
+            field = "data"
+        self.data.data = getattr(self.devices[name], field)
         self._current_data = name
         self._set_axis_metadata_from_device(self.data.axes[-1], name)
 
-    def set_axes(self, names=None):
+    def set_axes(self, names=None, fields=None):
         r"""
         Set axes for the :attr:`data` attribute.
 
@@ -667,6 +721,12 @@ class Measurement(entities.Measurement):
         more readable and pronounceable names they are known by. In the
         latter case, they are internally translated to the unique IDs.
 
+        Some devices can have additional attributes with data that you
+        want to operate on, *i.e.* set as axes values. In this case, provide
+        the names of the attributes as ``fields`` parameter. If you
+        provide fields, the lists ``names`` and ``fields`` need to be of
+        the same length.
+
         Parameters
         ----------
         names : :class:`list`
@@ -674,11 +734,32 @@ class Measurement(entities.Measurement):
 
             Note that names is a list, as you can have *n*\D data with *n*>1.
 
+        fields : :class:`list`
+            Field names of the devices whose data should be set as axes data.
+
+            Note that fields is a list, as you can have *n*\D data with *n*>1.
+
+        Raises
+        ------
+        ValueError
+            Raised if no data are set axes could be set for.
+
+        IndexError
+            Raised if fields are given and not of same length as names.
+
         """
+        if len(self.data.data) == 0:
+            raise ValueError("No data to set axes for")
+        if fields and (len(names) != len(fields)):
+            raise IndexError("Names and fields need to be of same length")
+        if not fields:
+            fields = ["data"] * len(names)
         for idx, device in enumerate(names):
             if device not in self.devices:
                 device = self.device_names[device]
-            self.data.axes[idx].values = self.devices[device].data
+            self.data.axes[idx].values = getattr(
+                self.devices[device], fields[idx]
+            )
             self._set_axis_metadata_from_device(self.data.axes[idx], device)
         self._current_axes = names
 

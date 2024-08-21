@@ -390,11 +390,45 @@ class TestMeasurement(unittest.TestCase):
             self.measurement.devices[name].data,
         )
 
-    @unittest.skip
     def test_set_axes_if_no_preferred_data_raises(self):
         h5file = DummyHDF5File(filename=self.filename)
         h5file.create(set_preferred=False)
         self.measurement.load(filename=self.filename)
         name = "SimMot:01"
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "No data to set axes for"):
             self.measurement.set_axes(names=[name])
+
+    def test_set_data_with_field_name(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimChan:01"
+        field = "positions"
+        self.measurement.set_data(name=name, field=field)
+        np.testing.assert_array_equal(
+            self.measurement.data.data,
+            getattr(self.measurement.devices[name], field),
+        )
+
+    def test_set_axes_with_field_name(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimMot:01"
+        field = "positions"
+        self.measurement.set_axes(names=[name], fields=[field])
+        np.testing.assert_array_equal(
+            self.measurement.data.axes[0].values,
+            getattr(self.measurement.devices[name], field),
+        )
+
+    def test_set_axes_with_different_length_of_names_and_fields_raises(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        names = ["SimMot:01"]
+        fields = ["positions", "data"]
+        with self.assertRaisesRegexp(
+            IndexError, "Names and fields need to " "be of same length"
+        ):
+            self.measurement.set_axes(names=names, fields=fields)
