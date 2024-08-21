@@ -125,14 +125,48 @@ module are:
 Usage
 =====
 
+When using the :class:`Measurement` class, make sure you have a general
+idea of the idea and architecture of the class. This means in particular:
+
+* **Data are not stored as one large table**, with one column per "device",
+  but in individual objects per device, mainly in the
+  :attr:`devices <Measurement.devices>` attribute.
+* One particular set of devices is usually assigned to be the **data to work
+  on**, and stored in the :attr:`data <Measurement.data>` attribute,
+  accordingly. Again, this is not a flat data array, but a composition of
+  objects, containing data (*i.e.*, intensity values) and corresponding
+  axes, together with the necessary metadata, such as quantity and unit.
+  For further details, have a look at the :class:`Data
+  <evedata.measurement.entities.measurement.Data>` class.
+* **Data are loaded on demand**, *not* when loading the file. Hence, initial
+  loading of a file should be pretty fast. If your file contains large
+  data for an individual device, loading its data may take a bit when
+  accessing them the first time.
+* "Filling" of data only takes place for those device data you explicitly
+  set as "data to work on" (see above), and only the data of these devices
+  will be made compatible. If you change either data or axes, this will
+  generally result in a different "filling".
+* The :class:`Measurement` class represents a **unit of data and metadata**.
+
+Having that said, here you go with more details on how to use the
+:class:`Measurement` class.
+
+
+Loading eveH5 files
+-------------------
+
 Loading the contents of a data file of a measurement may be as simple as:
 
 .. code-block::
 
-    from evedata.measurement.boundaries.measurement import Measurement
+    from evedata import Measurement
 
     measurement = Measurement()
     measurement.load(filename="my_measurement_file.h5")
+
+Note that due to importing the :class:`Measurement` class into the main
+namespace of the ``evedata`` package, you can import it directly from
+there.
 
 Of course, you could alternatively set the filename first,
 thus shortening the :meth:`load` method call:
@@ -143,7 +177,7 @@ thus shortening the :meth:`load` method call:
     measurement.filename = "my_measurement_file.h5"
     measurement.load()
 
-There is even a third way now: Instantiating the class already with a
+There is even a third way -- instantiating the class already with a
 given filename:
 
 .. code-block::
@@ -154,6 +188,91 @@ given filename:
 And yes, you can of course chain the object creation and loading the file
 if you like. However, this leads to harder to read code and is therefore
 *not* suggested.
+
+
+Setting the data to work on
+---------------------------
+
+Measurements typically involve a large list of individual devices for
+which data are recorded, and generally, the corresponding data are not of
+same shape or length. However, typically you set the data of one device as
+actual data (*i.e.*, intensity values or dependent variable), and the data of
+another devices as axis values (independent variables). If the data are
+incommensurable, some action needs to be taken to "broadcast" the axes
+values to the dimension/shape of the data values. Otherwise, all typical
+tasks such as plotting, processing, or analysis of the data would not be
+possible.
+
+If the scan you loaded the data from had the attributes
+``preferredChannel`` and ``preferredAxis`` set, the data of the
+corresponding devices will automatically be set to the :attr:`data
+<Measurement.data>` attribute, and if necessary, the data made commensurable.
+
+To explicitly set the data and/or axes to work on, two methods are
+available: :meth:`Measurement.set_data` and :meth:`Measurement.set_axes`.
+The name of these methods reflects their function:
+:meth:`Measurement.set_data` sets the dependent variable, while
+:meth:`Measurement.set_axes` sets the independent variable(s). In contrast
+to the mathematical terms, the dependent variable takes precedence when
+making the variables commensurate: the axes values will be changed if
+necessary to fit the dimensions and shape of the data (dependent variable).
+
+Whether you set channel or axes data as either axes or data is entirely
+your choice. Thus, you can plot, *e.g.*, axes data as function of a
+channel or another axis, as well as channel data as function of another
+channel or axis.
+
+Setting or changing the data to work on is as simple as calling two methods:
+
+.. code-block::
+
+    measurement.set_data(name="SimChan:01")
+    measurement.set_axes(names=["SimMot:02"])
+
+Note the slight difference in syntax for the two method calls: While
+:meth:`Measurement.set_data` has a parameter ``name`` (singular) that is a
+string, :meth:`Measurement.set_axes` has a parameter ``names`` (plural)
+that is a list of device names, even if you set only one axis.
+
+You need not set both, data and axes, if data had been set previously. If
+you set only data, without any axes having been set previously,
+axes values will automatically be filled with indices for you.
+
+While devices are stored with their unique XML IDs as keys in the
+:attr:`Measurement.devices` attribute, you can use either the unique XML
+ID or the more readable and pronounceable name of the device to set either
+data or axes.
+
+
+Getting the names of the devices currently set as data
+------------------------------------------------------
+
+To get the names of the devices currently set as data and accompanying
+axes, use the :attr:`Measurement.current_data` and
+:attr:`Measurement.current_axes` attributes:
+
+.. code-block::
+
+    current_data = measurement.current_data
+    current_axes = measurement.current_axes
+
+Note that the names are the unique XML-IDs used as HDF5 dataset names. To
+get the readable names, use :meth:`Measurement.get_name`:
+
+.. code-block::
+
+    current_data = measurement.get_name(measurement.current_data)
+    current_axes = measurement.get_name(measurement.current_axes)
+
+This is basically a convenience method for accessing the corresponding
+metadata attribute of the device object:
+
+.. code-block::
+
+    current_data = measurement.devices[measurement.current_data].metadata.name
+
+Furthermore, the :meth:`Measurement.get_name` method can handle both,
+strings, *i.e.* single names, and lists of strings/names.
 
 
 Internals: What happens when reading an eveH5 file?
@@ -310,6 +429,7 @@ class Measurement(entities.Measurement):
         attributes of the eveH5 file, if present. They can be set/changed
         using the :meth:`set_data` and :meth:`set_axes` methods.
 
+
     Raises
     ------
     exception
@@ -318,15 +438,49 @@ class Measurement(entities.Measurement):
 
     Examples
     --------
-    It is always nice to give some examples how to use the class. Best to do
-    that with code examples:
+    Loading the contents of a data file of a measurement may be as simple as:
 
     .. code-block::
 
-        obj = Measurement()
-        ...
+        from evedata import Measurement
 
+        measurement = Measurement()
+        measurement.load(filename="my_measurement_file.h5")
 
+    Note that due to importing the :class:`Measurement` class into the main
+    namespace of the ``evedata`` package, you can import it directly from
+    there.
+
+    Of course, you could alternatively set the filename first,
+    thus shortening the :meth:`load` method call:
+
+    .. code-block::
+
+        measurement = Measurement()
+        measurement.filename = "my_measurement_file.h5"
+        measurement.load()
+
+    There is even a third way -- instantiating the class already with a
+    given filename:
+
+    .. code-block::
+
+        measurement = Measurement(filename="my_measurement_file.h5")
+        measurement.load()
+
+    If the attributes ``preferred_channel`` and ``preferred_axis`` are
+    set, the data and corresponding axes are set as well. Otherwise,
+    the :attr:`data` attribute will initially not contain any data. Use
+    :meth:`set_data` and :meth:`set_axes` in this case:
+
+    .. code-block::
+
+        measurement.set_data(name="SimChan:02")
+        measurement.set_axes(names=["SimMot:02"])
+
+    Note that you can use both, the unique IDs of the devices and their
+    more readable and pronounceable names they are known by. In the
+    latter case, they are internally translated to the unique IDs.
 
     """
 
@@ -334,6 +488,9 @@ class Measurement(entities.Measurement):
         super().__init__()
         self.data = entities.Data()
         self.filename = filename
+        self._current_data = ""
+        self._current_axes = []
+        self._device_names = {}
         self._evefile = None
 
     @property
@@ -353,9 +510,73 @@ class Measurement(entities.Measurement):
     def filename(self, filename=""):
         self.metadata.filename = filename
 
+    @property
+    def current_data(self):
+        """
+        Name of the device currently set as data in :attr:`data`.
+
+        Note that the name is the unique XML-ID used as HDF5 dataset name.
+        To get the readable name, use :meth:`get_name`.
+
+        Returns
+        -------
+        current_data : :class:`str`
+            Name of the device currently set as data in :attr:`data`.
+
+        """
+        return self._current_data
+
+    @property
+    def current_axes(self):
+        """
+        Names of the axes currently set as axes in :attr:`data`.
+
+        Note that the names are the unique XML-IDs used as HDF5 dataset
+        names. To get the readable names, use :meth:`get_name`.
+
+        Returns
+        -------
+        current_axes : :class:`list`
+            Names of the axes currently set as axes in :attr:`data`.
+
+        """
+        return self._current_axes
+
+    @property
+    def device_names(self):
+        """
+        Name of the devices contained in :attr:`devices`.
+
+        The keys used in :attr:`devices` are the XML-IDs and names of the
+        HDF5 datasets. However, usually each device has a more readable
+        and pronounceable name that it is known by.
+
+        Note that device names are not guaranteed to be unique. For all
+        devices in the :attr:`devices` attribute, this should be the case,
+        though.
+
+        For a convenience method to obtain the device name given its
+        unique ID, see :meth:`get_name`.
+
+        Returns
+        -------
+        device_names : :class:`dict`
+            Names of the devices contained in :attr:`devices`.
+
+            The keys are the readable and pronounceable names of the
+            devices, the values are the corresponding XML-IDs.
+
+        """
+        return self._device_names
+
     def load(self, filename=""):
         """
         Load contents of an eveH5 file containing data.
+
+        If the attributes ``preferred_channel`` and ``preferred_axis`` are
+        set, the data and corresponding axes are set as well. Otherwise,
+        the :attr:`data` attribute will initially not contain any data.
+        Use :meth:`set_data` and :meth:`set_axes` in this case.
 
         Parameters
         ----------
@@ -370,6 +591,7 @@ class Measurement(entities.Measurement):
         self._map_log_messages()
         self._map_devices()
         self._set_data()
+        self._set_device_names()
 
     def _load_evefile(self):
         self._evefile = EveFile(filename=self.metadata.filename)
@@ -397,19 +619,96 @@ class Measurement(entities.Measurement):
 
     def _set_data(self):
         if self.metadata.preferred_axis and self.metadata.preferred_channel:
-            self.data.data = self.devices[
-                self.metadata.preferred_channel
-            ].data
-            self.data.axes[0].values = self.devices[
-                self.metadata.preferred_axis
-            ].data
-            self._set_axis_metadata_from_device(
-                self.data.axes[0], self.metadata.preferred_axis
-            )
-            self._set_axis_metadata_from_device(
-                self.data.axes[1], self.metadata.preferred_channel
-            )
+            self.set_data(name=self.metadata.preferred_channel)
+            self.set_axes(names=[self.metadata.preferred_axis])
 
     def _set_axis_metadata_from_device(self, axis=None, device=""):
         axis.quantity = self.devices[device].metadata.name
         axis.unit = self.devices[device].metadata.unit
+
+    def _set_device_names(self):
+        self._device_names = {
+            value.metadata.name: key for key, value in self.devices.items()
+        }
+
+    def set_data(self, name=""):
+        """
+        Set data for the :attr:`data` attribute.
+
+        The name is set to the :attr:`current_data` attribute as well.
+        Furthermore, the axis metadata in the :attr:`data` attribute are
+        set, *i.e.* "quantity" and "unit".
+
+        Note that you can use both, the unique IDs of the devices and their
+        more readable and pronounceable names they are known by. In the
+        latter case, they are internally translated to the unique IDs.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            Device name whose data should be set as data.
+
+        """
+        if name not in self.devices:
+            name = self.device_names[name]
+        self.data.data = self.devices[name].data
+        self._current_data = name
+        self._set_axis_metadata_from_device(self.data.axes[-1], name)
+
+    def set_axes(self, names=None):
+        r"""
+        Set axes for the :attr:`data` attribute.
+
+        The names are set to the :attr:`current_axes` attribute as well.
+        Furthermore, the axes metadata in the :attr:`data` attribute are
+        set for each axis, *i.e.* "quantity" and "unit".
+
+        Note that you can use both, the unique IDs of the devices and their
+        more readable and pronounceable names they are known by. In the
+        latter case, they are internally translated to the unique IDs.
+
+        Parameters
+        ----------
+        names : :class:`list`
+            Device names whose data should be set as axes data.
+
+            Note that names is a list, as you can have *n*\D data with *n*>1.
+
+        """
+        for idx, device in enumerate(names):
+            if device not in self.devices:
+                device = self.device_names[device]
+            self.data.axes[idx].values = self.devices[device].data
+            self._set_axis_metadata_from_device(self.data.axes[idx], device)
+        self._current_axes = names
+
+    def get_name(self, device=None):
+        """
+        Get name of a corresponding unique device ID.
+
+        Devices are stored in the :attr:`devices` attribute by their unique
+        IDs. However, they usually have more readable and pronounceable
+        names they are known by.
+
+        Note that device names are not guaranteed to be unique. For all
+        devices in the :attr:`devices` attribute, this should be the case,
+        though.
+
+        Parameters
+        ----------
+        device : :class:`str` | :class:`list`
+            ID(s) of the device(s)
+
+        Returns
+        -------
+        name : :class:`str` | :class:`list`
+            Name(s) of the device(s)
+
+            If ``device`` is a list, ``name`` will be a list, too.
+
+        """
+        if isinstance(device, (list, tuple)):
+            name = [self.devices[name].metadata.name for name in device]
+        else:
+            name = self.devices[device].metadata.name
+        return name

@@ -15,7 +15,7 @@ class Measurement extends measurement.entities.measurement.Measurement {
     save(filename)
     export(filename, format)
     set_data(name, field)
-    set_axes(name[], field[])
+    set_axes(names[], fields[])
 }
 
 Measurement *-- measurement.entities.metadata.Metadata

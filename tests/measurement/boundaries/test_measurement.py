@@ -43,6 +43,21 @@ class DummyHDF5File:
             simmot.attrs["Unit"] = np.bytes_(["eV"])
             simmot.attrs["Access"] = np.bytes_(["ca:foobar"])
             simmot.attrs["DeviceType"] = np.bytes_(["Axis"])
+            simmot2 = main.create_dataset(
+                "SimMot:02",
+                data=np.ndarray(
+                    [5],
+                    dtype=np.dtype(
+                        [("PosCounter", "<i4"), ("SimMot:02", "<f8")]
+                    ),
+                ),
+            )
+            simmot2["PosCounter"] = np.linspace(6, 10, 5)
+            simmot2["SimMot:02"] = np.random.random(5)
+            simmot2.attrs["Name"] = np.bytes_(["baf"])
+            simmot2.attrs["Unit"] = np.bytes_(["nm"])
+            simmot2.attrs["Access"] = np.bytes_(["ca:foobaz"])
+            simmot2.attrs["DeviceType"] = np.bytes_(["Axis"])
             simchan = main.create_dataset(
                 "SimChan:01",
                 data=np.ndarray(
@@ -59,6 +74,22 @@ class DummyHDF5File:
             simchan.attrs["Access"] = np.bytes_(["ca:barbaz"])
             simchan.attrs["DeviceType"] = np.bytes_(["Channel"])
             simchan.attrs["Detectortype"] = np.bytes_(["Standard"])
+            simchan2 = main.create_dataset(
+                "SimChan:02",
+                data=np.ndarray(
+                    [5],
+                    dtype=np.dtype(
+                        [("PosCounter", "<i4"), ("SimChan:02", "<f8")]
+                    ),
+                ),
+            )
+            simchan2["PosCounter"] = np.linspace(6, 10, 5)
+            simchan2["SimChan:02"] = np.random.random(5)
+            simchan2.attrs["Name"] = np.bytes_(["baz"])
+            simchan2.attrs["Unit"] = np.bytes_(["mA"])
+            simchan2.attrs["Access"] = np.bytes_(["ca:bazfoo"])
+            simchan2.attrs["DeviceType"] = np.bytes_(["Channel"])
+            simchan2.attrs["Detectortype"] = np.bytes_(["Standard"])
             data = np.ndarray(
                 [5],
                 dtype=np.dtype(
@@ -157,6 +188,17 @@ class TestMeasurement(unittest.TestCase):
                 item, evedata.evefile.entities.data.MeasureData
             )
 
+    def test_load_sets_device_names(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        self.assertTrue(self.measurement.device_names)
+        device_names = {
+            value.metadata.name: key
+            for key, value in self.measurement.devices.items()
+        }
+        self.assertDictEqual(device_names, self.measurement.device_names)
+
     def test_load_sets_data_to_preferred_data(self):
         h5file = DummyHDF5File(filename=self.filename)
         h5file.create()
@@ -181,7 +223,178 @@ class TestMeasurement(unittest.TestCase):
         h5file = DummyHDF5File(filename=self.filename)
         h5file.create()
         self.measurement.load(filename=self.filename)
-        self.assertEqual("foo", self.measurement.data.axes[0].quantity)
-        self.assertEqual("eV", self.measurement.data.axes[0].unit)
-        self.assertEqual("bar", self.measurement.data.axes[1].quantity)
-        self.assertEqual("A", self.measurement.data.axes[1].unit)
+        self.assertEqual(
+            self.measurement.devices[
+                self.measurement.metadata.preferred_axis
+            ].metadata.name,
+            self.measurement.data.axes[0].quantity,
+        )
+        self.assertEqual(
+            self.measurement.devices[
+                self.measurement.metadata.preferred_axis
+            ].metadata.unit,
+            self.measurement.data.axes[0].unit,
+        )
+        self.assertEqual(
+            self.measurement.devices[
+                self.measurement.metadata.preferred_channel
+            ].metadata.name,
+            self.measurement.data.axes[1].quantity,
+        )
+        self.assertEqual(
+            self.measurement.devices[
+                self.measurement.metadata.preferred_channel
+            ].metadata.unit,
+            self.measurement.data.axes[1].unit,
+        )
+
+    def test_preferred_data_sets_current_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        self.assertEqual("SimChan:01", self.measurement.current_data)
+
+    def test_preferred_data_sets_current_axes(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        self.assertListEqual(["SimMot:01"], self.measurement.current_axes)
+
+    def test_set_data_sets_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimChan:02"
+        self.measurement.set_data(name=name)
+        np.testing.assert_array_equal(
+            self.measurement.data.data,
+            self.measurement.devices[name].data,
+        )
+
+    def test_set_data_sets_current_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimChan:02"
+        self.measurement.set_data(name=name)
+        self.assertEqual(name, self.measurement.current_data)
+
+    def test_current_data_is_read_only(self):
+        with self.assertRaises(AttributeError):
+            self.measurement.current_data = "foo"  # noqa
+
+    def test_set_data_sets_axis_metadata(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimChan:02"
+        self.measurement.set_data(name=name)
+        self.assertEqual(
+            self.measurement.devices[name].metadata.name,
+            self.measurement.data.axes[1].quantity,
+        )
+        self.assertEqual(
+            self.measurement.devices[name].metadata.unit,
+            self.measurement.data.axes[1].unit,
+        )
+
+    def test_set_data_with_name_sets_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        dataset_id = "SimChan:02"
+        name = self.measurement.devices[dataset_id].metadata.name
+        self.measurement.set_data(name=name)
+        np.testing.assert_array_equal(
+            self.measurement.data.data,
+            self.measurement.devices[dataset_id].data,
+        )
+
+    def test_set_axes_sets_axes(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimMot:02"
+        self.measurement.set_axes(names=[name])
+        np.testing.assert_array_equal(
+            self.measurement.data.axes[0].values,
+            self.measurement.devices[name].data,
+        )
+
+    def test_set_axes_sets_current_axes(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimMot:02"
+        self.measurement.set_axes(names=[name])
+        self.assertListEqual([name], self.measurement.current_axes)
+
+    def test_current_axes_is_read_only(self):
+        with self.assertRaises(AttributeError):
+            self.measurement.current_axes = ["foo"]  # noqa
+
+    def test_set_axes_sets_axis_metadata(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimMot:02"
+        self.measurement.set_axes(names=[name])
+        self.assertEqual(
+            self.measurement.devices[name].metadata.name,
+            self.measurement.data.axes[0].quantity,
+        )
+        self.assertEqual(
+            self.measurement.devices[name].metadata.unit,
+            self.measurement.data.axes[0].unit,
+        )
+
+    def test_set_axes_with_name_sets_axes(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        dataset_id = "SimMot:02"
+        name = self.measurement.devices[dataset_id].metadata.name
+        self.measurement.set_axes(names=[name])
+        np.testing.assert_array_equal(
+            self.measurement.data.axes[0].values,
+            self.measurement.devices[dataset_id].data,
+        )
+
+    def test_get_name_returns_name(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        dataset_id = "SimMot:02"
+        name = self.measurement.devices[dataset_id].metadata.name
+        self.assertEqual(name, self.measurement.get_name(dataset_id))
+
+    def test_get_name_with_list_returns_list_of_names(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        dataset_id = ["SimMot:02", "SimChan:01"]
+        names = [
+            self.measurement.devices[device].metadata.name
+            for device in dataset_id
+        ]
+        self.assertListEqual(names, self.measurement.get_name(dataset_id))
+
+    def test_set_data_if_no_preferred_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(set_preferred=False)
+        self.measurement.load(filename=self.filename)
+        name = "SimChan:01"
+        self.measurement.set_data(name=name)
+        np.testing.assert_array_equal(
+            self.measurement.data.data,
+            self.measurement.devices[name].data,
+        )
+
+    @unittest.skip
+    def test_set_axes_if_no_preferred_data_raises(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(set_preferred=False)
+        self.measurement.load(filename=self.filename)
+        name = "SimMot:01"
+        with self.assertRaises(ValueError):
+            self.measurement.set_axes(names=[name])
