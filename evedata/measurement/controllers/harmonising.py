@@ -234,3 +234,89 @@ class AxesLastFill(Harmonisation):
             values = values[positions]
             result.append(values)
         return result
+
+
+class HarmonisationFactory:
+    """
+    Factory for getting the correct harmonisation object.
+
+    For background on the need for harmonisation, see the documentation of the
+    entire :mod:`harmonising <evedata.measurement.controllers.harmonising>`
+    module, and of the :class:`Harmonisation
+    <evedata.measurement.controllers.harmonising.Harmonisation>` class.
+
+    Given a decision which type of harmonisation you would like to apply to
+    your data, this factory class allows you to get the correct
+    harmonisation instance without hassle. And you can even change your mind
+    in between and don't have to change any code---the whole idea behind
+    factories.
+
+    Attributes
+    ----------
+    measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
+        Measurement the harmonisation should be performed for.
+
+
+    Parameters
+    ----------
+    measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
+        Measurement the harmonisation should be performed for.
+
+
+    Examples
+    --------
+    Getting a harmonisation object is as simple as calling a single method
+    on the factory object:
+
+    .. code-block::
+
+        factory = HarmonisationFactory()
+        harmonisation = factory.get_harmonisation(mode="AxesLastFill")
+
+    This will provide you with the appropriate :obj:`AxesLastFill` instance.
+
+    As harmonisations need a :class:`Measurement
+    <evedata.measurement.boundaries.measurement.Measurement>` object,
+    you can set one to the factory, and it will get added automatically to
+    the harmonisation instance for you:
+
+    .. code-block::
+
+        factory = HarmonisationFactory(measurement=my_measurement)
+        harmonisation = factory.get_harmonisation(mode="AxesLastFill")
+
+    Thus, when used from within a :class:`Measurement
+    <evedata.measurement.boundaries.measurement.Measurement>` object,
+    set the :attr:`measurement` attribute to ``self``.
+
+    """
+
+    def __init__(self, measurement=None):
+        self.measurement = measurement
+
+    def get_harmonisation(self, mode="Harmonisation"):
+        """
+        Obtain a :class:`Harmonisation` instance for a particular mode.
+
+        If no mode is provided, this defaults to the base class. As the
+        :class:`Harmonisation` does not implement any functionality, this is
+        rather useless.
+
+        If the :attr:`measurement` attribute is set, it is automatically set
+        in the :obj:`Harmonisation` instance returned.
+
+        Parameters
+        ----------
+        mode : :class:`str`
+            Harmonisation mode to return a :class:`Harmonisation` instance for.
+
+            Default: "Harmonisation"
+
+        Returns
+        -------
+        harmonisation : :class:`Harmonisation`
+            Harmonisation instance
+
+        """
+        instance = globals()[mode](measurement=self.measurement)
+        return instance

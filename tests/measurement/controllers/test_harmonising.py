@@ -166,3 +166,32 @@ class TestLastFill(unittest.TestCase):
             self.harmonisation.measurement.devices["SimMot:01"].positions,
             result[1],
         )
+
+
+class TestHarmonisationFactory(unittest.TestCase):
+    def setUp(self):
+        self.factory = harmonising.HarmonisationFactory()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_get_harmonisation_returns_harmonisation(self):
+        self.assertIsInstance(
+            self.factory.get_harmonisation(), harmonising.Harmonisation
+        )
+
+    def test_get_harmonisation_with_type_returns_correct_harmonisation(self):
+        self.assertIsInstance(
+            self.factory.get_harmonisation(mode="AxesLastFill"),
+            harmonising.Harmonisation,
+        )
+
+    def test_initialise_with_measurement_sets_measurement(self):
+        measurement = "foo"
+        factory = harmonising.HarmonisationFactory(measurement=measurement)
+        self.assertEqual(measurement, factory.measurement)
+
+    def test_get_harmonisation_with_measurement_sets_measurement(self):
+        self.factory.measurement = "foo"
+        harmonisation = self.factory.get_harmonisation()
+        self.assertEqual(self.factory.measurement, harmonisation.measurement)
