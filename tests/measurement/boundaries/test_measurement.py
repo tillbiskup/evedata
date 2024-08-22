@@ -428,7 +428,7 @@ class TestMeasurement(unittest.TestCase):
         self.measurement.load(filename=self.filename)
         names = ["SimMot:01"]
         fields = ["positions", "data"]
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             IndexError, "Names and fields need to " "be of same length"
         ):
             self.measurement.set_axes(names=names, fields=fields)

@@ -10,5 +10,5 @@ evedata.measurement.controllers subpackage
 .. toctree::
     :maxdepth: 1
 
-    evedata.measurement.controllers.filling
+    evedata.measurement.controllers.harmonising
 
