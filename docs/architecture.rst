@@ -637,7 +637,7 @@ Controllers
 
 What may be in here:
 
-* Fill modes, now termed "harmonising"
+* Fill modes, now termed "joining"
 * Mapping monitor time stamps to position counts
 
   * Results probably in :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` objects.
@@ -649,25 +649,33 @@ What may be in here:
   * While there may be several datasets (one for each sample) created from one measurement (*i.e.*, eveH5 file), the 1:1 relation between measurement and file should hold.
 
 
-Harmonising: "fill modes"
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Joining: "fill modes"
+~~~~~~~~~~~~~~~~~~~~~
 
-For each motor axis and detector channel, in the original eveH5 file only those values appear---typically together with a "position counter" (PosCount) value---that are actually set or measured. Hence, the number of values (*i.e.*, the length of the data vector) will generally be different for different detectors/channels and devices/axes. To be able to plot arbitrary data against each other, the corresponding data vectors need to be brought to the same dimensions (*i.e.*, "harmonised", originally somewhat misleadingly termed "filled").
+For each motor axis and detector channel, in the original eveH5 file only those values appear---typically together with a "position counter" (PosCount) value---that are actually set or measured. Hence, the number of values (*i.e.*, the length of the data vector) will generally be different for different detectors/channels and devices/axes. To be able to plot arbitrary data against each other, the corresponding data vectors need to be brought to the same dimensions (*i.e.*, "joined", originally somewhat misleadingly termed "filled").
 
 Currently, there are four "fill modes" available for data: NoFill, LastFill, NaNFill, LastNaNFill. From the `documentation of eveFile <https://www.ahf.ptb.de/messpl/sw/python/common/eveFile/doc/html/Section-Fillmode.html#evefile.Fillmode>`_:
 
 
 NoFill
-    Use only data from positions where at least one axis and one channel have values.
+    "Use only data from positions where at least one axis and one channel have values."
+
+    Actually, not a filling, but mathematically an intersection, or, in terms of relational databases, an ``SQL INNER JOIN``. In any case, data are *reduced*.
 
 LastFill
-    Use all channel data and fill in the last known position for all axes without values.
+    "Use all channel data and fill in the last known position for all axes without values."
+
+    Similar to an ``SQL LEFT JOIN`` with data left and axes right, but additionally explicitly setting the missing axes values in the join to the last known axis value.
 
 NaNFill
-    Use all axis data and fill in NaN for all channels without values.
+    "Use all axis data and fill in NaN for all channels without values."
+
+    Similar to an ``SQL LEFT JOIN`` with axes left and data right. To be exact, the ``NULL`` values of the join operation will be replaced by ``NaN``.
 
 LastNaNFill
-    Use all data and fill in NaN for all channels without values and fill in the last known position for all axes without values.
+    "Use all data and fill in NaN for all channels without values and fill in the last known position for all axes without values."
+
+    Similar to an ``SQL OUTER JOIN``, but additionally explicitly setting the missing axes values in the join to the last known axis value and replacing the ``NULL`` values of the join operation by ``NaN``..
 
 
 Furthermore, for the Last*Fill modes, snapshots are inspected for axes values that are newer than the last recorded axis in the main/standard section.

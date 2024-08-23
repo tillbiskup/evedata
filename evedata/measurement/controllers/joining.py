@@ -8,7 +8,7 @@ value---that have actually been set or measured. Hence, the number of
 values (*i.e.*, the length of the data vector) will generally be different
 for different devices. To be able to plot arbitrary data against each other,
 the corresponding data vectors need to be commensurate. If this is not the
-case, they need to be brought to the same dimensions (*i.e.*, "harmonised",
+case, they need to be brought to the same dimensions (*i.e.*, "joined",
 originally somewhat misleadingly termed "filled").
 
 To be exact, being commensurate is only a necessary, but not a sufficient
@@ -24,9 +24,9 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class Harmonisation:
+class Join:
     """
-    Base class for harmonisation of data.
+    Base class for joining of data.
 
     For each motor axis and detector channel, in the original eveH5 file only
     those values appear---together with a "position counter" (PosCount)
@@ -35,49 +35,49 @@ class Harmonisation:
     for different devices. To be able to plot arbitrary data against each
     other, the corresponding data vectors need to be commensurate. If this
     is not the case, they need to be brought to the same dimensions (*i.e.*,
-    "harmonised", originally somewhat misleadingly termed "filled").
+    "joined", originally somewhat misleadingly termed "filled").
 
     The main "quantisation" axis of the values for a device and the
-    common reference is the list of positions. Hence, to harmonise,
+    common reference is the list of positions. Hence, to join,
     first of all the lists of positions are compared, and gaps handled
     accordingly.
 
     As there are different strategies how to deal with gaps in the
     positions list, generally, there will be different subclasses of the
-    :class:`Harmonisation` class dealing each with a particular strategy.
+    :class:`Join` class dealing each with a particular strategy.
 
 
     Attributes
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
-        Measurement the harmonisation should be performed for.
+        Measurement the Join should be performed for.
 
-        Although harmonisation is carried out for a small subset of the
+        Although joining is carried out for a small subset of the
         device data of a measurement, additional information from the
         measurement may be necessary to perform the task.
 
     Parameters
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
-        Measurement the harmonisation should be performed for.
+        Measurement the join should be performed for.
 
 
     Examples
     --------
-    Usually, harmonisation takes place in the :meth:`set_data()
+    Usually, joining takes place in the :meth:`set_data()
     <evedata.measurement.boundaries.measurement.Measurement.set_data>` and
     :meth:`set_axes()
     <evedata.measurement.boundaries.measurement.Measurement.set_axes>`
     methods. Furthermore, a :obj:`Measurement
     <evedata.measurement.boundaries.measurement.Measurement>` object will
-    have a :class:`Harmonisation` instance of the appropriate type. To
-    harmonise data, in this case of a detector channel and a motor axis,
-    call :meth:`harmonise` with the respective parameters:
+    have a :class:`Join` instance of the appropriate type. To
+    join data, in this case of a detector channel and a motor axis,
+    call :meth:`join` with the respective parameters:
 
     .. code-block::
 
-        harmonisation = Harmonisation(measurement=my_measurement)
-        data, *axes = harmonisation.harmonise(
+        join = Join(measurement=my_measurement)
+        data, *axes = join.join(
             data=("SimChan:01", None),
             axes=(("SimMot:02", None)),
         )
@@ -98,18 +98,18 @@ class Harmonisation:
     def __init__(self, measurement=None):
         self.measurement = measurement
 
-    def harmonise(self, data=None, axes=None):
+    def join(self, data=None, axes=None):
         """
         Harmonise data.
 
         The main "quantisation" axis of the values for a device and the
-        common reference is the list of positions. Hence, to harmonise,
+        common reference is the list of positions. Hence, to join,
         first of all the lists of positions are compared, and gaps handled
         accordingly.
 
         As there are different strategies how to deal with gaps in the
         positions list, generally, there will be different subclasses of the
-        :class:`Harmonisation` class dealing each with a particular strategy.
+        :class:`Join` class dealing each with a particular strategy.
 
         Parameters
         ----------
@@ -129,7 +129,7 @@ class Harmonisation:
         Returns
         -------
         data : :class:`list`
-            Homogenised data and axes values.
+            Joined data and axes values.
 
             The first element is always the data, the following the
             (variable number of) axes. To separate the two and always get a
@@ -137,7 +137,7 @@ class Harmonisation:
 
             .. code-block::
 
-                data, *axes = harmonisation.harmonise(...)
+                data, *axes = join.join(...)
 
         Raises
         ------
@@ -150,29 +150,32 @@ class Harmonisation:
 
         """
         if not self.measurement:
-            raise ValueError("Need a measurement to harmonise data.")
+            raise ValueError("Need a measurement to join data.")
         if not data:
-            raise ValueError("Need data to harmonise data.")
+            raise ValueError("Need data to join data.")
         if not axes:
-            raise ValueError("Need axes to harmonise data.")
-        return self._harmonise(data=data, axes=axes)
+            raise ValueError("Need axes to join data.")
+        return self._join(data=data, axes=axes)
 
-    def _harmonise(self, data=None, axes=None):  # noqa
+    def _join(self, data=None, axes=None):  # noqa
         return []
 
 
-class AxesLastFill(Harmonisation):
+class AxesLastFill(Join):
     # noinspection PyUnresolvedReferences
     """
     Inflate axes to data dimensions using last for missing value.
 
     This was previously known as "LastFill" mode and was described as "Use
     all channel data and fill in the last known position for all axes
-    without values."
+    without values." In SQL terms (relational database), this would be
+    similar to a left join with data left and axes right, but additionally
+    explicitly setting the missing axes values in the join to the last
+    known axis value.
 
     While the terms "channel" and "axis" have different meanings than in
-    context of the :mod:`harmonising
-    <evedata.measurement.controllers.harmonising>` module, the behaviour is
+    context of the :mod:`joining
+    <evedata.measurement.controllers.joining>` module, the behaviour is
     qualitatively similar:
 
     * The device used as "data" is taken as reference and its values are
@@ -193,26 +196,26 @@ class AxesLastFill(Harmonisation):
     Attributes
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
-        Measurement the harmonisation should be performed for.
+        Measurement the join should be performed for.
 
-        Although harmonisation is carried out for a small subset of the
+        Although joining is carried out for a small subset of the
         device data of a measurement, additional information from the
         measurement may be necessary to perform the task.
 
     Parameters
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
-        Measurement the harmonisation should be performed for.
+        Measurement the join should be performed for.
 
 
     Examples
     --------
-    See the :class:`Harmonisation` base class for examples -- and replace
+    See the :class:`Join` base class for examples -- and replace
     the class name accordingly.
 
     """
 
-    def _harmonise(self, data=None, axes=None):
+    def _join(self, data=None, axes=None):
         result = []
         data_device = self.measurement.devices[data[0]]
         axes_devices = [self.measurement.devices[axis[0]] for axis in axes]
@@ -236,54 +239,53 @@ class AxesLastFill(Harmonisation):
         return result
 
 
-class HarmonisationFactory:
+class JoinFactory:
     """
-    Factory for getting the correct harmonisation object.
+    Factory for getting the correct join object.
 
-    For background on the need for harmonisation, see the documentation of the
-    entire :mod:`harmonising <evedata.measurement.controllers.harmonising>`
-    module, and of the :class:`Harmonisation
-    <evedata.measurement.controllers.harmonising.Harmonisation>` class.
+    For background on the need for joining, see the documentation of the
+    entire :mod:`joining <evedata.measurement.controllers.joining>` module, and
+    of the :class:`Join <evedata.measurement.controllers.joining.Join>` class.
 
-    Given a decision which type of harmonisation you would like to apply to
+    Given a decision which type of join you would like to apply to
     your data, this factory class allows you to get the correct
-    harmonisation instance without hassle. And you can even change your mind
+    join instance without hassle. And you can even change your mind
     in between and don't have to change any code---the whole idea behind
     factories.
 
     Attributes
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
-        Measurement the harmonisation should be performed for.
+        Measurement the join should be performed for.
 
 
     Parameters
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
-        Measurement the harmonisation should be performed for.
+        Measurement the join should be performed for.
 
 
     Examples
     --------
-    Getting a harmonisation object is as simple as calling a single method
+    Getting a join object is as simple as calling a single method
     on the factory object:
 
     .. code-block::
 
-        factory = HarmonisationFactory()
-        harmonisation = factory.get_harmonisation(mode="AxesLastFill")
+        factory = JoinFactory()
+        join = factory.get_join(mode="AxesLastFill")
 
     This will provide you with the appropriate :obj:`AxesLastFill` instance.
 
-    As harmonisations need a :class:`Measurement
+    As joins need a :class:`Measurement
     <evedata.measurement.boundaries.measurement.Measurement>` object,
     you can set one to the factory, and it will get added automatically to
-    the harmonisation instance for you:
+    the join instance for you:
 
     .. code-block::
 
-        factory = HarmonisationFactory(measurement=my_measurement)
-        harmonisation = factory.get_harmonisation(mode="AxesLastFill")
+        factory = JoinFactory(measurement=my_measurement)
+        join = factory.get_join(mode="AxesLastFill")
 
     Thus, when used from within a :class:`Measurement
     <evedata.measurement.boundaries.measurement.Measurement>` object,
@@ -294,28 +296,28 @@ class HarmonisationFactory:
     def __init__(self, measurement=None):
         self.measurement = measurement
 
-    def get_harmonisation(self, mode="Harmonisation"):
+    def get_join(self, mode="Join"):
         """
-        Obtain a :class:`Harmonisation` instance for a particular mode.
+        Obtain a :class:`Join` instance for a particular mode.
 
         If no mode is provided, this defaults to the base class. As the
-        :class:`Harmonisation` does not implement any functionality, this is
+        :class:`Join` does not implement any functionality, this is
         rather useless.
 
         If the :attr:`measurement` attribute is set, it is automatically set
-        in the :obj:`Harmonisation` instance returned.
+        in the :obj:`Join` instance returned.
 
         Parameters
         ----------
         mode : :class:`str`
-            Harmonisation mode to return a :class:`Harmonisation` instance for.
+            Join mode to return a :class:`Join` instance for.
 
-            Default: "Harmonisation"
+            Default: "Join"
 
         Returns
         -------
-        harmonisation : :class:`Harmonisation`
-            Harmonisation instance
+        join : :class:`Join`
+            Join instance
 
         """
         instance = globals()[mode](measurement=self.measurement)
