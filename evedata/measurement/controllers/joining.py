@@ -3,10 +3,10 @@
 *Ensure data and axes values are commensurate and compatible.*
 
 For each motor axis and detector channel, in the original eveH5 file only
-those values appear---together with a "position counter" (PosCount)
-value---that have actually been set or measured. Hence, the number of
-values (*i.e.*, the length of the data vector) will generally be different
-for different devices. To be able to plot arbitrary data against each other,
+those values appear---together with a "position" (PosCount) value---that
+have actually been set or measured. Hence, the number of values (*i.e.*,
+the length of the data vector) will generally be different for different
+devices. To be able to plot arbitrary data against each other,
 the corresponding data vectors need to be commensurate. If this is not the
 case, they need to be brought to the same dimensions (*i.e.*, "joined",
 originally somewhat misleadingly termed "filled").
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 class Join:
     """
-    Base class for joining of data.
+    Base class for joining data.
 
     For each motor axis and detector channel, in the original eveH5 file only
     those values appear---together with a "position counter" (PosCount)
@@ -184,6 +184,8 @@ class AxesLastFill(Join):
       dimension as the data.
     * For values originally missing for an axis, the last value of the
       previous position is used.
+    * If no previous value exists for a missing value, the value of
+      :attr:`missing_value` is used.
 
     Of course, as in all cases, the (integer) positions are used as common
     reference for the values of all devices.
@@ -202,6 +204,11 @@ class AxesLastFill(Join):
         device data of a measurement, additional information from the
         measurement may be necessary to perform the task.
 
+    missing_value : :class:`float`
+        Value used if no previous axis value is available.
+
+        Default: 0
+
     Parameters
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
@@ -214,6 +221,10 @@ class AxesLastFill(Join):
     the class name accordingly.
 
     """
+
+    def __init__(self, measurement=None):
+        super().__init__(measurement=measurement)
+        self.missing_value = 0
 
     def _join(self, data=None, axes=None):
         result = []
@@ -235,6 +246,8 @@ class AxesLastFill(Join):
                 np.digitize(data_device.positions, axes_device.positions) - 1
             )
             values = values[positions]
+            # Set values to zero where no previous axis values exist
+            values[np.where(positions < 0)] = self.missing_value
             result.append(values)
         return result
 

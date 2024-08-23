@@ -127,6 +127,25 @@ class TestLastFill(unittest.TestCase):
         )
         self.assertEqual(result[1][-2], result[1][-1])
 
+    def test_join_fills_axes_values_with_gap_at_beginning(self):
+        self.join.measurement.devices = {
+            "SimChan:01": MockDevice(
+                data=np.random.random(5), positions=np.linspace(0, 4, 5)
+            ),
+            "SimMot:01": MockDevice(
+                data=np.random.random(3), positions=np.linspace(2, 4, 3)
+            ),
+        }
+        result = self.join.join(
+            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+        )
+        self.assertEqual(len(result[0]), len(result[1]))
+        np.testing.assert_array_equal(
+            self.join.measurement.devices["SimMot:01"].data,
+            result[1][2:],
+        )
+        self.assertEqual(0, result[1][0])
+
     def test_join_fills_axes_values_with_gaps(self):
         self.join.measurement.devices = {
             "SimChan:01": MockDevice(
