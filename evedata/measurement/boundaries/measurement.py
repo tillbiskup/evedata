@@ -108,10 +108,14 @@ module are:
     measurement program, *i.e.* be actual monitors with time stamps rather
     than positions.
 
-* **Data "filling"** for ready-to-plot datasets.
+* **Data joining ("filling")** for ready-to-plot datasets.
 
-  * "Filling" is only carried out for the currently selected devices in
+  * Joining is only carried out for the currently selected devices in
     the "data" attribute.
+  * Joining will generally be different for each combination of currently
+    selected devices.
+  * For details on joining, see the :mod:`joining
+    <evedata.measurement.controllers.joining>` module.
 
 * Actual **data are loaded on demand**, not when loading the file.
 
@@ -142,10 +146,11 @@ idea of the idea and architecture of the class. This means in particular:
   loading of a file should be pretty fast. If your file contains large
   data for an individual device, loading its data may take a bit when
   accessing them the first time.
-* "Filling" of data only takes place for those device data you explicitly
-  set as "data to work on" (see above), and only the data of these devices
-  will be made compatible. If you change either data or axes, this will
-  generally result in a different "filling".
+* Joining ("filling") of data only takes place for those device data you
+  explicitly set as "data to work on" (see above), and only the data of
+  these devices will be made compatible. If you change either data or axes,
+  this will generally result in a different join. For details on joining,
+  see the :mod:`joining <evedata.measurement.controllers.joining>` module.
 * The :class:`Measurement` class represents a **unit of data and metadata**.
 
 Having that said, here you go with more details on how to use the
@@ -206,7 +211,8 @@ possible.
 If the scan you loaded the data from had the attributes
 ``preferredChannel`` and ``preferredAxis`` set, the data of the
 corresponding devices will automatically be set to the :attr:`data
-<Measurement.data>` attribute, and if necessary, the data made commensurable.
+<Measurement.data>` attribute, and if necessary, the data made commensurable
+(joined).
 
 To explicitly set the data and/or axes to work on, two methods are
 available: :meth:`Measurement.set_data` and :meth:`Measurement.set_axes`.
@@ -366,7 +372,7 @@ class, these are:
   attributes of the eveH5 file, if present. |check|
 
   * Set axis metadata (measure, unit). |check|
-  * Fill data accordingly if necessary. |cross|
+  * Join ("fill") data accordingly if necessary. |check|
 
 * Copy the :attr:`EveFile.scan
   <evedata.evefile.boundaries.evefile.EveFile.setup>` attribute to the
@@ -411,6 +417,7 @@ Module documentation
 import logging
 
 from evedata.evefile.boundaries.evefile import EveFile
+from evedata.measurement.controllers import joining
 from evedata.measurement.entities import measurement as entities
 
 logger = logging.getLogger(__name__)
@@ -480,6 +487,19 @@ class Measurement(entities.Measurement):
         attributes of the eveH5 file, if present. They can be set/changed
         using the :meth:`set_data` and :meth:`set_axes` methods.
 
+    Parameters
+    ----------
+    filename : :class:`str`
+        Name of the file to load data from
+
+    join_type : :class:`str`
+        Join type used to join data.
+
+        Needs to be a valid class from the :mod:`joining
+        <evedata.measurement.controllers.joining>` module.
+
+        Default: "AxesLastFill"
+
 
     Examples
     --------
@@ -529,14 +549,17 @@ class Measurement(entities.Measurement):
 
     """
 
-    def __init__(self, filename=""):
+    def __init__(self, filename="", join_type="AxesLastFill"):
         super().__init__()
         self.data = entities.Data()
         self.filename = filename
-        self._current_data = ""
+        self._current_data = ()
         self._current_axes = []
         self._device_names = {}
         self._evefile = None
+        self._join = None
+        self._join_type = join_type
+        self.join_type = self._join_type
 
     @property
     def filename(self):
@@ -569,7 +592,7 @@ class Measurement(entities.Measurement):
             Name of the device currently set as data in :attr:`data`.
 
         """
-        return self._current_data
+        return self._current_data[0]
 
     @property
     def current_axes(self):
@@ -585,7 +608,7 @@ class Measurement(entities.Measurement):
             Names of the axes currently set as axes in :attr:`data`.
 
         """
-        return self._current_axes
+        return [axis[0] for axis in self._current_axes]
 
     @property
     def device_names(self):
@@ -613,6 +636,61 @@ class Measurement(entities.Measurement):
 
         """
         return self._device_names
+
+    def get_current_data(self):
+        """
+        Get name and attribute of the device used as current data.
+
+        In contrast to the :attr:`current_data` attribute, this method
+        returns a tuple with the device name and attribute of that device
+        used as data.
+
+        Returns
+        -------
+        current_data : :class:`tuple`
+            Name and attribute of the device used as current data.
+
+        """
+        return self._current_data
+
+    def get_current_axes(self):
+        """
+        Get names and attributes of the devices used as current axes.
+
+        In contrast to the :attr:`current_axes` attribute, this method
+        returns a list of tuples with the device names and attributes of each
+        device used as axis.
+
+        Returns
+        -------
+        current_data : :class:`list`
+            Name and attribute of each device used as current axes.
+
+            Each element in the list is a tuple (``name``, ``attribute``).
+
+        """
+        return self._current_axes
+
+    @property
+    def join_type(self):
+        """
+        Join type used to join data.
+
+        Needs to be a valid class from the :mod:`joining
+        <evedata.measurement.controllers.joining>` module.
+
+        Returns
+        -------
+        join_type : :class:`str`
+            Join type used to join data.
+
+        """
+        return self._join_type
+
+    @join_type.setter
+    def join_type(self, join_type="AxesLastFill"):
+        self._join_type = join_type
+        self._join = joining.JoinFactory(measurement=self).get_join(join_type)
 
     def load(self, filename=""):
         """
@@ -705,8 +783,17 @@ class Measurement(entities.Measurement):
             name = self.device_names[name]
         if not field:
             field = "data"
-        self.data.data = getattr(self.devices[name], field)
-        self._current_data = name
+        if self._current_axes:
+            data, *axes = self._join.join(
+                data=(name, field),
+                axes=self._current_axes,
+            )
+            for idx, axis in enumerate(axes):
+                self.data.axes[idx].values = axis
+        else:
+            data = getattr(self.devices[name], field)
+        self.data.data = data
+        self._current_data = (name, field)
         self._set_axis_metadata_from_device(self.data.axes[-1], name)
 
     def set_axes(self, names=None, fields=None):
@@ -754,14 +841,26 @@ class Measurement(entities.Measurement):
             raise IndexError("Names and fields need to be of same length")
         if not fields:
             fields = ["data"] * len(names)
+        current_axes = []
+        axes = []
+        devices = []
         for idx, device in enumerate(names):
             if device not in self.devices:
                 device = self.device_names[device]
-            self.data.axes[idx].values = getattr(
-                self.devices[device], fields[idx]
+            current_axes.append((device, fields[idx]))
+            axes.append(getattr(self.devices[device], fields[idx]))
+            devices.append(device)
+        self._current_axes = current_axes
+        if self._current_data:
+            _, *axes = self._join.join(
+                data=self._current_data,
+                axes=self._current_axes,
             )
-            self._set_axis_metadata_from_device(self.data.axes[idx], device)
-        self._current_axes = names
+        for idx, axis in enumerate(axes):
+            self.data.axes[idx].values = axis
+            self._set_axis_metadata_from_device(
+                self.data.axes[idx], devices[idx]
+            )
 
     def get_name(self, device=None):
         """

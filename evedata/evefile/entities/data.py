@@ -628,7 +628,7 @@ class AxisData(MeasureData):
 
         """
         super()._import_from_hdf5dataimporter(importer=importer)
-        indices = np.where(np.diff(self.positions))
+        indices = np.where(np.diff([*self.positions, self.positions[-1] + 1]))
         for attribute in importer.mapping.values():
             setattr(self, attribute, getattr(self, attribute)[indices])
 

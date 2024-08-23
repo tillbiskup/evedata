@@ -15,6 +15,98 @@ To be exact, being commensurate is only a necessary, but not a sufficient
 criterion, as not only the shape needs to be commensurate, but the indices
 (in this case the positions) be identical.
 
+
+A bit of history
+================
+
+In the previous inerface (``EveFile``), there are four "fill modes" available
+for data: NoFill, LastFill, NaNFill, LastNaNFill. From the `documentation of
+eveFile <https://www.ahf.ptb.de/messpl/sw/python/common/eveFile/doc/html
+/Section-Fillmode.html#evefile.Fillmode>`_:
+
+
+NoFill
+    "Use only data from positions where at least one axis and one channel
+    have values."
+
+    Actually, not a filling, but mathematically an intersection, or,
+    in terms of relational databases, an ``SQL INNER JOIN``. In any case,
+    data are *reduced*.
+
+LastFill
+    "Use all channel data and fill in the last known position for all axes
+    without values."
+
+    Similar to an ``SQL LEFT JOIN`` with data left and axes right,
+    but additionally explicitly setting the missing axes values in the join
+    to the last known axis value.
+
+NaNFill
+    "Use all axis data and fill in NaN for all channels without values."
+
+    Similar to an ``SQL LEFT JOIN`` with axes left and data right. To be
+    exact, the ``NULL`` values of the join operation will be replaced by
+    ``NaN``.
+
+LastNaNFill
+    "Use all data and fill in NaN for all channels without values and fill
+    in the last known position for all axes without values."
+
+    Similar to an ``SQL OUTER JOIN``, but additionally explicitly setting
+    the missing axes values in the join to the last known axis value and
+    replacing the ``NULL`` values of the join operation by ``NaN``.
+
+
+Furthermore, for the Last*Fill modes, snapshots are inspected for axes
+values that are newer than the last recorded axis in the main/standard section.
+
+Note that none of the fill modes guarantees that there are no NaNs (or
+comparable null values) in the resulting data.
+
+
+.. important::
+
+    The IDL Cruncher seems to use LastNaNFill combined with applying some
+    "dirty" fixes to account for scans using MPSKIP and those scans
+    "monitoring" a motor position via a pseudo-detector. The ``EveHDF``
+    class (DS) uses LastNaNFill as a default as well but does *not* apply
+    some additional post-processing.
+
+
+Join modes currently implemented
+================================
+
+Currently, there is exactly one join mode implemented:
+
+* :class:`AxesLastFill`
+
+  Inflate axes to data dimensions using last for missing value.
+
+  This mode is equivalent to the "LastFill" mode described above.
+
+
+For developers
+==============
+
+To implement additional join modes, create a class inheriting from the
+:class:`Join` base class and implement the actual joining in the private
+method ``_join()``.
+
+There is a factory class :class:`JoinFactory` that you can ask to get a
+:class:`Join` object:
+
+.. code-block::
+
+    factory = JoinFactory()
+    join = factory.get_join(mode="AxesLastFill")
+
+This would return an :obj:`AxesLastFill` object. For further details,
+see the :class:`JoinFactory` documentation.
+
+
+Module documentation
+====================
+
 """
 
 import logging

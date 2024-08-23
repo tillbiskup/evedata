@@ -675,7 +675,7 @@ NaNFill
 LastNaNFill
     "Use all data and fill in NaN for all channels without values and fill in the last known position for all axes without values."
 
-    Similar to an ``SQL OUTER JOIN``, but additionally explicitly setting the missing axes values in the join to the last known axis value and replacing the ``NULL`` values of the join operation by ``NaN``..
+    Similar to an ``SQL OUTER JOIN``, but additionally explicitly setting the missing axes values in the join to the last known axis value and replacing the ``NULL`` values of the join operation by ``NaN``.
 
 
 Furthermore, for the Last*Fill modes, snapshots are inspected for axes values that are newer than the last recorded axis in the main/standard section.

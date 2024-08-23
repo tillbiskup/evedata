@@ -10,6 +10,7 @@ from evedata.evefile.entities import data, metadata
 class DummyHDF5File:
     def __init__(self, filename=""):
         self.filename = filename
+        self.shape = 10
 
     def create(self, random=False, double=False):
         with h5py.File(self.filename, "w") as file:
@@ -18,26 +19,31 @@ class DummyHDF5File:
             c1.create_group("snapshot")
             meta = c1.create_group("meta")
             data_ = np.ndarray(
-                [10],
+                [self.shape],
                 dtype=np.dtype(
                     [("PosCounter", "<i4"), ("PosCountTimer", "<i4")]
                 ),
             )
             if random:
                 data_["PosCounter"] = np.random.randint(
-                    low=1, high=10, size=10
+                    low=1, high=self.shape, size=self.shape
                 )
                 data_["PosCountTimer"] = np.linspace(start=2, stop=20, num=10)
             elif double:
                 data_["PosCounter"] = np.asarray(
-                    [1, 1, 2, 3, 4, 4, 4, 5, 6, 7]
+                    [1, 1, 2, 3, 4, 4, 4, 5, 6, 6]
                 )
+                self.shape = len(np.unique(data_["PosCounter"]))
                 data_["PosCountTimer"] = np.asarray(
-                    [2, 3, 4, 6, 8, 9, 9, 10, 12, 14]
+                    [2, 3, 4, 6, 8, 9, 9, 10, 12, 13]
                 )
             else:
-                data_["PosCounter"] = np.linspace(start=1, stop=10, num=10)
-                data_["PosCountTimer"] = np.linspace(start=2, stop=20, num=10)
+                data_["PosCounter"] = np.linspace(
+                    start=1, stop=self.shape, num=self.shape
+                )
+                data_["PosCountTimer"] = np.linspace(
+                    start=2, stop=self.shape * 2, num=self.shape
+                )
             poscounttimer = meta.create_dataset("PosCountTimer", data=data_)
             poscounttimer.attrs["Unit"] = np.bytes_(["msecs"])
 
@@ -239,6 +245,20 @@ class TestAxisData(unittest.TestCase):
         self.data.get_data()
         self.assertTrue(np.all(np.diff(self.data.positions) > 0))
         self.assertTrue(np.any(self.data.data % 2))
+        self.assertEqual(h5file.shape, len(self.data.data))
+
+    def test_get_data_preserves_length_of_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(double=False)
+        importer = data.HDF5DataImporter(source=self.filename)
+        importer.item = "/c1/meta/PosCountTimer"
+        importer.mapping = {
+            "PosCounter": "positions",
+            "PosCountTimer": "data",
+        }
+        self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertEqual(h5file.shape, len(self.data.data))
 
 
 class TestChannelData(unittest.TestCase):

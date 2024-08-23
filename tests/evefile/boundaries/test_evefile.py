@@ -27,24 +27,28 @@ class DummyHDF5File:
             simmot = main.create_dataset(
                 "SimMot:01",
                 data=np.ones(
-                    [5, 2],
+                    [5],
                     dtype=np.dtype(
                         [("PosCounter", "<i4"), ("SimMot:01", "<f8")]
                     ),
                 ),
             )
+            simmot["PosCounter"] = np.linspace(1, 5, 5)
+            simmot["SimMot:01"] = np.random.random(5)
             simmot.attrs["Name"] = np.bytes_(["foo"])
             simmot.attrs["Access"] = np.bytes_(["ca:foobar"])
             simmot.attrs["DeviceType"] = np.bytes_(["Axis"])
             simchan = main.create_dataset(
                 "SimChan:01",
                 data=np.ones(
-                    [5, 2],
+                    [5],
                     dtype=np.dtype(
                         [("PosCounter", "<i4"), ("SimChan:01", "<f8")]
                     ),
                 ),
             )
+            simchan["PosCounter"] = np.linspace(1, 5, 5)
+            simchan["SimChan:01"] = np.random.random(5)
             simchan.attrs["Name"] = np.bytes_(["bar"])
             simchan.attrs["Access"] = np.bytes_(["ca:barbaz"])
             simchan.attrs["DeviceType"] = np.bytes_(["Channel"])
@@ -135,3 +139,10 @@ class TestEveFile(unittest.TestCase):
             self.evefile.data["SimMot:01"],
             self.evefile.get_data(["foo", "bar"])[0],
         )
+
+    def test_data_have_correct_shape(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.evefile.load(filename=self.filename)
+        self.assertEqual(5, len(self.evefile.data["SimChan:01"].data))
+        self.assertEqual(5, len(self.evefile.data["SimMot:01"].data))

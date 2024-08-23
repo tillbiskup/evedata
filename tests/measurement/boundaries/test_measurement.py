@@ -6,6 +6,7 @@ import numpy as np
 
 import evedata.evefile.entities.data
 from evedata.measurement.boundaries import measurement
+from evedata.measurement.controllers import joining
 
 
 class DummyHDF5File:
@@ -46,14 +47,14 @@ class DummyHDF5File:
             simmot2 = main.create_dataset(
                 "SimMot:02",
                 data=np.ndarray(
-                    [5],
+                    [7],
                     dtype=np.dtype(
                         [("PosCounter", "<i4"), ("SimMot:02", "<f8")]
                     ),
                 ),
             )
-            simmot2["PosCounter"] = np.linspace(6, 10, 5)
-            simmot2["SimMot:02"] = np.random.random(5)
+            simmot2["PosCounter"] = np.linspace(2, 8, 7)
+            simmot2["SimMot:02"] = np.random.random(7)
             simmot2.attrs["Name"] = np.bytes_(["baf"])
             simmot2.attrs["Unit"] = np.bytes_(["nm"])
             simmot2.attrs["Access"] = np.bytes_(["ca:foobaz"])
@@ -77,27 +78,27 @@ class DummyHDF5File:
             simchan2 = main.create_dataset(
                 "SimChan:02",
                 data=np.ndarray(
-                    [5],
+                    [7],
                     dtype=np.dtype(
                         [("PosCounter", "<i4"), ("SimChan:02", "<f8")]
                     ),
                 ),
             )
-            simchan2["PosCounter"] = np.linspace(6, 10, 5)
-            simchan2["SimChan:02"] = np.random.random(5)
+            simchan2["PosCounter"] = np.linspace(2, 8, 7)
+            simchan2["SimChan:02"] = np.random.random(7)
             simchan2.attrs["Name"] = np.bytes_(["baz"])
             simchan2.attrs["Unit"] = np.bytes_(["mA"])
             simchan2.attrs["Access"] = np.bytes_(["ca:bazfoo"])
             simchan2.attrs["DeviceType"] = np.bytes_(["Channel"])
             simchan2.attrs["Detectortype"] = np.bytes_(["Standard"])
             data = np.ndarray(
-                [5],
+                [8],
                 dtype=np.dtype(
                     [("PosCounter", "<i4"), ("PosCountTimer", "<i4")]
                 ),
             )
-            data["PosCounter"] = np.linspace(1, 5, 5)
-            data["PosCountTimer"] = np.linspace(42, 814, 5)
+            data["PosCounter"] = np.linspace(1, 8, 8)
+            data["PosCountTimer"] = np.linspace(42, 826, 8)
             poscounttimer = meta.create_dataset("PosCountTimer", data=data)
             poscounttimer.attrs["Unit"] = np.bytes_(["msecs"])
 
@@ -283,6 +284,24 @@ class TestMeasurement(unittest.TestCase):
         with self.assertRaises(AttributeError):
             self.measurement.current_data = "foo"  # noqa
 
+    def test_get_current_data_returns_tuple(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        self.assertEqual(
+            (self.measurement.current_data, "data"),
+            self.measurement.get_current_data(),
+        )
+
+    def test_get_current_axes_returns_list_of_tuples(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        self.assertListEqual(
+            [(self.measurement.current_axes[0], "data")],
+            self.measurement.get_current_axes(),
+        )
+
     def test_set_data_sets_axis_metadata(self):
         h5file = DummyHDF5File(filename=self.filename)
         h5file.create()
@@ -316,9 +335,24 @@ class TestMeasurement(unittest.TestCase):
         self.measurement.load(filename=self.filename)
         name = "SimMot:02"
         self.measurement.set_axes(names=[name])
+        common_elements = self.measurement.devices[name].positions[
+            np.isin(
+                self.measurement.devices[name].positions,
+                self.measurement.devices[
+                    self.measurement.current_data
+                ].positions,
+            )
+        ]
+        data_indices = np.searchsorted(
+            self.measurement.devices[self.measurement.current_data].positions,
+            common_elements,
+        )
+        axes_indices = np.searchsorted(
+            self.measurement.devices[name].positions, common_elements
+        )
         np.testing.assert_array_equal(
-            self.measurement.data.axes[0].values,
-            self.measurement.devices[name].data,
+            self.measurement.data.axes[0].values[data_indices],
+            self.measurement.devices[name].data[axes_indices],
         )
 
     def test_set_axes_sets_current_axes(self):
@@ -355,9 +389,24 @@ class TestMeasurement(unittest.TestCase):
         dataset_id = "SimMot:02"
         name = self.measurement.devices[dataset_id].metadata.name
         self.measurement.set_axes(names=[name])
+        common_elements = self.measurement.devices[dataset_id].positions[
+            np.isin(
+                self.measurement.devices[dataset_id].positions,
+                self.measurement.devices[
+                    self.measurement.current_data
+                ].positions,
+            )
+        ]
+        data_indices = np.searchsorted(
+            self.measurement.devices[self.measurement.current_data].positions,
+            common_elements,
+        )
+        axes_indices = np.searchsorted(
+            self.measurement.devices[dataset_id].positions, common_elements
+        )
         np.testing.assert_array_equal(
-            self.measurement.data.axes[0].values,
-            self.measurement.devices[dataset_id].data,
+            self.measurement.data.axes[0].values[data_indices],
+            self.measurement.devices[dataset_id].data[axes_indices],
         )
 
     def test_get_name_returns_name(self):
@@ -432,3 +481,67 @@ class TestMeasurement(unittest.TestCase):
             IndexError, "Names and fields need to " "be of same length"
         ):
             self.measurement.set_axes(names=names, fields=fields)
+
+    def test_set_data_joins_axes(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimChan:02"
+        self.measurement.set_data(name=name)
+        common_positions = np.intersect1d(
+            self.measurement.devices[name].positions,
+            self.measurement.devices[
+                self.measurement.current_axes[0]
+            ].positions,
+        ).astype(int)
+        axes_positions = np.isin(
+            self.measurement.devices[
+                self.measurement.current_axes[0]
+            ].positions,
+            common_positions,
+        )
+        np.testing.assert_array_equal(
+            self.measurement.data.axes[0].values[
+                np.arange(len(axes_positions))[axes_positions] - 1
+            ],
+            self.measurement.devices[self.measurement.current_axes[0]].data[
+                np.arange(len(axes_positions))[axes_positions]
+            ],
+        )
+
+    def test_set_axes_joins_axes(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        name = "SimMot:02"
+        self.measurement.set_axes(names=[name])
+        common_positions = np.intersect1d(
+            self.measurement.devices[self.measurement.current_data].positions,
+            self.measurement.devices[name].positions,
+        ).astype(int)
+        axes_positions = np.isin(
+            self.measurement.devices[
+                self.measurement.current_axes[0]
+            ].positions,
+            common_positions,
+        )
+        self.assertEqual(
+            len(self.measurement.data.data),
+            len(self.measurement.data.axes[0].values),
+        )
+        np.testing.assert_array_equal(
+            self.measurement.data.axes[0].values[common_positions - 1],
+            self.measurement.devices[self.measurement.current_axes[0]].data[
+                axes_positions
+            ],
+        )
+
+    def test_join_type_returns_correct_type(self):
+        self.assertEqual("AxesLastFill", self.measurement.join_type)
+
+    def test_join_type_sets_join(self):
+        self.measurement.join_type = "Join"
+        self.assertIsInstance(self.measurement._join, joining.Join)
+        self.assertFalse(
+            isinstance(self.measurement._join, joining.AxesLastFill)
+        )
