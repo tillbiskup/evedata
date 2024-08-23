@@ -643,10 +643,6 @@ What may be in here:
   * Results probably in :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` objects.
 
 * Converting scan with subscans into appropriate subscan data structure
-* Mapping between :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` and :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` objects, *i.e.* low-level and high-level interface
-
-  * Assumes a 1:1 mapping between files and measurements.
-  * While there may be several datasets (one for each sample) created from one measurement (*i.e.*, eveH5 file), the 1:1 relation between measurement and file should hold.
 
 
 Joining: "fill modes"
