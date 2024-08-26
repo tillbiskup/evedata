@@ -120,6 +120,17 @@ class Measurement:
         Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
+    device_snapshots : :class:`dict`
+        Snapshot data recorded from the devices involved in a scan.
+
+        Each item is an instance of
+        :class:`evedata.evefile.entities.data.MeasureData`.
+
+        Snapshots reflect, as their name says, the state of the devices at a
+        given point in time. Snapshots of devices involved in a scan are
+        used in :mod:`data joining <evedata.measurement.controllers.joining>`
+        to get additional reference points.
+
     metadata : :class:`evedata.measurement.entities.metadata.Metadata`
         Measurement metadata
 
@@ -146,6 +157,7 @@ class Measurement:
         self.devices = {}
         self.machine = {}
         self.beamline = {}
+        self.device_snapshots = {}
         self.metadata = Metadata()
         self.scan = None
         self.setup = None

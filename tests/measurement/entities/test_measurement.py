@@ -17,6 +17,7 @@ class TestMeasurement(unittest.TestCase):
             "devices",
             "machine",
             "beamline",
+            "device_snapshots",
             "metadata",
             "scan",
             "setup",

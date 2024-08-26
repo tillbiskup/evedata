@@ -461,6 +461,17 @@ class Measurement(entities.Measurement):
         Each item is an instance of
         :class:`evedata.evefile.entities.data.Data`.
 
+    device_snapshots : :class:`dict`
+        Snapshot data recorded from the devices involved in a scan.
+
+        Each item is an instance of
+        :class:`evedata.evefile.entities.data.MeasureData`.
+
+        Snapshots reflect, as their name says, the state of the devices at a
+        given point in time. Snapshots of devices involved in a scan are
+        used in :mod:`data joining <evedata.measurement.controllers.joining>`
+        to get additional reference points.
+
     metadata : :class:`evedata.measurement.entities.metadata.Metadata`
         Measurement metadata
 
@@ -713,6 +724,7 @@ class Measurement(entities.Measurement):
         self._map_metadata()
         self._map_log_messages()
         self._map_devices()
+        self._map_snapshots()
         self._set_data()
         self._set_device_names()
 
@@ -739,6 +751,10 @@ class Measurement(entities.Measurement):
     def _map_devices(self):
         for key, value in self._evefile.data.items():
             self.devices[key] = value
+
+    def _map_snapshots(self):
+        for key, value in self._evefile.snapshots.items():
+            self.device_snapshots[key] = value
 
     def _set_data(self):
         if self.metadata.preferred_axis and self.metadata.preferred_channel:

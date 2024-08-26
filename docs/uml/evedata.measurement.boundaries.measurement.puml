@@ -5,6 +5,7 @@ class Measurement extends measurement.entities.measurement.Measurement {
     devices{} : MeasureData
     machine{} : MeasureData | MonitorData
     beamline{} : MeasureData | MonitorData
+    device_snapshots{} : MeasureData
     metadata : Metadata
     scan : Scan
     setup : Setup

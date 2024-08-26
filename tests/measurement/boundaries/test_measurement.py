@@ -13,7 +13,7 @@ class DummyHDF5File:
     def __init__(self, filename=""):
         self.filename = filename
 
-    def create(self, set_preferred=True):
+    def create(self, set_preferred=True, add_snapshot=False):
         with h5py.File(self.filename, "w") as file:
             file.attrs["EVEH5Version"] = np.bytes_(["7"])
             file.attrs["Version"] = np.bytes_(["2.0"])
@@ -29,6 +29,7 @@ class DummyHDF5File:
                 c1.attrs["preferredChannel"] = np.bytes_(["SimChan:01"])
             main = c1.create_group("main")
             meta = c1.create_group("meta")
+            snapshot = c1.create_group("snapshot")
             simmot = main.create_dataset(
                 "SimMot:01",
                 data=np.ndarray(
@@ -106,9 +107,55 @@ class DummyHDF5File:
                 b"2024-07-25T10:04:03: Lorem ipsum",
                 b"2024-07-25T10:05:23: dolor sit amet",
             ]
-            LiveComment = file.create_dataset(
-                "LiveComment", data=np.asarray(log_messages)
-            )
+            file.create_dataset("LiveComment", data=np.asarray(log_messages))
+            if add_snapshot:
+                simmot = snapshot.create_dataset(
+                    "SimMot:01",
+                    data=np.ndarray(
+                        [2],
+                        dtype=np.dtype(
+                            [("PosCounter", "<i4"), ("SimMot:01", "<f8")]
+                        ),
+                    ),
+                )
+                simmot["PosCounter"] = np.asarray([1, 9])
+                simmot["SimMot:01"] = np.random.random(2)
+                simmot.attrs["Name"] = np.bytes_(["foo"])
+                simmot.attrs["Unit"] = np.bytes_(["eV"])
+                simmot.attrs["Access"] = np.bytes_(["ca:foobar"])
+                simmot.attrs["DeviceType"] = np.bytes_(["Axis"])
+                simchan = snapshot.create_dataset(
+                    "SimChan:01",
+                    data=np.ndarray(
+                        [2],
+                        dtype=np.dtype(
+                            [("PosCounter", "<i4"), ("SimChan:01", "<f8")]
+                        ),
+                    ),
+                )
+                simchan["PosCounter"] = np.asarray([1, 9])
+                simchan["SimChan:01"] = np.random.random(2)
+                simchan.attrs["Name"] = np.bytes_(["bar"])
+                simchan.attrs["Unit"] = np.bytes_(["A"])
+                simchan.attrs["Access"] = np.bytes_(["ca:barbaz"])
+                simchan.attrs["DeviceType"] = np.bytes_(["Channel"])
+                simchan.attrs["Detectortype"] = np.bytes_(["Standard"])
+                simchan3 = snapshot.create_dataset(
+                    "SimChan:03",
+                    data=np.ndarray(
+                        [2],
+                        dtype=np.dtype(
+                            [("PosCounter", "<i4"), ("SimChan:03", "<f8")]
+                        ),
+                    ),
+                )
+                simchan3["PosCounter"] = np.asarray([1, 9])
+                simchan3["SimChan:03"] = np.random.random(2)
+                simchan3.attrs["Name"] = np.bytes_(["bazfoo"])
+                simchan3.attrs["Unit"] = np.bytes_(["A"])
+                simchan3.attrs["Access"] = np.bytes_(["ca:bazfoo"])
+                simchan3.attrs["DeviceType"] = np.bytes_(["Channel"])
+                simchan3.attrs["Detectortype"] = np.bytes_(["Standard"])
 
 
 class TestMeasurement(unittest.TestCase):
@@ -128,6 +175,7 @@ class TestMeasurement(unittest.TestCase):
             "devices",
             "machine",
             "beamline",
+            "device_snapshots",
             "metadata",
             "scan",
             "setup",
@@ -199,6 +247,16 @@ class TestMeasurement(unittest.TestCase):
             for key, value in self.measurement.devices.items()
         }
         self.assertDictEqual(device_names, self.measurement.device_names)
+
+    def test_load_sets_device_snapshots(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(add_snapshot=True)
+        self.measurement.load(filename=self.filename)
+        self.assertTrue(self.measurement.device_snapshots)
+        for item in self.measurement.device_snapshots.values():
+            self.assertIsInstance(
+                item, evedata.evefile.entities.data.MeasureData
+            )
 
     def test_load_sets_data_to_preferred_data(self):
         h5file = DummyHDF5File(filename=self.filename)
