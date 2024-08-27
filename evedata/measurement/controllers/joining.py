@@ -112,6 +112,7 @@ Module documentation
 import logging
 
 import numpy as np
+import numpy.ma as ma
 
 logger = logging.getLogger(__name__)
 
@@ -278,13 +279,11 @@ class AxesLastFill(Join):
       previous position is used.
     * If no previous value exists for a missing value, the value of
       :attr:`missing_value` is used.
+    * The snapshots are checked for values corresponding to the axis,
+      and if present, are taken into account.
 
     Of course, as in all cases, the (integer) positions are used as common
     reference for the values of all devices.
-
-    .. todo::
-        Currently, the class does *not* handle snapshot values, as snapshots
-        are not yet present in the Measurement object.
 
 
     Attributes
@@ -294,12 +293,13 @@ class AxesLastFill(Join):
 
         Although joining is carried out for a small subset of the
         device data of a measurement, additional information from the
-        measurement may be necessary to perform the task.
+        measurement may be necessary to perform the task, *e.g.*,
+        the snapshots.
 
-    missing_value : :class:`float`
+    missing_value : :attr:`numpy.ma.masked` | :class:`float`
         Value used if no previous axis value is available.
 
-        Default: 0
+        Default: :attr:`numpy.ma.masked`
 
     Parameters
     ----------
@@ -316,7 +316,7 @@ class AxesLastFill(Join):
 
     def __init__(self, measurement=None):
         super().__init__(measurement=measurement)
-        self.missing_value = 0
+        self.missing_value = ma.masked
 
     def _join(self, data=None, axes=None):
         result = []
@@ -334,12 +334,24 @@ class AxesLastFill(Join):
             else:
                 axes_attribute = "data"
             values = getattr(axes_device, axes_attribute)
-            positions = (
-                np.digitize(data_device.positions, axes_device.positions) - 1
-            )
+            if axes[idx][0] in self.measurement.device_snapshots:
+                axes_positions = np.searchsorted(
+                    axes_device.positions,
+                    self.measurement.device_snapshots[axes[idx][0]].positions,
+                )
+                snapshot_values = getattr(
+                    self.measurement.device_snapshots[axes[idx][0]],
+                    axes_attribute,
+                )
+                values = np.insert(values, axes_positions, snapshot_values)
+            else:
+                axes_positions = axes_device.positions
+            positions = np.digitize(data_device.positions, axes_positions) - 1
             values = values[positions]
-            # Set values to zero where no previous axis values exist
-            values[np.where(positions < 0)] = self.missing_value
+            # Set values to special value where no previous axis values exist
+            if np.any(np.where(positions < 0)):
+                values = ma.masked_array(values)
+                values[np.where(positions < 0)] = self.missing_value
             result.append(values)
         return result
 
