@@ -73,6 +73,41 @@ comparable null values) in the resulting data.
     some additional post-processing.
 
 
+How to deal with missing values?
+================================
+
+Depending on the concrete situation, there may be no value available to
+fill a gap in an axis. Hence, how to deal with this situation?
+
+
+Numeric values
+--------------
+
+For numeric values, some kind of "NaN" (not a number) could be used.
+
+For NumPy, only floats can have a dedicated "NaN", but no other dtype.
+Hence, in case of missing values, a masked array (
+:class:`numpy.ma.MaskedArray`) is used and :data:`numpy.ma.masked` set
+explicitly for those missing values. For all practical purposes,
+this should work similar to the :data:`numpy.nan`. In particular,
+when trying to plot a :class:`numpy.ma.MaskedArray`, the masked values are
+simply ignored. For further details of how to work with masked arrays,
+see the :mod:`numpy.ma` documentation.
+
+
+Non-numeric values
+------------------
+
+First of all: Does this situation occur in reality? Yes, there are axes
+with non-numeric values. But are these axes ever joined? If so,
+some textual value such as "N/A" (not available) may be used.
+
+.. important::
+
+    Currently, this situation is *not* implemented in the classes of the
+    :mod:`joining <evedata.measurement.controllers.joining>` module.
+
+
 Join modes currently implemented
 ================================
 
@@ -296,10 +331,10 @@ class AxesLastFill(Join):
         measurement may be necessary to perform the task, *e.g.*,
         the snapshots.
 
-    missing_value : :attr:`numpy.ma.masked` | :class:`float`
+    missing_value : :data:`numpy.ma.masked` | :class:`float`
         Value used if no previous axis value is available.
 
-        Default: :attr:`numpy.ma.masked`
+        Default: :data:`numpy.ma.masked`
 
     Parameters
     ----------
