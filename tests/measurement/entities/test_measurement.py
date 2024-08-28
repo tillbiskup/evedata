@@ -20,7 +20,7 @@ class TestMeasurement(unittest.TestCase):
             "device_snapshots",
             "metadata",
             "scan",
-            "setup",
+            "station",
             "log_messages",
         ]
         for attribute in attributes:

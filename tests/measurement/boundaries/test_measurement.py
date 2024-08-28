@@ -178,7 +178,7 @@ class TestMeasurement(unittest.TestCase):
             "device_snapshots",
             "metadata",
             "scan",
-            "setup",
+            "station",
             "log_messages",
             "data",
         ]

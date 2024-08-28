@@ -143,7 +143,7 @@ class Measurement:
     scan : :class:`Scan`
         Description of the actual scan.
 
-    setup : :class:`Setup`
+    station : :class:`Station`
         Description of the actual setup.
 
     Raises
@@ -160,7 +160,7 @@ class Measurement:
         self.device_snapshots = {}
         self.metadata = Metadata()
         self.scan = None
-        self.setup = None
+        self.station = None
         self.log_messages = []
 
 

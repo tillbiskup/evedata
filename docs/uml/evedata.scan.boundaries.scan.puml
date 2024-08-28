@@ -9,7 +9,7 @@ interface File {
 class Scan extends scan.entities.scan.Scan implements File {
 }
 
-class Setup extends scan.entities.setup.Setup implements File {
+class Station extends scan.entities.setup.Setup implements File {
 }
 
 @enduml

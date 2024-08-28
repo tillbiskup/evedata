@@ -4,7 +4,7 @@ class File {
     metadata : Metadata
     log_messages : LogMessage[]
     scan : Scan
-    setup : Setup
+    station : Station
     data : Data{}
     snapshots : Data{}
     monitors : Data{}
@@ -40,13 +40,13 @@ class Scan extends scan.boundaries.scan.Scan {
 }
 'note left: See diagrams for\nscan subpackage.
 
-class Setup extends scan.boundaries.setup.Setup {
+class Station extends scan.boundaries.scan.Station {
     filename : string
 }
 
 File *-- Metadata
 File "1" *-- "n" LogMessage
 File *-- Scan
-File *-- Setup
+File *-- Station
 
 @enduml

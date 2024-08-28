@@ -8,7 +8,7 @@ class Measurement extends measurement.entities.measurement.Measurement {
     device_snapshots{} : MeasureData
     metadata : Metadata
     scan : Scan
-    setup : Setup
+    station : Station
     log_messages[] : LogMessage
     data : Data
 
@@ -21,17 +21,17 @@ class Measurement extends measurement.entities.measurement.Measurement {
 
 Measurement *-- measurement.entities.metadata.Metadata
 Measurement *-- Scan
-Measurement *-- Setup
+Measurement *-- Station
 
 class evefile.entities.file.Scan {
 }
 
-class evefile.entities.file.Setup {
+class evefile.entities.file.Station {
 }
 
 class Scan extends evefile.entities.file.Scan
 
-class Setup extends evefile.entities.file.Setup
+class Station extends evefile.entities.file.Station
 
 class measurement.entities.measurement.Data {
     data : np.ndarray
