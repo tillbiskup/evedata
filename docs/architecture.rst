@@ -108,11 +108,11 @@ Despite the opposite chain of dependencies, starting with the :mod:`file <evedat
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Split "Scan" and "Setup", similarly to how they are stored in eveH5 in the future?
+    * Split "Scan" and "Station", similarly to how they are stored in eveH5 in the future?
 
-      The :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` subpackage now contains two facades: :class:`Scan <evedata.scan.boundaries.scan.Scan>` with the scan description and :class:`Setup <evedata.scan.boundaries.scan.Setup>` with the setup description.
+      The :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` subpackage now contains two facades: :class:`Scan <evedata.scan.boundaries.scan.Scan>` with the scan description and :class:`Station <evedata.scan.boundaries.scan.Station>` with the description of all devices (machine, beamline, setup), currently "setup" in the SCML.
 
-      The setup part of the SCML file sent to the engine is not necessarily identical with the XML file with the setup description loaded by the engine. Hence, it may make sense to have both stored separately, or have a "Scan" facade that contains only the scan description, and a "Setup" facade containing the information on the relevant devices.
+      The setup part of the SCML file sent to the engine is not necessarily identical to the XML file with the setup description loaded by the engine. Hence, it may make sense to have both stored separately, or have a "Scan" facade that contains only the scan description, and a "Station" facade containing the information on the relevant devices.
 
       Which version is eventually saved in the HDF5 files? As it is the engine saving these files, it should be the version with the setup part updated. But is this really the case?
 
@@ -571,7 +571,7 @@ A measurement generally reflects all the data obtained during a measurement. How
 .. figure:: uml/evedata.measurement.entities.measurement.*
     :align: center
 
-    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Devices are all the detector(channel)s and motor(axe)s used in a scan. Distinguishing between detector(channel)s/motor(axe)s, beamline, and machine can (at least partially) happen based on the data type: detector(channel)s are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Setup` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data` and :class:`Axis` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
+    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Devices are all the detector(channel)s and motor(axe)s used in a scan. Distinguishing between detector(channel)s/motor(axe)s, beamline, and machine can (at least partially) happen based on the data type: detector(channel)s are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Station` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data` and :class:`Axis` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
 
 
 
@@ -924,7 +924,7 @@ setup module
     :align: center
     :width: 750px
 
-    Class hierarchy of the :mod:`scan.entities.setup <evedata.scan.entities.setup>` module, closely resembling the schema of the SCML file. Differing from the SCML schema definition, an additional class :class:`Setup <evedata.scan.entities.setup.Scan>` is introduced here containing objects of the subclasses "Detector, "Motor", and "Device" of "AbstractDevice". The SCML schema contains these three at the same level as "Scan" and "Plugins".
+    Class hierarchy of the :mod:`scan.entities.setup <evedata.scan.entities.setup>` module, closely resembling the schema of the SCML file. Differing from the SCML schema definition, an additional class :class:`Setup <evedata.scan.entities.setup.Setup>` is introduced here containing objects of the subclasses "Detector, "Motor", and "Device" of "AbstractDevice". The SCML schema contains these three at the same level as "Scan" and "Plugins".
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)

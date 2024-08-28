@@ -75,3 +75,7 @@ Some questions to address
   * With removing chains, any event could always be mapped to the current position count. Hence, no need for storing timestamps instead any more.
   * The fundamental question: are there any events that we need to monitor that deserve an extra group in the eveH5 file? If we were to monitor (via ``camonitor``) any PV (usually a device option), this would be a variable device option stored in the device dataset.
   * In any case, monitors should contain HDF5 datasets representing (abstract) devices (together with their options, if available), but not bare options, as in eveH5 v7.
+
+* Could we distinguish between machine and beamline devices already in the setup part of the SCML file and create groups in the eveH5 file for both, *i.e.*, groups ``machine`` and ``beamline``?
+
+  * If so, where to put the "standard" machine datasets (current, lifetime) to? ``main`` or ``machine``?

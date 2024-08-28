@@ -375,12 +375,12 @@ class, these are:
   * Join ("fill") data accordingly if necessary. |check|
 
 * Copy the :attr:`EveFile.scan
-  <evedata.evefile.boundaries.evefile.EveFile.setup>` attribute to the
+  <evedata.evefile.boundaries.evefile.EveFile.scan>` attribute to the
   :attr:`Measurement.scan` attribute. |cross|
 
-* Copy the :attr:`EveFile.setup
-  <evedata.evefile.boundaries.evefile.EveFile.setup>` attribute to the
-  :attr:`Measurement.setup` attribute. |cross|
+* Copy the :attr:`EveFile.station
+  <evedata.evefile.boundaries.evefile.EveFile.station>` attribute to the
+  :attr:`Measurement.station` attribute. |cross|
 
 
 Questions to address
@@ -391,9 +391,9 @@ Questions to address
   * Currently, all devices from the snapshot section that are *not* as
     well part of the main section will end up in either
     :attr:`Measurement.machine` or :attr:`Measurement.beamline`.
-  * What about those snapshot devices that are part of the main section?
-    They may be relevant for the filling, hence most possibly need to be
-    retained somewhere.
+  * Those snapshot devices that are part of the main section may be
+    relevant for the filling, hence are stored in
+    :attr:`Measurement.device_snapshots`.
 
 * How to sensibly distinguish which of the datasets originally in the
   snapshot and monitor section belong to :attr:`Measurement.machine` and
@@ -402,7 +402,9 @@ Questions to address
 * How to deal with the :attr:`EveFile.position_timestamps
   <evedata.evefile.boundaries.evefile.EveFile.position_timestamps>` dataset?
 
-  * This one is necessary for mapping monitor timestamps to positions.
+  * This one is necessary for mapping monitor timestamps to positions,
+    as well as to relate timestamps from log messages to positions or
+    positions to absolute times, if necessary.
   * Could we deal with it internally, as we have a representation of the
     :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` object?
 
