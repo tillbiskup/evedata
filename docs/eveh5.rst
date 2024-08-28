@@ -44,8 +44,19 @@ Some of the most important differences with respect to the previous scheme, v7:
 * SCML and XML are stored as HDF5 datasets, not in the userdata area at the beginning of the HDF5 file.
 * Additional data for datasets, such as average and interval channels or normalised values, are stored as additional columns in the channel dataset.
 * Channels used for normalisation do not appear as separate channels any more, their data are stored together with the normalised data in the HDF5 datasets of the normalised channels.
+
+  * Will this be a problem?
+
 * Channels whose attributes can change between scan modules are suffixed with their respective scan module ID.
 * Array and area channels are modelled as HDF5 datasets. The reason to still have individual groups per channel is storing the variable number of ROI datasets together with the respective channel.
+* Snapshot group is no longer optional, as snapshots containing *all* devices currently available will be carried out automatically at the begin and end of a scan in the future.
+* New group "pre_postscan" containing datasets for each device that is set in the pre-/postscan phase of a scan module.
+
+  * Options of devices set are contained in the device datasets as static attributes.
+
+* New group "positioning" containing datasets for each axis that has been positioned by a positioning plugin.
+* No group "device" (aka monitor) any more
+
 
 
 Some questions to address
@@ -61,12 +72,6 @@ Some questions to address
 
 * Do we still need monitors with timestamps instead of positions as axis? Is there anything relevant that cannot be mapped on the position count as quantisation axis of the measurement?
 
-  * Monitors for events that are not controlled by the engine, *e.g.* from the machine itself, may be a conceptually valid scenario, though. In any case, monitors should contain HDF5 datasets representing (abstract) devices (together with their options, if available), but not bare options, as in eveH5 v7.
-
-* How to deal with pre-/postscan and positioning phases of a scan module? At least pre-/postscan devices are currently automatically registered as monitors, although this is not very intuitive and contradicts the original idea of monitors.
-
-  * Adding groups, one for pre-/postscan and one for positioning, and give the former distinct position counts?
-
-  * Pre-/postscan devices are either "dumb" devices or options of devices. In the latter case, they are obviously variable options where all values need to be stored as an array in the data model. However, as these options do *not* have values for each position values for the device they belong to are stored, these pre-/postscan options need to be stored in separate datasets on the HDF5 level, and probably as an ``option`` object containing both, positions and values, in a dict or list in the corresponding device class in ``evedata``.
-
-  * Positionings are clearly motor axes, and they get their own position count added to the axis dataset (checked and confirmed). However, as there is no detector value for this position count(s), these positions are usually not plotted and ignored in the analysis. If separating the positionings into a separate HDF5 group and datasets, one could even think of storing the information how the positioning has been done (the name of the function used to calculate the position) as an additional column. Of course, this could theoretically be inferred from the SCML file stored in the HDF5 file as well, but why not have it directly accessible?
+  * With removing chains, any event could always be mapped to the current position count. Hence, no need for storing timestamps instead any more.
+  * The fundamental question: are there any events that we need to monitor that deserve an extra group in the eveH5 file? If we were to monitor (via ``camonitor``) any PV (usually a device option), this would be a variable device option stored in the device dataset.
+  * In any case, monitors should contain HDF5 datasets representing (abstract) devices (together with their options, if available), but not bare options, as in eveH5 v7.

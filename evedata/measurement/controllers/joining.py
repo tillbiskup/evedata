@@ -2,6 +2,12 @@
 
 *Ensure data and axes values are commensurate and compatible.*
 
+.. sidebar:: Contents
+
+    .. contents::
+        :local:
+        :depth: 2
+
 For each motor axis and detector channel, in the original eveH5 file only
 those values appear---together with a "position" (PosCount) value---that
 have actually been set or measured. Hence, the number of values (*i.e.*,
@@ -19,7 +25,7 @@ criterion, as not only the shape needs to be commensurate, but the indices
 A bit of history
 ================
 
-In the previous inerface (``EveFile``), there are four "fill modes" available
+In the previous interface (``EveFile``), there are four "fill modes" available
 for data: NoFill, LastFill, NaNFill, LastNaNFill. From the `documentation of
 eveFile <https://www.ahf.ptb.de/messpl/sw/python/common/eveFile/doc/html
 /Section-Fillmode.html#evefile.Fillmode>`_:

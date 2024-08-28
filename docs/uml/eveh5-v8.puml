@@ -25,10 +25,14 @@ class Root << (G,orchid) >> {
 }
 
 
-Root *-- monitor
 Root *-- main
 Root *-- snapshot
+Root *-- positioning
+Root *-- pre_postscan
 Root *-- meta
+
+pre_postscan -[hidden]> positioning
+positioning -[hidden]> meta
 
 enum DeviceType {
     NonnumericChannel
@@ -67,14 +71,9 @@ note left of DetectorType
     packages.
 endnote
 
-class monitor << (G,orchid) >> <<optional>> {
-}
-
-monitor *-- "<monitordata>"
-
 class main << (G,orchid) >> {}
 
-class snapshot << (G,orchid) >> <<optional>> {}
+class snapshot << (G,orchid) >> {}
 
 note left of snapshot
     The ""snapshot"" group contains only datasets
@@ -89,13 +88,50 @@ snapshot *-- "<singlepointdata>"
 
 class meta << (G,orchid) >> {}
 
-meta *-- Positions2Milliseconds
 meta *-- Scan
-meta *-- Setup
+meta *-- Station
+meta *-- Positions2Milliseconds
 meta *-- LogMessages
-Setup -[hidden]> Scan
+meta *-- ErrorMessages
+Station -[hidden]> Scan
 
 'main -[hidden]> snapshot
+
+class positioning << (G,orchid) >> {}
+
+positioning *-- "<positioningdata>"
+
+class "<positioningdata>" << (D,orange) >> {
+    Name : string
+    XMLID : string
+    --
+    Positions : int32
+    Data : float64
+    Function : string
+    ChannelID : string
+    NormalizeID : string
+    Parameters : <any>
+}
+note bottom of "<positioningdata>"
+    The dataset has the same name
+    as the corresponding axis dataset.
+end note
+
+class pre_postscan << (G,orchid) >> {}
+
+pre_postscan *-- "<devicedata>"
+
+class "<devicedata>" << (D,orange) >> {
+    PV : string
+    AccessMode : string
+    Name : string
+    XMLID : string
+    DeviceType : string
+    --
+    Positions : int32
+    Data : <any>
+}
+
 
 class "<axisdata>" << (D,orange) >> {
     PV : string
@@ -106,14 +142,19 @@ class "<axisdata>" << (D,orange) >> {
     - Unit : string
     --
     Positions : int32
-    Data : float64 | vlen_float64
+    Data : <any>
 }
 note bottom of "<axisdata>"
-    For axes with encoders, RBV will be saved
-    synchronised with each detector channel
-    readout, and in this case, for average channels
-    individual RBV per channel readout will be stored
+    For axes with encoders,
+    RBV will be saved synchronised
+    with each detector channel
+    readout, and in this case,
+    for average channels
+    individual RBV per channel
+    readout will be stored
     for one and the same position.
+
+    Axes may have nonnumeric values.
 end note
 
 class "<singlepointdata>" << (D,orange) >> {
@@ -308,7 +349,7 @@ class "scientificcamera_statistics<#>" << (D,orange) >> {
     CentroidSigmaXY : float64
 }
 
-class Setup << (D,orange) >> {
+class Station << (D,orange) >> {
     Version : string
     Filename : string
     --
@@ -335,13 +376,6 @@ class Scan << (D,orange) >> {
     XML : string
 }
 
-class Positions2Milliseconds << (D,orange) >> {
-    Unit : string
-    --
-    Positions : int32
-    Milliseconds : int32
-}
-
 class LogMessages << (D,orange) >> <<optional>> {
     --
     Timestamp : string
@@ -350,27 +384,39 @@ class LogMessages << (D,orange) >> <<optional>> {
     Message : vlen_string
 }
 
+class ErrorMessages << (D,orange) >> <<optional>> {
+    --
+    Positions : int32
+    DeviceID : string
+    Severity : string
+    State : string
+}
+
+class Positions2Milliseconds << (D,orange) >> {
+    Unit : string
+    --
+    Positions : int32
+    Milliseconds : int32
+}
+
+LogMessages -[hidden]> ErrorMessages
+ErrorMessages -[hidden]> Positions2Milliseconds
+Positions2Milliseconds -[hidden]> Station
+Station -[hidden]> Scan
+
 note as SCML_note
-    XML should be a fixed_length string and the dataset compressed,
+    XML should be a fixed_length string
+    and the dataset compressed,
     to save (a lot of) space.
-    Tests have revealed compression by about 95% for real XML data.
-    Not naming the data field results in proper display of the XML
-    in HDFView, including line breaks, and regardless of compression.
+    Tests have revealed compression
+    by about 95% for real XML data.
+    Not naming the data field results
+    in proper display of the XML
+    in HDFView, including line breaks,
+    and regardless of compression.
 end note
 
 Scan .. SCML_note
-Setup .. SCML_note
-
-class "<monitordata>" << (D,orange) >> {
-    PV : string
-    AccessMode : string
-    Name : string
-    XMLID : string
-    DeviceType : string
-    - Unit : string
-    --
-    Milliseconds : int32
-    Data : <i>any</i>
-}
+Station .. SCML_note
 
 @enduml
