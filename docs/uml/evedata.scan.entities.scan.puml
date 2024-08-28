@@ -7,17 +7,15 @@ class Scan {
     comment : string
     savefilename : string
     confirmsave : boolean
-    saveplugin : Controller
     monitoroptions : string[]
     startevent : Event
     redoevents : Event[]
     breakevents : Event[]
     stopevents : Event[]
     pauseconditions : PauseCondition[]
-    scanmodules : ScanModule[]
+    scanmodules : AbstractScanModule[]
 }
-Scan *-- Controller
-Scan *-- "n" ScanModule
+Scan *-- "n" AbstractScanModule
 Scan *-- "n" PauseCondition
 Scan *-- "n" Event
 
@@ -26,7 +24,7 @@ note bottom of PauseCondition: See separate\nevent module.
 File *- Scan
 note left of File: See separate\nfile module.
 
-class ScanModule {
+class AbstractScanModule {
     name : string
     xpos : integer
     ypos : integer
@@ -35,17 +33,21 @@ class ScanModule {
     appended : integer
     id : integer
 }
-ScanModule <|-- ClassicScanModule
-ScanModule <|-- StaticAxisSnapshot
-ScanModule <|-- StaticChannelSnapshot
-ScanModule <|-- DynamicAxisSnapshot
-ScanModule <|-- DynamicChannelSnapshot
+AbstractScanModule <|-- ScanModule
+AbstractScanModule <|-- SnapshotModule
 
 class Controller {
     parameter : Parameter[]
     name : string
 }
 Controller *-- "n" Parameter
+
+note bottom of Controller
+    Why is "Controller"
+    not named "Plugin"?
+    What is the difference
+    between the two?
+end note
 
 class IntervalChannel {
     triggerinterval : float
@@ -65,7 +67,7 @@ class Positioning {
 }
 Positioning *-- Controller
 
-class ClassicScanModule {
+class ScanModule {
     valuecount : integer
     settletime : float
     triggerdelay : float
@@ -81,13 +83,13 @@ class ClassicScanModule {
     positionings : Positioning[]
     plots : Plot[]
 }
-ClassicScanModule *-- "n" Event
-ClassicScanModule *-- "n" PreScan
-ClassicScanModule *-- "n" Axis
-ClassicScanModule *-- "n" Channel
-ClassicScanModule *-- "n" PostScan
-ClassicScanModule *-- "n" Positioning
-ClassicScanModule *-- "n" Plot
+ScanModule *-- "n" Event
+ScanModule *-- "n" PreScan
+ScanModule *-- "n" Axis
+ScanModule *-- "n" Channel
+ScanModule *-- "n" PostScan
+ScanModule *-- "n" Positioning
+ScanModule *-- "n" Plot
 
 note bottom of Plot: See separate\nplot module.
 note bottom of Event: See separate\nevent module.
@@ -103,21 +105,8 @@ class PostScan {
     reset_originalvalue : boolean
 }
 
-class DynamicAxisSnapshot {
+class SnapshotModule {
 }
-
-class DynamicChannelSnapshot {
-}
-
-class StaticAxisSnapshot {
-    axes : Axis[]
-}
-StaticAxisSnapshot *-- "n" Axis
-
-class StaticChannelSnapshot {
-    channels : Channel[]
-}
-StaticChannelSnapshot *-- "n" Channel
 
 class Axis {
     axis_id : string

@@ -14,16 +14,17 @@ PluginType *- Plugin
 
 enum PluginType {
     position
-    save = "HDF5"
     display
     postscanpositioning
 }
-note left of PluginType::save
-    There is only one
-    save plugin left: HDF5
-end note
 note left of PluginType::display
     What are these?
+end note
+note left of PluginType::postscanpositioning
+    Rename into
+    "positioning" for
+    consistency with
+    other classes?
 end note
 
 enum PluginData {

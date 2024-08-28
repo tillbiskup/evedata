@@ -10,9 +10,9 @@ class Plot {
 }
 Plot *-- XAxis
 Plot *-- "1..2" YAxis
-ClassicScanModule *- "n" Plot
+ScanModule *- "n" Plot
 
-note bottom of ClassicScanModule: See separate\nscan module
+note bottom of ScanModule: See separate\nscan module
 
 class PlotAxis {
     id : string

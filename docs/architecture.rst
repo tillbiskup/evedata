@@ -825,7 +825,7 @@ The scan functional layer contains all classes necessary to represent the conten
 
 .. important::
 
-    The SCML file contained in (most) eveH5 files "only" saves the scan description, not the description of the measurement station. Furthermore, it saves the SCML in a way that it can be reused directly by the measurement program, *i.e.* with variables *not* replaced. Why is this important?
+    The SCML file contained in (most) eveH5 files "only" saves the scan description and a reduced set of devices in the setup section, not the entire description of the measurement station as stored in the ``messplatz.xml`` file. Furthermore, it saves the SCML in a way that it can be reused directly by the GUI of the measurement program, *i.e.* with variables *not* replaced. Why is this important?
 
     * Variables are not replaced by their actual values
 
@@ -843,6 +843,8 @@ One big difference between the SCML schema and the class hierarchy defined in th
 
 Entities
 --------
+
+Although the :mod:`evedata.scan` subpackage has a different goal as compared to the original SCML, namely its read-only interest, the discussion below is currently heading towards a restructuring of the SCML XML schema (XSD), mainly informed by the data model developed above.
 
 
 file module
@@ -865,19 +867,31 @@ This module contains the main :class:`File <evedata.scan.entities.file.File>` cl
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * Storing the plain XML
+    * Renaming "setup" to "station"?
 
-      Is there a need to store the plain XML file somewhere? Or would it be sufficient to extract it (again) when needed from the eveH5 file?
+      In the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` class, there is a distinction between setup, beamline, and machine. The current notion of "setup" in the SCML file is a summary of these three. However, it might be sensible to distinguish the devices belonging to either of the three types already on the SCML level.
 
     * Moving "Plugin" to its own module for consistency?
 
       "Scan" and "Setup" are contained in their own modules, as is "Plot" and "Event" that are both used in "Scan".
 
+    * Remove the entire "Plugin" part from the SCML file?
+
+      What is the reasoning behind defining plugins in the SCML that are eventually a function of the eve engine and not of the individual scan? Positioning plugins are a prime example, as are the (now removed) save plugins.
+
+      Probably, originally the idea was to have a generic definition of plugins and allow for defining libraries here that would get accessed by a running engine dynamically. However, it seems that this has never really materialised.
+
+      Are position plugins (for creating axes positions) something the GUI would know how to handle if we define something new in the SCML? Probably not, and if not, than we could remove it from the SCML as well.
+
+    * What are "display" plugins?
+
+      Is there any need to have them in the SCML?
+
 
 scan module
 ~~~~~~~~~~~
 
-This module contains all classes storing information on the actual scan. An SCML file can contain exactly one scan. Furthermore, as has been decided to remove multiple chains in one scan, and hence the concept of chains altogether, the hierarchy is a bit simpler as compared to the current (Version 9.2, as of 04/2024) SCML XML schema. One scan consists of *n* scan modules.
+This module contains all classes storing information on the actual scan. An SCML file can contain exactly one scan. Furthermore, as has been decided to remove multiple chains in one scan, and hence the concept of chains altogether, the hierarchy is a bit simpler as compared to the current (Version 9.2, as of 08/2024) SCML XML schema. One scan consists of *n* scan modules.
 
 To slightly reduce the already rather complex list of classes, plots, events, and pause conditions have been outsourced into separate modules, with the latter two together in one module. These modules are described separately below.
 
@@ -887,6 +901,13 @@ To slightly reduce the already rather complex list of classes, plots, events, an
     :width: 750px
 
     Class hierarchy of the :mod:`scan.entities.scan <evedata.scan.entities.scan>` module, closely resembling the schema of the SCML file. As the scan module is already quite complicated, event and plot-related classes have been separated into their own modules and are described below. Hint: For a larger view, you may open the image in a separate tab. As it is vectorised (SVG), it scales well.
+
+
+Comments:
+
+* The chains have been removed entirely.
+* The snapshot modules have been reduced to one single module (similar to a combination of the previously available dynamic snapshot modules).
+* The saveplugin attribute on the scan level has been removed.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -938,6 +959,14 @@ setup module
       Is there somewhere (*e.g.* in the SCML file) more information on the individual devices, such as the exact type and manufacturer for commercial devices? This might be relevant in terms of traceability of changes in the setup.
 
       Looks like as of now there is no such information stored anywhere. It might be rather straight-forward to expand the SCML schema for this purpose, not affecting the GUI or engine (both do not care about this information).
+
+    * Rename into "station" to distinguish better between setup, beamline, and machine?
+
+      Furthermore, distinguish for each (abstract) device where it belongs to (setup, beamline, machine) and make these three sections on the top level of the station SCML tag?
+
+    * How to get the data model into the SCML?
+
+      The data model for the devices (detectors, motors, ...) as detailed above for Evefile and Measurement should somehow be reflected in the SCML file as well. Do we need distinct tags/classes for that, or is it sufficient to have the ``class`` attribute with the appropriate name?
 
 
 Controllers
