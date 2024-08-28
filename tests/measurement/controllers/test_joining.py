@@ -11,6 +11,9 @@ class MockDevice:
         self.data = data
         self.positions = positions
 
+    def get_data(self):
+        pass
+
 
 class MockMeasurement:
     def __init__(self, snapshots=False):

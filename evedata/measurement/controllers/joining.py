@@ -376,6 +376,7 @@ class AxesLastFill(Join):
                 axes_attribute = "data"
             values = getattr(axes_device, axes_attribute)
             if axes[idx][0] in self.measurement.device_snapshots:
+                self.measurement.device_snapshots[axes[idx][0]].get_data()
                 axes_positions = np.searchsorted(
                     axes_device.positions,
                     self.measurement.device_snapshots[axes[idx][0]].positions,
