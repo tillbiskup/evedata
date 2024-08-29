@@ -77,7 +77,7 @@ class TestJoin(unittest.TestCase):
         self.assertIsInstance(result, list)
 
 
-class TestLastFill(unittest.TestCase):
+class TestAxesLastFill(unittest.TestCase):
     def setUp(self):
         self.join = joining.AxesLastFill()
         self.join.measurement = MockMeasurement()

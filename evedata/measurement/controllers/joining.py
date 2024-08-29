@@ -108,10 +108,13 @@ First of all: Does this situation occur in reality? Yes, there are axes
 with non-numeric values. But are these axes ever joined? If so,
 some textual value such as "N/A" (not available) may be used.
 
-.. important::
+.. note::
 
-    Currently, this situation is *not* implemented in the classes of the
-    :mod:`joining <evedata.measurement.controllers.joining>` module.
+    The default fill value of a :class:`numpy.ma.MaskedArray` is ``N/A``,
+    and this is (only) used when calling :meth:`numpy.ma.MaskedArray.filled`.
+    Otherwise, the masked values are in most cases simply ignored. For an
+    overview of the default fill values of masked arrays, see the
+    :attr:`numpy.ma.MaskedArray.fill_value` attribute.
 
 
 Join modes currently implemented
@@ -122,6 +125,9 @@ Currently, there is exactly one join mode implemented:
 * :class:`AxesLastFill`
 
   Inflate axes to data dimensions using last for missing value.
+
+  If no previous axes value is available, convert the data into a
+  :obj:`numpy.ma.MaskedArray` object and mask the value.
 
   This mode is equivalent to the "LastFill" mode described above.
 
@@ -153,7 +159,7 @@ Module documentation
 import logging
 
 import numpy as np
-import numpy.ma as ma
+from numpy import ma
 
 logger = logging.getLogger(__name__)
 
@@ -318,8 +324,9 @@ class AxesLastFill(Join):
       dimension as the data.
     * For values originally missing for an axis, the last value of the
       previous position is used.
-    * If no previous value exists for a missing value, the value of
-      :attr:`missing_value` is used.
+    * If no previous value exists for a missing value, the data are
+      converted into a :obj:`numpy.ma.MaskedArray` object and the values
+      masked with :data:`numpy.ma.masked`.
     * The snapshots are checked for values corresponding to the axis,
       and if present, are taken into account.
 
@@ -337,11 +344,6 @@ class AxesLastFill(Join):
         measurement may be necessary to perform the task, *e.g.*,
         the snapshots.
 
-    missing_value : :data:`numpy.ma.masked` | :class:`float`
-        Value used if no previous axis value is available.
-
-        Default: :data:`numpy.ma.masked`
-
     Parameters
     ----------
     measurement : :class:`evedata.measurement.boundaries.measurement.Measurement`
@@ -357,7 +359,6 @@ class AxesLastFill(Join):
 
     def __init__(self, measurement=None):
         super().__init__(measurement=measurement)
-        self.missing_value = ma.masked
 
     def _join(self, data=None, axes=None):
         result = []
@@ -393,7 +394,7 @@ class AxesLastFill(Join):
             # Set values to special value where no previous axis values exist
             if np.any(np.where(positions < 0)):
                 values = ma.masked_array(values)
-                values[np.where(positions < 0)] = self.missing_value
+                values[np.where(positions < 0)] = ma.masked
             result.append(values)
         return result
 
