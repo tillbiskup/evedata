@@ -325,12 +325,12 @@ To print all device names:
 
 .. code-block::
 
-    for name in measurement.device_names.keys():
+    for name in measurement.device_names:
         print(name)
 
 Of course, you could do the same for the unique IDs. However, in this 
 case, simply iterate over the keys of the :attr:`Measurement.devices` 
-attribute and you're done.
+attribute, and you're done.
 
 
 Internals: What happens when reading an eveH5 file?

@@ -101,7 +101,7 @@ What follows is a summary of the different aspects, for the time being
     <evedata.evefile.entities.data.AxisData>` objects. |check|
 
     * How to distinguish between axes with and without encoders? |cross|
-    * Read channels with RBV and replace axis values with RBV.
+    * Read channels with RBV and replace axis values with RBV. |cross|
 
       * Most probably, the corresponding channel has the same *name*
         (not XML-ID, though!) as the axis, but with suffix ``_RBV``,
@@ -138,7 +138,7 @@ What follows is a summary of the different aspects, for the time being
     :obj:`AverageChannelData
     <evedata.evefile.entities.data.AverageChannelData>`,
     and :obj:`IntervalChannelData
-    <evedata.evefile.entities.data.IntervalChannelData>`, respectively.
+    <evedata.evefile.entities.data.IntervalChannelData>`, respectively. |cross|
 
     Hint: Getting the shape of an HDF5 dataset is a cheap operation and
     does *not* require reading the actual data, as the information is
@@ -286,7 +286,7 @@ Fundamental change of eveH5 schema with v8
 ==========================================
 
 It is anticipated that based on the experience with the data model
-implemented within the `evedata` package, the schema of the eveH5 files
+implemented within the ``evedata`` package, the schema of the eveH5 files
 will change dramatically with the new version v8. Overarching design
 principles of the schema overhaul include:
 
@@ -301,6 +301,9 @@ principles of the schema overhaul include:
       data point are represented as additional columns in the HDF5 dataset.
 
 * Removing of the chain ``c1`` that was never and will never be used.
+
+For details, see the :doc:`/eveh5` overview page, and particulary the
+section on eveH5 v8.
 
 Taken together, this restructuring of the eveH5 schema most probably means
 that the mapper for v8 does not have much in common with the mappers for
