@@ -78,6 +78,9 @@ comparable null values) in the resulting data.
     class (DS) uses LastNaNFill as a default as well but does *not* apply
     some additional post-processing.
 
+    Shall fill modes be something to change in a viewer? And which fill
+    modes are used in practice (and do we have any chance to find this out)?
+
 
 How to deal with missing values?
 ================================

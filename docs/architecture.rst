@@ -85,7 +85,7 @@ Furthermore, the evefile functional layer provides a stable abstraction of the c
 
 .. important::
 
-    As the evefile functional layer is *not* meant as a (human-facing) user interface, it is *not* concerned with concepts such as fill modes, but represents the data "as is". This means that the different data can generally not be plotted against each other. This is a deliberate decision, as filling data for a (two-dimensional) data array, although generally desirable for (simple) plotting purposes, masks/removes some highly important information, *e.g.* whether a value has not been measured in the first place, or whether obtaining a value has failed for some reason.
+    As the evefile functional layer is *not* meant as a (human-facing) user interface, it is *not* concerned with concepts such as "fill modes" (joining), but represents the data "as is". This means that the different data can generally not be plotted against each other. This is a deliberate decision, as joining data for a (two-dimensional) data array, although generally desirable for (simple) plotting purposes, masks/removes some highly important information, *e.g.* whether a value has not been measured in the first place, or whether obtaining a value has failed for some reason.
 
 
 Entities
@@ -127,7 +127,7 @@ Some comments (not discussions any more):
 data module
 ~~~~~~~~~~~
 
-Data are organised in "datasets" within HDF5, and the ``evefile.data`` module provides the relevant entities to describe these datasets. Although currently (as of 06/2024, eve version 2.1) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists. Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
+Data are organised in "datasets" within HDF5, and the :mod:`data <evedata.evefile.entities.data>` module provides the relevant entities to describe these datasets. Although currently (as of 08/2024, eve version 2.1) neither average nor interval detector channels save the individual data points, at least the former is a clear need of the engineers/scientists. Hence, the data model already respects this use case. As per position (count) there can be a variable number of measured points, the resulting array is no longer rectangular, but a "ragged array". While storing such arrays is possible directly in HDF5, the implementation within evedata is entirely independent of the actual representation in the eveH5 file.
 
 
 .. _fig-uml_evedata-evefile.data:
@@ -136,7 +136,7 @@ Data are organised in "datasets" within HDF5, and the ``evefile.data`` module pr
     :align: center
     :width: 750px
 
-    Class hierarchy of the evefile.data module. Each class has a corresponding metadata class in the evefile.metadata module. While in this diagram, some child classes seem to be identical, they have a different type of metadata (see the evefile.metadata module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. For details on the ``ArrayChannelData`` and ``AreaChannelData`` classes, see :numref:`Fig. %s <fig-uml_arraychannel>` and :numref:`Fig. %s <fig-uml_areachannel>`, respectively. You may click on the image for a larger view.
+    Class hierarchy of the :mod:`data <evedata.evefile.entities.data>` module. Each class has a corresponding metadata class in the :mod:`metadata <evedata.evefile.entities.metadata>` module. While in this diagram, some child classes seem to be identical, they have a different type of metadata (see the :mod:`metadata <evedata.evefile.entities.metadata>` module below). Generally, having different types serves to discriminate where necessary between detector channels and motor axes. For details on the :class:`ArrayChannelData <evedata.evefile.entities.data.ArrayChannelData>` and :class:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>` classes, see :numref:`Fig. %s <fig-uml_arraychannel>` and :numref:`Fig. %s <fig-uml_areachannel>`, respectively. You may click on the image for a larger view.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -162,21 +162,21 @@ Some comments (not discussions any more, though):
 
   There are measurements where for a given position count spectra (1D) or entire images (2D) are recorded. At least for the latter, the data usually reside in external files. Currently, the file name (including the full path, starting with which version of the eveH5 schema?) is stored as value in the dataset in these cases. For a discussion, see `#7732 <https://redmine.ahf.ptb.de/issues/7732>`_. An additional complication: historically, the has been some mismatch between file number stored in the HDF5 dataset and actual file number. Hence, some way of correcting the mapping after reading the file needs to be possible.
 
-  Generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as ``ArrayChannelData``, with the ``_data`` attribute being a 2D numpy array. In case of storing images (2D data per position count), these data are modelled as ``AreaChannelData``, with the ``_data`` attribute being either a list of 2D/3D numpy arrays (containing the image data for one or different channels), a numpy array of arrays, or a 3D/4D array.
+  Generally, spectra (1D data per position count) contained within an eveH5 file in the "arraydata" group are modelled as :class:`ArrayChannelData <evedata.evefile.entities.data.ArrayChannelData>`, with the ``_data`` attribute being a 2D numpy array. In case of storing images (2D data per position count), these data are modelled as :class:`AreaChannelData <evedata.evefile.entities.data.AreaChannelData>`, with the ``_data`` attribute being either a list of 2D/3D numpy arrays (containing the image data for one or different channels), a numpy array of arrays, or a 3D/4D array.
 
-  While for a usual HDF5 dataset, the ``DataImporter`` object contains the eveH5 filename and dataset path for accessing the data, in case of external data, it contains a list of external filenames/references.
+  While for a usual HDF5 dataset, the :class:`DataImporter <evedata.evefile.entities.data.DataImporter>` object contains the eveH5 filename and dataset path for accessing the data, in case of external data, it contains a list of external filenames/references.
 
-* Filled data
+* Joined ("filled") data
 
   Only axis data can and will be filled, and they will be filled differently depending on the channel data they are plotted against.
 
-  If we allow several channels to be plotted against one axis, things will get slightly more involved, as the axis data need to be filled with respect to both channels in this case, and probably the channel data filled with NaN values as well. Alternatives would be to have the axis data filled individually for the individual channels, or to delete those points in the channel datasets where the other channel(s) don't have corresponding values (hooray, there we are again with our different fill modes...).
+  If we allow several channels to be plotted against one axis, things will get slightly more involved, as the axis data need to be joined with respect to both channels in this case, and probably the channel data filled with NaN values as well. Alternatives would be to have the axis data joined individually for the individual channels, or to delete those points in the channel datasets where the other channel(s) don't have corresponding values (hooray, there we are again with our different "fill modes"...).
 
-  Filling takes place by objects located in the controllers technical layer of the **measurement functional layer**, and the filled data will be stored in a separate attribute, retaining the original unfilled data.
+  Joining takes place by objects located in the controllers technical layer of the **measurement functional layer**, and the joined data will be stored in a separate attribute, retaining the original unfilled data.
 
 * Detector channels that are redefined within an experiment/scan
 
-  Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently (eveH5 v7), all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes.Generally, we need separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_.
+  Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently (eveH5 v7), all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. Generally, we need separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_.
 
   The current state of affairs (as of 06/2024) regarding a new eveH5 scheme (v8) is to separate single-point channels from average and interval channels and have average and interval channel datasets *per se* be suffixed by the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique.
 
@@ -184,13 +184,15 @@ Some comments (not discussions any more, though):
 
   1. separating the values for the different channels into separate datasets
 
-     This is rather complicated, but probably possible by looking at the different HDF5 datasets where present -- although this would require reading the *data* of the HDF5 datasets if corresponding datasets are available in the "averagemeta" or/and "standarddev" group to check for changes in these data.
+    This is rather complicated, but probably possible by looking at the different HDF5 datasets where present -- although this would require reading the *data* of the HDF5 datasets if corresponding datasets are available in the "averagemeta" or/and "standarddev" group to check for changes in these data.
 
-    Separating the data is but only necessary if correspnding datasets are available in the "averagemeta" or/and "standarddev" groups. *I.e.*, loading the data needs only to happen once this condition is met. However, as soon as this condition is met, data for legacy files need to be loaded to separate the data into separate datasets and not to have the surprise afterwards when first accessing the presumably single detector channel to all of a sudden have it split into several datasets.
+    Separating the data is but only necessary if corresponding datasets are available in the "averagemeta" or/and "standarddev" groups. *I.e.*, loading the data needs only to happen once this condition is met. However, as soon as this condition is met, data for legacy files need to be loaded to separate the data into separate datasets and not to have the surprise afterwards when first accessing the presumably single detector channel to all of a sudden have it split into several datasets.
 
   2. sensibly naming the resulting multiple datasets.
 
-     Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
+    Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
+
+    Getting the scan module ID requires to read the SCML, though, as usually, the SMCounter pseudo-detector channel will not be present. Furthermore, mapping position counts to scan modules is far from simple. Hence, an alternative option may be to suffix the respective datasets with increasing integer numbers, without relation to the scan module ID.
 
 * Additional class ``DeviceData``, but not ``OptionData``
 
@@ -200,7 +202,7 @@ Some comments (not discussions any more, though):
 
   Options should generally be mapped to the respective classes the options belong to. For options, we additionally need to distinguish between "scalar" options that do not change within one scan module (and should in the future appear as attributes on the HDF5 level), and options whose values need to be saved for each individual position count (and should in the future appear as additional dataset columns on the HDF5 level).
 
-  As of now, scalar options appear as dictionary ``options`` in the ``Metadata`` class hierarchy, while variable options with individual values per position count appear as dictionary ``options`` in the ``Data`` class hierarchy.
+  As of now, scalar options appear as dictionary ``options`` in the ``Metadata`` class hierarchy, while variable options with individual values per position count appear as dictionary ``options`` in the ``Data`` class hierarchy. Note that this only applies to options that are not mapped to attributes of an explicit class in the data model.
 
 * Dealing with axes read-back values (RBV)
 
@@ -244,7 +246,7 @@ Multi Channel Analysers (MCA) generally collect 1D data and typically have separ
 
 Note: The scalar attributes for ArrayChannelROIs will currently be saved as snapshots regardless of whether the actual ROI has been defined/used. Hence, the evedata package needs to decide based on the existence of the actual data whether to create a ROI object and attach it to :class:`ArrayChannelData <evedata.evefile.entities.data.ArrayChannelData>`.
 
-The calibration parameters are needed to convert the *x* axis of the MCA spectrum into a real energy axis. Hence, the :class:`MCAChannelCalibration <evedata.evefile.entities.metadata.MCAChannelCalibration>` class will have methods for performing exactly this conversion. The relationship between calibrated units (cal) and channel number (chan) is defined as cal=CALO + chan\*CALS + chan^2\*CALQ. The first channel in the spectrum is defined as chan=0. However, not all MCAs/SDDs have these calibration values: Ketek SDDs seem to not have these values (internal calibration?).
+The calibration parameters are needed to convert the *x* axis of the MCA spectrum into a real energy axis. Hence, the :class:`MCAChannelCalibration <evedata.evefile.entities.metadata.MCAChannelCalibration>` class has a method :meth:`calibrate() <evedata.evefile.entities.metadata.MCAChannelCalibration.calibrate>` for performing exactly this conversion. The relationship between calibrated units (cal) and channel number (chan) is defined as cal=CALO + chan\*CALS + chan^2\*CALQ. The first channel in the spectrum is defined as chan=0. However, not all MCAs/SDDs have these calibration values: Ketek SDDs seem to not have these values (internal calibration?).
 
 The real_time and life_time values can be used to get an idea of the amount of pile up occurring, *i.e.* having two photons with same energy within a short time interval reaching the detector being detected as one photon with twice the energy. Hence, latest in the radiometry package, distinct methods for this kind of analysis should be implemented.
 
@@ -320,14 +322,14 @@ Data without context (*i.e.* metadata) are mostly useless. Hence, to every class
     Class hierarchy of the evefile.metadata module. Each concrete class in the evefile.data module has a corresponding metadata class in this module. You may click on the image for a larger view.
 
 
-A note on the ``AbstractDeviceMetadata`` interface class: The eveH5 dataset corresponding to the TimestampMetadata class is special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
+A note on the :class:`AbstractDeviceMetadata <evedata.evefile.entities.metadata.AbstractDeviceMetadata>` interface class: The eveH5 dataset corresponding to the TimestampMetadata class is special in sense of having no PV and transport type nor an id. Several options have been considered to address this problem:
 
 #. Moving these three attributes down the line and copying them multiple times (feels bad).
 #. Leaving the attributes blank for the "special" dataset (feels bad, too).
 #. Introduce another class in the hierarchy, breaking the parallel to the Data class hierarchy (potentially confusing).
 #. Create a mixin class (abstract interface) with the three attributes and use multiple inheritance/implements.
 
-As obvious from the UML diagram, the last option has been chosen. The name "DeviceMetadata" resembles the hierarchy in the ``scml.setup`` module and clearly distinguishes actual devices from datasets not containing data read from some instrument.
+As obvious from the UML diagram, the last option has been chosen. The name "DeviceMetadata" resembles the hierarchy in the :mod:`scan.entities.setup <evedata.scan.entities.setup>` module and clearly distinguishes actual devices from datasets not containing data read from some instrument.
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -341,7 +343,7 @@ Some comments (not discussions any more, though):
 
   "pv" is the EPICS process variable, "access_mode" refers to the access mode (local vs. ca, in the future additionally pva). Both are currently (as of eveH5 v7) stored as one attribute "access" in the eveH5 datasets, separated by ":" in the form ``<access_mode>:<pv>``. In the new eveH5 schema (v8), these attributes will be split into two attributes with the corresponding names.
 
-* Attributes for ``AverageChannelMetadata`` and ``IntervalChannelMetadata``
+* Attributes for :class:`AverageChannelMetadata <evedata.evefile.entities.metadata.AverageChannelMetadata>` and :class:`IntervalChannelMetadata <evedata.evefile.entities.metadata.IntervalChannelMetadata>`
 
   The current model in the UML schemas of data and metadata assumes different data(sets) in case a detector channel gets redefined within a scan, see `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_ and the discussion above. This should be verified and specified.
 
@@ -404,7 +406,7 @@ Given the data model to not correspond to the current eveH5 structure (v7), it m
 Extract set values for axes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The axes positions stored in the HDF5 file are the RBVs after positioning. If, however, an axis never reached the set value due to limit violation or other constraints, this is usually not visible from the HDF5 file, as the severity is typically not recorded. However, the set values for each axis can be inferred from the scan description. Having this information would be helpful for routine checks whether a scan ran as expected. Set values are stored in the ``set_values`` attribute of the ``AxisData`` class.
+The axes positions stored in the HDF5 file are the RBVs after positioning. If, however, an axis never reached the set value due to limit violation or other constraints, this is usually not visible from the HDF5 file, as the severity is typically not recorded. However, the set values for each axis can be inferred from the scan description. Having this information would be helpful for routine checks whether a scan ran as expected. Set values are stored in the :attr:`set_values <evedata.evefile.entities.data.AxisData.set_values>` attribute of the :class:`AxisData <evedata.evefile.entities.data.AxisData>` class.
 
 
 Correct mapping of file numbers for external files
@@ -420,11 +422,11 @@ What may be in here:
 
 * facade:
 
-  * evefile
+  * :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>`
 
 resources:
 
-* eveH5
+* :class:`HDF5File <evedata.evefile.boundaries.eveh5.HDF5File>`
 * Interfaces towards additional files, *e.g.* images
 
   * Images in particular are usually not stored in the eveH5 files, but only pointers to these files.
@@ -448,18 +450,18 @@ evefile module (facade)
     Class hierarchy of the evefile.boundaries.evefile module, providing the facade for an eveH5 file. Currently, the basic idea is to inherit from the ``File`` entity and extend it accordingly, adding behaviour.
 
 
-As per :numref:`Fig. %s <fig-uml_evefile_boundaries_evefile>`, the ``EveFile`` class inherits from the ``File`` class of the entities subpackage. Reading (loading) an eveH5 file will result in calling out to :meth:`eveH5.HDF5File.read`, followed by mapping the eveH5 contents to the data model. Additionally, for eveH5 v7 and below, datasets for detector channels that have been redefined within one scan and scans using MPSKIP are mapped to the respective datasets accordingly. Last but not least, the corresponding SCML (and setup description, where applicable) are loaded and the metadata contained therein mapped to the metadata of the corresponding datasets.
+As per :numref:`Fig. %s <fig-uml_evefile_boundaries_evefile>`, the :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` class inherits from the :class:`File <evedata.evefile.entities.file.File>` class of the :mod:`entities <evedata.evefile.entities>` subpackage. Reading (loading) an eveH5 file will result in calling out to :meth:`HDF5File.read() <evedata.evefile.boundaries.eveh5.HDF5File.read>`, followed by mapping the eveH5 contents to the data model. Additionally, for eveH5 v7 and below, datasets for detector channels that have been redefined within one scan and scans using MPSKIP are mapped to the respective datasets accordingly. Last but not least, the corresponding SCML (and setup description, where applicable) are loaded and the metadata contained therein mapped to the metadata of the corresponding datasets.
 
 
 Some comments (not discussions any more, though):
 
 * Metadata from SCML file
 
-  There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). This information needs to be mapped to the respective metadata classes (and those classes be extended accordingly). This mapping will take place here, as per schema of the functional and technical layers, the ``evefile`` subpackage depends on the ``scan`` subpackage.
+  There is more information available from the SCML file (and the measurement station/beam line description - but that is generally not available when reading eveH5 files if it is not contained in the SCML). This information needs to be mapped to the respective metadata classes (and those classes be extended accordingly). This mapping will take place here, as per schema of the functional and technical layers, the :mod:`evefile <evedata.evefile>` subpackage depends on the :mod:`scan <evedata.scan>` subpackage.
 
 * Non-monotonic position counts in eveH5 datasets
 
-  Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, the sorting logic should be implemented in  the controller layer and called by the facade.
+  Due to the (intrinsic) way the engine handles scans, position counts can be non-monotonic (`#4562 <https://redmine.ahf.ptb.de/issues/4562>`_, `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_). However, this will usually be a problem for the analysis. Therefore, the sorting logic is implemented in the entities layer in the load method(s).
 
 
 eveh5 module (resource)
@@ -471,10 +473,10 @@ The aim of this module is to provide a Python representation (in form of a hiera
 .. figure:: uml/evedata.evefile.boundaries.eveh5.*
     :align: center
 
-    Class hierarchy of the :mod:`evedata.evefile.boundaries.eveh5` module. The :class:`HDF5Item` class and children represent the individual HDF5 items on a Python level, similarly to the classes provided in the h5py package, but *without* requiring an open HDF5 file. Furthermore, reading actual data (dataset values) is deferred by default.
+    Class hierarchy of the :mod:`evedata.evefile.boundaries.eveh5` module. The :class:`HDF5Item <evedata.evefile.boundaries.eveh5.HDF5Item>` class and children represent the individual HDF5 items on a Python level, similarly to the classes provided in the h5py package, but *without* requiring an open HDF5 file. Furthermore, reading actual data (dataset values) is deferred by default.
 
 
-As such, the ``HDF5Item`` class hierarchy shown above is pretty generic and should work with all eveH5 versions. However, it is *not* meant as a generic HDF5 interface, as it does make some assumptions based on the eveH5 file structure and format.
+As such, the :class:`HDF5Item <evedata.evefile.boundaries.eveh5.HDF5Item>` class hierarchy shown above is pretty generic and should work with all eveH5 versions. However, it is *not* meant as a generic HDF5 interface, as it does make some assumptions based on the eveH5 file structure and format.
 
 
 Some comments (not discussions any more, though):
@@ -497,18 +499,18 @@ Some comments (not discussions any more, though):
 Measurement
 ===========
 
-Generally, the measurement subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages. However, besides these two Python packages, human users will want to use the ``evedata`` package as well. Hence, it should be as human-friendly as possible.
+Generally, the :mod:`measurement <evedata.measurement>` subpackage, as mentioned already in the :doc:`Concepts <concepts>` section, provides the interface towards the "user", where user mostly means the ``evedataviewer`` and ``radiometry`` packages. However, besides these two Python packages, human users will want to use the ``evedata`` package as well. Hence, it should be as human-friendly as possible.
 
 
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the measurement subpackage are shown below, reflecting the current state of affairs (and thinking).
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the :mod:`measurement <evedata.measurement>` subpackage are shown below, reflecting the current state of affairs (and thinking).
 
 
 .. note::
 
-    The mapping of the information contained in both, the HDF5 and SCML layers of an eveH5 file, to the measurement is far from being properly modelled or understood. This is partly due to the step-wise progress in understanding. On a rather fundamental level, it remains to be decided whether a ``Measurement`` should allow for reconstructing how a measurement has actually been carried out (*i.e.*, provide access to the SCML and hence the anatomy of the scan).
+    The mapping of the information contained in both, the HDF5 and SCML layers of an eveH5 file, to the measurement is far from being properly modelled or understood. This is partly due to the step-wise progress in understanding. On a rather fundamental level, it remains to be decided whether a :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` should allow for reconstructing how a measurement has actually been carried out (*i.e.*, provide access to the SCML and hence the anatomy of the scan).
 
 
-What is the main difference between the :mod:`evefile <evedata.evefile>` and the :mod:`measurement <evedata.measurement>` subpackages? Basically, the information contained in an eveH5 file needs to be "interpreted" to be able to process, analyse, and plot the data. While the :mod:`evefile <evedata.evefile>` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the :mod:`measurement <evedata.measurement>` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
+What is the main difference between the :mod:`evefile <evedata.evefile>` and the :mod:`measurement <evedata.measurement>` subpackages? Basically, **the information contained in an eveH5 file needs to be "interpreted"** to be able to process, analyse, and plot the data. While the :mod:`evefile <evedata.evefile>` subpackage provides the necessary data structures to faithfully represent all information contained in an eveH5 file, the :mod:`measurement <evedata.measurement>` subpackage provides the result of an "interpretation" of this information in a way that facilitates data processing, analysis and plotting.
 
 However, the :mod:`measurement <evedata.measurement>` subpackage is still general enough to cope with all the different kinds of measurements the eve measurement program can deal with. Hence, it may be a wise idea to create dedicated dataset classes in the ``radiometry`` package for different types of experiments. The NeXus file format may be a good source of inspiration here, particularly their `application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. The ``evedataviewer`` package in contrast aims at displaying whatever kind of measurement has been performed using the eve measurement program. Hence it will deal directly with :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` (facade) objects of the :mod:`measurement <evedata.measurement>` subpackage.
 
@@ -538,12 +540,15 @@ Entities
 
 A few general remarks:
 
-* :class:`Measurement <evedata.measurement.entities.measurement.Measurement>` will probably still be distinct from the "dataset" concept used in the ``evedataviewer`` and ``radiometry`` packages.
+* :class:`Measurement (entity) <evedata.measurement.entities.measurement.Measurement>` is still distinct from the "dataset" concept used in the ``evedataviewer`` and ``radiometry`` packages.
+
+  * However, the :class:`Measurement (facade) <evedata.measurement.boundaries.measurement.Measurement>` is very close to the "dataset" concept of the ASpecD framework and used in the ``evedataviewer`` and ``radiometry`` packages.
+
 * Metadata need to be attached to the individual data objects, as is the case in the :mod:`evedata.evefile.entities` subpackage.
 * Clear differences between the :mod:`measurement <evedata.measurement>` and :mod:`evefile <evedata.evefile>` subpackages:
 
-  * :mod:`measurement <evedata.measurement>` takes care of filling, subscans, and probably mapping of monitors to datasets with positions.
-  * The distinction between "main", "snapshot", and "monitor" may be discarded in favour of more useful abstractions. This requires, however, a thorough discussion of the concepts of monitors and snapshots, how they are currently used and how they should be used (and mapped) in the future.
+  * :mod:`measurement <evedata.measurement>` takes care of data joining ("filling"), subscans, and probably mapping of monitors to datasets with positions.
+  * The distinction between "main", "snapshot", and "monitor" are discarded in favour of more useful abstractions ("devices/setup", "beamline", "machine"). This requires, however, a thorough discussion of the concepts of monitors and snapshots, how they are currently used and how they should be used (and mapped) in the future.
 
 
 
@@ -565,13 +570,13 @@ A few general remarks:
 measurement module
 ~~~~~~~~~~~~~~~~~~
 
-A measurement generally reflects all the data obtained during a measurement. However, to plot data or to perform some analysis, usually we need data together with an axis (or multiple axes for *n*\D data), where data ("intensity values") and axis values come from different HDF5 datasets. Furthermore, there may generally be the need/interest to plot arbitrary data against each other, *i.e.* channel data *vs.* channel data and axis data *vs.* axis data, not only channel data *vs.* axis data. This is the decisive difference between the :class:`Measurement entity <evedata.measurement.entities.measurement.Measurement>` and the :class:`Measurement facade <evedata.measurement.boundaries.measurement.Measurement>`, with the latter having the additional attributes for storing the data to work on.
+A :class:`Measurement <evedata.measurement.entities.measurement.Measurement>` generally reflects all the data obtained during a measurement. However, to plot data or to perform some analysis, usually we need data together with an axis (or multiple axes for *n*\D data), where data ("intensity values") and axis values come from different HDF5 datasets. Furthermore, there may generally be the need/interest to plot arbitrary data against each other, *i.e.* channel data *vs.* channel data and axis data *vs.* axis data, not only channel data *vs.* axis data. This is the decisive difference between the :class:`Measurement entity <evedata.measurement.entities.measurement.Measurement>` and the :class:`Measurement facade <evedata.measurement.boundaries.measurement.Measurement>`, with the latter having the additional attributes for storing the data to work on.
 
 
 .. figure:: uml/evedata.measurement.entities.measurement.*
     :align: center
 
-    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Devices are all the detector(channel)s and motor(axe)s used in a scan. Distinguishing between detector(channel)s/motor(axe)s, beamline, and machine can (at least partially) happen based on the data type: detector(channel)s are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Station` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data` and :class:`Axis` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
+    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Devices are all the detector(channel)s and motor(axe)s used in a scan. Distinguishing between detector(channel)s/motor(axe)s, beamline, and machine can (at least partially) happen based on the data type: detector(channel)s are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Station` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data <evedata.measurement.entities.measurement.Data>` and :class:`Axis <evedata.measurement.entities.measurement.Axis>` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
 
 
 
@@ -589,7 +594,7 @@ A measurement generally reflects all the data obtained during a measurement. How
 
     * How to deal with monitors?
 
-      * Add an ``events`` attribute to the ``Measurement`` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
+      * Add an ``events`` attribute to the :class:`Measurement <evedata.measurement.entities.measurement.Measurement>` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
 
 
 Some comments (not discussions any more, though):
@@ -648,42 +653,9 @@ What may be in here:
 Joining: "fill modes"
 ~~~~~~~~~~~~~~~~~~~~~
 
+For details see the :mod:`joining <evedata.measurement.controllers.joining>` module.
+
 For each motor axis and detector channel, in the original eveH5 file only those values appear---typically together with a "position counter" (PosCount) value---that are actually set or measured. Hence, the number of values (*i.e.*, the length of the data vector) will generally be different for different detectors/channels and devices/axes. To be able to plot arbitrary data against each other, the corresponding data vectors need to be brought to the same dimensions (*i.e.*, "joined", originally somewhat misleadingly termed "filled").
-
-Currently, there are four "fill modes" available for data: NoFill, LastFill, NaNFill, LastNaNFill. From the `documentation of eveFile <https://www.ahf.ptb.de/messpl/sw/python/common/eveFile/doc/html/Section-Fillmode.html#evefile.Fillmode>`_:
-
-
-NoFill
-    "Use only data from positions where at least one axis and one channel have values."
-
-    Actually, not a filling, but mathematically an intersection, or, in terms of relational databases, an ``SQL INNER JOIN``. In any case, data are *reduced*.
-
-LastFill
-    "Use all channel data and fill in the last known position for all axes without values."
-
-    Similar to an ``SQL LEFT JOIN`` with data left and axes right, but additionally explicitly setting the missing axes values in the join to the last known axis value.
-
-NaNFill
-    "Use all axis data and fill in NaN for all channels without values."
-
-    Similar to an ``SQL LEFT JOIN`` with axes left and data right. To be exact, the ``NULL`` values of the join operation will be replaced by ``NaN``.
-
-LastNaNFill
-    "Use all data and fill in NaN for all channels without values and fill in the last known position for all axes without values."
-
-    Similar to an ``SQL OUTER JOIN``, but additionally explicitly setting the missing axes values in the join to the last known axis value and replacing the ``NULL`` values of the join operation by ``NaN``.
-
-
-Furthermore, for the Last*Fill modes, snapshots are inspected for axes values that are newer than the last recorded axis in the main/standard section.
-
-Note that none of the fill modes guarantees that there are no NaNs (or comparable null values) in the resulting data.
-
-
-.. important::
-
-    The IDL Cruncher seems to use LastNaNFill combined with applying some "dirty" fixes to account for scans using MPSKIP and those scans "monitoring" a motor position via a pseudo-detector. The ``EveHDF`` class (DS) uses LastNaNFill as a default as well but does *not* apply some additional post-processing.
-
-    Shall fill modes be something to change in a viewer? And which fill modes are used in practice (and do we have any chance to find this out)?
 
 
 For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:`numpy.union1d`. Operating on more than two arrays can be done using :func:`functools.reduce`, as mentioned in the numpy documentation (with examples). Helpful may be :func:`numpy.digitize` as well.
@@ -730,9 +702,6 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
       In context of mapping such scans beforehand in the :mod:`evefile <evedata.evefile>` subpackage to more appropriate data objects, *i.e.* with multiple values per position, the problem should be solved.
 
 
-If filling is an operation on an :obj:`evefile.evefile.EveFile` object returning a :obj:`dataset.dataset.Dataset` object, how to call this operation and from where? One possibility would be to have a :meth:`evefile.evefile.EveFile.fill` method that takes an appropriate argument for the fill mode, another option would be a method of the :class:`dataset.dataset.Dataset` class or an implicit call when getting data from a file (via an :obj:`evefile.evefile.EveFile` object).
-
-
 
 Mapping timestamps to position counts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -748,7 +717,7 @@ Mapping timestamps to position counts
 
       Monitor data (with time in milliseconds as primary axis) need to be mapped to measured data (with position counts as primary axis). Mapping position counts to time stamps is trivial (lookup), but *vice versa* is not unique and the algorithm generally needs to be decided upon. There is an age-long discussion on this topic (`#5295 note 3 <https://redmine.ahf.ptb.de/issues/5295#note-3>`_). For a current discussion see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_.
 
-      Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): This mapping should most probably take place in the controllers technical layer of the measurement functional layer. The individual ``MonitorData`` class cannot do the mapping without having access to the mapping table.
+      Besides the question how to best map one to the other (that needs to be discussed, decided, clearly documented and communicated, and eventually implemented): This mapping should most probably take place in the controllers technical layer of the measurement functional layer. The individual :class:`MonitorData <evedata.evefile.entities.data.MonitorData>` class cannot do the mapping without having access to the mapping table.
 
 
 For a detailed discussion/summary of the current state of affairs regarding the algorithm and its specification, see `#7722 <https://redmine.ahf.ptb.de/issues/7722>`_. In short:
@@ -781,10 +750,10 @@ Boundaries
 
 What may be in here:
 
-* facade: Measurement
+* facade: :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>`
 
   * Interface towards users (*i.e.*, mainly the ``radiometry`` and ``evedataviewer`` packages)
-  * Given a filename of an eveH5 file, returns a ``Measurement`` object.
+  * Given a filename of an eveH5 file, loads all contained information into the :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` object.
 
 * resources:
 
@@ -810,22 +779,25 @@ A few comments on the :class:`Measurement <evedata.measurement.boundaries.measur
 
 * The big difference to the :class:`Measurement entity <evedata.measurement.entities.measurement.Measurement>` is the additional attribute ``data``. It contains the actual data that should be plotted or processed further. Thus, the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade resembles the dataset concept known from the ASpecD framework and underlying, *i.a.*, the ``radiometry`` package.
 * The ``data`` attribute will usually be pre-filled with the data from the "preferred_axis" and "preferred_channel" attributes of the eveH5 file, if present. They can be set/changed using the :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>` and :meth:`Measurement.set_axes() <evedata.measurement.boundaries.measurement.Measurement.set_axes>` methods.
-* The :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>` method takes care of filling (of the axes) if necessary. Furthermore, you can set the attribute of the underlying data object to obtain the data from, if it is not ``data``, but, *e.g.*, ``std`` or an option. The latter is crucial, as the data model of the :mod:`evefile <evedata.evefile>` subpackage provides abstractions from the plain HDF5 datasets where options are stored as separate datasets independent of the devices they actually belong to.
-* The :meth:`Measurement.set_axes() <evedata.measurement.boundaries.measurement.Measurement.set_axes>` method allows to set more than one axis, hence the ``name`` parameter is a list. How to deal with the situation that an option of a dataset should be used as axis, *e.g.* the ``AcquireTime`` of images? Have a ``field`` parameter similar to :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>`, but this time as list? Alternatively, allow the elements in the "name" list to be lists/tuples with name and field?
+* The :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>` method takes care of joining ("filling") if necessary. Furthermore, you can set the attribute of the underlying data object to obtain the data from, if it is not ``data``, but, *e.g.*, ``std`` or an option. The latter is crucial, as the data model of the :mod:`evefile <evedata.evefile>` subpackage provides abstractions from the plain HDF5 datasets where options are stored as separate datasets independent of the devices they actually belong to.
+* The :meth:`Measurement.set_axes() <evedata.measurement.boundaries.measurement.Measurement.set_axes>` method allows to set more than one axis, hence the ``name`` parameter is a list. As an option of a dataset could be used as axis, *e.g.* the ``AcquireTime`` of images, there is an additional ``field`` parameter similar to :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>`.
 * What is the difference between the :meth:`Measurement.save() <evedata.measurement.boundaries.measurement.Measurement.save>` and :meth:`Measurement.export() <evedata.measurement.boundaries.measurement.Measurement.export>` methods? The idea is to have "save" save to a (to be defined) standard format, while "export" would export to whatever given format.
+
+  * This distinction is somewhat arbitrary and may be removed in the future.
+  * In any case, saving/exporting data is a feature for somewhat later, although at least some "sensible" export format (and if it be plain text) may be a high demand for providing data to to collaboration partners. However, here, the ``radiometry`` package and the underlying ASpecD exporters may come in handy.
 
 
 Scan
 ====
 
-The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the measurement functional layer are shown below, reflecting the current state of affairs (and thinking).
+The overall package structure of the evedata package is shown in :numref:`Fig. %s <fig-uml_evedata>`. Furthermore, a series of (still higher-level) UML schemata for the :mod:`scan <evedata.scan>` functional layer are shown below, reflecting the current state of affairs (and thinking).
 
-The scan functional layer contains all classes necessary to represent the contents of an SCML file. The general idea behind is to have all relevant information contained in the scan description and saved together with the data in the eveH5 file at hand. The SCML file is generally stored within the eveH5 file, and it is the information used by the GUI of the measurement program. One big advantage of having the information of the SCML file as compared to the information stored in the eveH5 file itself: The structure of the scan is available, making it possible to infer much more information relevant for interpreting the data.
+The :mod:`scan <evedata.scan>` functional layer contains all classes necessary to represent the contents of an SCML file. The general idea behind is to have all relevant information contained in the scan description and saved together with the data in the eveH5 file at hand. The SCML file is generally stored within the eveH5 file, and it is the information used by the GUI of the measurement program. One big advantage of having the information of the SCML file as compared to the information stored in the eveH5 file itself: The structure of the scan is available, making it possible to infer much more information relevant for interpreting the data.
 
 
 .. important::
 
-    The SCML file contained in (most) eveH5 files "only" saves the scan description and a reduced set of devices in the setup section, not the entire description of the measurement station as stored in the ``messplatz.xml`` file. Furthermore, it saves the SCML in a way that it can be reused directly by the GUI of the measurement program, *i.e.* with variables *not* replaced. Why is this important?
+    The SCML file contained in (most) eveH5 files "only" saves the scan description and a reduced set of devices in the setup section, not the entire description of the measurement station as stored in the ``<measurement-station-name>.xml`` file. Furthermore, it saves the SCML in a way that it can be reused directly by the GUI of the measurement program, *i.e.* with variables *not* replaced. Why is this important?
 
     * Variables are not replaced by their actual values
 
@@ -844,7 +816,7 @@ One big difference between the SCML schema and the class hierarchy defined in th
 Entities
 --------
 
-Although the :mod:`evedata.scan` subpackage has a different goal as compared to the original SCML, namely its read-only interest, the discussion below is currently heading towards a restructuring of the SCML XML schema (XSD), mainly informed by the data model developed above.
+Although the :mod:`scan <evedata.scan>` subpackage has a different goal as compared to the original SCML, namely its read-only interest, the discussion below is currently heading towards a restructuring of the SCML XML schema definition (XSD), mainly informed by the data model developed above.
 
 
 file module
@@ -974,7 +946,9 @@ Controllers
 
 What may be in here:
 
-* mapping different versions of SCML files to the entities
+* Mapping different versions of SCML files to the entities
+* Extracting set values for axes
+* Get a mapping of position counts to scan modules?
 
 
 version_mapping module
@@ -989,7 +963,7 @@ What may be in here:
 * facades:
 
   * scan
-  * (setup)
+  * (station)
 
 * resources:
 
@@ -1008,5 +982,11 @@ scan module (facade)
     Class hierarchy of the :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` module, providing the facades for the scan and setup descriptions. Currently, the basic idea is to inherit from the :class:`Scan <evedata.scan.entities.scan.Scan>` and :class:`Setup <evedata.scan.entities.setup.Setup>` entities and extend them accordingly, adding behaviour and implementing the :class:`File <evedata.scan.boundaries.scan.File>` interface.
 
 
+When loading an SCML/XML file, the :class:`SCML <evedata.scan.boundaries.scml.SCML>` class is called to read the actual XML, and afterwards, the contents are mapped to the entities defined in the :mod:`entities <evedata.scan.entities>` subpackage.
+
+
 scml module (resource)
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Most probably a DOM parser converting the SCML/XML read to a hierarchy of Python objects/structures.
+

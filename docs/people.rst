@@ -8,3 +8,4 @@ The evedata package is currently developed and maintained by `Till Biskup <https
 
 All development is performed in close collaboration with the colleagues at PTB responsible for developing and maintaining the EVE measurement program: Jens Eden, Hartmut Scherr, Marcus Michalsky.
 
+Furthermore, developing such a package and the underlying abstractions forming the data model is only possible in close contact with the actual domain experts, *i.e.* all the people at PTB actually operating the beamlines, obtaining the data, and finally analysing the measurements.
