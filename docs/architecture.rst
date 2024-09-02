@@ -734,6 +734,14 @@ Special cases that need to be addressed either here or during import of the data
 Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>` object. This is the case for the additional :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` class as subclass of :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>`. The next question: Where to place these new objects in the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` (facade) class?
 
 
+Subscans
+~~~~~~~~
+
+Different types of subscans exist, and currently (as of eveH5 v7), neither the scan structure nor proper information on the subscans materialises in the eveH5 files. Typical subscans are nested scan modules, but sometimes, chained scan modules exist as well (*e.g.*, for bolometers with subsequent scans with shutter open and closed).
+
+Furthermore, things get more complicated for measuring different samples within one scan, but not subsequently, but "row-wise" with one parameter set for all samples in one "row". In any case, future schema versions for the eveH5 files need to account for the different types of subscans and need to store information that allows for reproducible and straight-forward extraction of the data belonging to the individual samples.
+
+
 Boundaries
 ----------
 
