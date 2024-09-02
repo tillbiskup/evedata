@@ -297,9 +297,14 @@ Note for Pilatus cameras: Those cameras seem to have three sensors each for temp
 
       The camera controller seems to set MinX, MinY, SizeX, SizeY. Is this the generally agreed and consistent way of defining the marker area? What should the four elements of the :attr:`ScientificCameraROIData.marker <evedata.evefile.entities.data.ScientificCameraROIData.marker>` attribute represent?
 
-    * Sample cameras: additional fields
 
-      Are ``beam_x`` and ``beam_y`` really parameters that change between images within a scan module? AFAIK, these are values set once when adjusting the camera, and otherwise never change. If so, they should be moved to the metadata.
+Some comments (not discussions any more, though):
+
+* Sample cameras: additional fields
+
+  The parameters ``beam_x`` and ``beam_y`` don't change between images within a scan module, but are set once when adjusting the camera, and otherwise never change. Hence, they have been moved to the metadata.
+
+  Note, however, that currently, these parameters are marked as ``autoacquire=measurement`` in the template file.
 
 
 metadata module
@@ -433,6 +438,8 @@ resources:
   * Import routines for the different files (or at least a sensible modular mechanism involving an importer factory) need to be implemented.
   * Is the ``evedata`` package the correct place for these importers? One could think of the ``radiometry`` package as the better place, but on the other hand, the ``evedataviewer`` package would need to be able to display those data as well, hence need the import to be done.
 
+    Given the ``evedata`` package to act as a (complicated) importer, all importer mechanisms for additional data not stored in the HDF5 file should be implemented here.
+
 * Interfaces towards other file formats
 
   * One potential candidate for an exchange format would be the NeXus format. However, there is not one NeXus file format, but there are several schemas for different types of experiments. For details, see the `NeXus application definitions <https://manual.nexusformat.org/classes/applications/index.html>`_. Hence, those exporters may better be located in the ``radiometry`` package.
@@ -450,7 +457,7 @@ evefile module (facade)
     Class hierarchy of the evefile.boundaries.evefile module, providing the facade for an eveH5 file. Currently, the basic idea is to inherit from the ``File`` entity and extend it accordingly, adding behaviour.
 
 
-As per :numref:`Fig. %s <fig-uml_evefile_boundaries_evefile>`, the :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` class inherits from the :class:`File <evedata.evefile.entities.file.File>` class of the :mod:`entities <evedata.evefile.entities>` subpackage. Reading (loading) an eveH5 file will result in calling out to :meth:`HDF5File.read() <evedata.evefile.boundaries.eveh5.HDF5File.read>`, followed by mapping the eveH5 contents to the data model. Additionally, for eveH5 v7 and below, datasets for detector channels that have been redefined within one scan and scans using MPSKIP are mapped to the respective datasets accordingly. Last but not least, the corresponding SCML (and setup description, where applicable) are loaded and the metadata contained therein mapped to the metadata of the corresponding datasets.
+As per :numref:`Fig. %s <fig-uml_evefile_boundaries_evefile>`, the :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` class inherits from the :class:`File <evedata.evefile.entities.file.File>` class of the :mod:`entities <evedata.evefile.entities>` subpackage. Reading (loading) an eveH5 file results in calling out to :meth:`HDF5File.read() <evedata.evefile.boundaries.eveh5.HDF5File.read>`, followed by mapping the eveH5 contents to the data model. Additionally, for eveH5 v7 and below, datasets for detector channels that have been redefined within one scan and scans using MPSKIP are mapped to the respective datasets accordingly. Last but not least, the corresponding SCML (and setup description, where applicable) is loaded and the metadata contained therein mapped to the metadata of the corresponding datasets.
 
 
 Some comments (not discussions any more, though):
@@ -532,7 +539,7 @@ A few ideas/comments for further modelling this subpackage:
 
 * :mod:`evefile <evedata.evefile>` represents the eveH5 file, while :mod:`measurement <evedata.measurement>` maps the different datasets to more sensible abstractions.
 
-  * Not all abstractions will necessarily be reflected in the future in the eveH5 file. Currently (eveH5 v7), most of the abstractions are clearly not visible there. How to deal with this situation? The entities in the :mod:`evefile <evedata.evefile>` subpackage should reflect the future eveH5 scheme and abstractions therein, with the version mapping from the controller technical layer responsible for the mapping of older eveH5 schemata to the entities.
+  * Not all abstractions will necessarily be reflected in the future in the eveH5 file. Currently (eveH5 v7), most of the abstractions are clearly not visible there. To deal with this situation, the entities in the :mod:`evefile <evedata.evefile>` subpackage should reflect the future eveH5 scheme and abstractions therein, with the version mapping from the controller technical layer responsible for the mapping of older eveH5 schemata to the entities.
 
 
 Entities
@@ -551,22 +558,6 @@ A few general remarks:
   * The distinction between "main", "snapshot", and "monitor" are discarded in favour of more useful abstractions ("devices/setup", "beamline", "machine"). This requires, however, a thorough discussion of the concepts of monitors and snapshots, how they are currently used and how they should be used (and mapped) in the future.
 
 
-
-.. admonition:: Points to discuss further (without claiming to be complete)
-
-    * Introducing the concepts of detector, motor, option, device?
-
-      There are distinct concepts, particularly between detector and channel, and motor and axis: A detector can have *n* channels, a motor can have *n* axes. On the EPICS level, this does not matter, and so far, on the eveH5 level, the datasets correspond to channels and axes. However, would it make sense to introduce the concept of a detector (at least)?
-
-      This seems to be particularly powerful in case of cameras having different EPICS PVs that are of relevance. However, in case of the Pilatus detector, we even have a composition of channels and at least one axis (settable parameter). This would demand for another layer of abstraction, *i.e.* a more general Camera class and a series of derived classes for particular camera detectors.
-
-      What other abstractions are sensible on the level of the setup/measurement? Would it be sensible to rethink the current layout and design of the measurement program to better reflect these concepts there as well? This would fit into having "devices" that do monitor much more parameters, and particularly the state of crucial PVs (by means of status PVs) -- in order to have a more transparent measurement allowing for detailed *post mortem* analysis if something seems fishy.
-
-    * Two "layers" of a future evedataviewer?
-
-      Given more abstract concepts such as detector, motor, or even camera to be introduced, there still may be the need/wish to plot arbitrary channels/axes/options against each other. Would that demand for two different layers of an evedataviewer, one more in line of the current Cruncher and BessyHDFViewer that are rather close to the eveH5 files, and one dealing with the far more abstract and powerful concepts?
-
-
 measurement module
 ~~~~~~~~~~~~~~~~~~
 
@@ -576,7 +567,7 @@ A :class:`Measurement <evedata.measurement.entities.measurement.Measurement>` ge
 .. figure:: uml/evedata.measurement.entities.measurement.*
     :align: center
 
-    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Currently, this diagram just reflects first ideas for a more abstract representation of a measurement as compared to the data model of the evefile subpackage. Devices are all the detector(channel)s and motor(axe)s used in a scan. Distinguishing between detector(channel)s/motor(axe)s, beamline, and machine can (at least partially) happen based on the data type: detector(channel)s are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Station` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data <evedata.measurement.entities.measurement.Data>` and :class:`Axis <evedata.measurement.entities.measurement.Axis>` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
+    Class hierarchy of the :mod:`measurement.entities.measurement <evedata.measurement.entities.measurement>` module. Devices are all the detector(channel)s and motor(axe)s used in a scan. Distinguishing between detector(channel)s/motor(axe)s, beamline, and machine can (at least partially) happen based on the data type: detector(channel)s are :class:`ChannelData <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine and beamline parameters are more tricky, as they can be :class:`DeviceData <evedata.evefile.entities.data.DeviceData>` (from the "monitor" section) as well as :class:`ChannelData <evedata.evefile.entities.data.ChannelData>` (and :class:`AxisData <evedata.evefile.entities.data.AxisData>` for shutters and alike?) from the original "main" and "snapshot" sections. :class:`Scan` and :class:`Station` inherit directly from their counterparts in the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. :class:`Data <evedata.measurement.entities.measurement.Data>` and :class:`Axis <evedata.measurement.entities.measurement.Axis>` seem not to be used here, but become essential in the corresponding :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade. See :numref:`Fig. %s <fig-uml_evedata.measurement.boundaries.measurement>` for details.
 
 
 
@@ -591,10 +582,6 @@ A :class:`Measurement <evedata.measurement.entities.measurement.Measurement>` ge
     * How to reliably identify those HDF5 datasets that belong to the ``machine`` and ``beamline`` sections?
 
       Basically, all of these datasets should come from either the ``snapshot`` or ``device`` (aka monitor) section of the eveH5 file. How about (in the future) explicitly mark the corresponding devices in the SCML and setup file as belonging to either machine or beamline, record them automatically, and place them in distinct groups in the eveH5 file?
-
-    * How to deal with monitors?
-
-      * Add an ``events`` attribute to the :class:`Measurement <evedata.measurement.entities.measurement.Measurement>` class? It might be an interesting use case to have a list of "events" (aka values for the different monitors) in chronological order, and similar to the monitors themselves, they should be mappable to the position counts. This would allow for a display of arbitrary data together with (relevant) events.
 
 
 Some comments (not discussions any more, though):
@@ -663,12 +650,6 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
 
 .. admonition:: Points to discuss further (without claiming to be complete)
 
-    * How to handle data filling?
-
-      * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data dimensions need to be made compatible.
-      * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
-      * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other? -- Yes, that should always be the case.
-
     * Which fill modes are relevant/needed?
 
       It seems that LastNaNFill is widely used as a default fill mode. Depending on the origin of the data, additional post-processing (see below) is necessary to have usable data.
@@ -676,10 +657,6 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
       As NoFill does not only not fill, but actually reduce data, "fill mode" may not be the ideal term. Other opinions/ideas/names?
 
       Given that the :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` class provides a faithful representation of the actual data contained in an eveH5 file, one could think of mechanisms to highlight those values that were actually recorded (as compared to filled afterwards). Would this help to reduce the number of fill modes available?
-
-    * Where/when to apply filling?
-
-      The :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` class contains the data *as read* from the eveH5 file, *i.e.* the not at all filled data for each channel/detector and axis/motor (faithful representation of the eveH5 file contents). Hence, filling is a task the :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` object is responsible for, calling out to the respective classes from the :mod:`controllers <evedata.measurement.controllers>` layer upon setting the data attribute.
 
     * Will there always be only one fill mode for one dataset?
 
@@ -701,6 +678,18 @@ For numpy set operations, see in particular :func:`numpy.intersect1d` and :func:
 
       In context of mapping such scans beforehand in the :mod:`evefile <evedata.evefile>` subpackage to more appropriate data objects, *i.e.* with multiple values per position, the problem should be solved.
 
+
+Some comments (not discussions any more, though):
+
+* How to handle data filling?
+
+  * Obviously, if one wants to plot arbitrary HDF5 datasets against each other (as currently possible), data dimensions need to be made compatible.
+  * The original values should always be retained, to be able to show/tell which values have actually been obtained (and to discriminate between not recorded and failed to record, *i.e.* no entry vs. NaN in the original HDF5 dataset)
+  * Could there be different (and changing) filling of the data depending on which "axes" should be plotted against each other? -- Yes, that should always be the case.
+
+* Where/when to apply filling?
+
+  The :class:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` class contains the data *as read* from the eveH5 file, *i.e.* the not at all filled data for each channel/detector and axis/motor (faithful representation of the eveH5 file contents). Hence, filling is a task the :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` object is responsible for, calling out to the respective classes from the :mod:`controllers <evedata.measurement.controllers>` layer upon setting the data attribute.
 
 
 Mapping timestamps to position counts
@@ -742,7 +731,7 @@ Special cases that need to be addressed either here or during import of the data
 
   Not clear whether this situation can actually occur, but if so, most probably in this case only one value should be contained in the data. See `#7688, note 11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_ for details.
 
-Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>` object. This is the case for the additional :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` class as subclass of :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>`. The next question: Where to place these new objects in the :class:`File <evedata.evefile.entities.file.File>` class of the :mod:`evedata.evefile.entities.file` module? Alternatively: Would this be something outside the evefile subpackage, probably within the measurement subpackage?
+Furthermore, a requirement is that the original monitor data are retained when converting timestamps to position counts. This most probably means to create a new :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>` object. This is the case for the additional :obj:`DeviceData <evedata.evefile.entities.data.DeviceData>` class as subclass of :obj:`MeasureData <evedata.evefile.entities.data.MeasureData>`. The next question: Where to place these new objects in the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` (facade) class?
 
 
 Boundaries
@@ -764,7 +753,7 @@ What may be in here:
 measurement module (facade)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade is/will be the main entry point to the ``evedata`` package and hence the main interface both, for ``evedataviewer`` and ``radiometry`` packages as well as for human users. Technically speaking, you are free to extract individual data from the structure and do whatever you like with it. However, one big difference between the current state of affairs and the ``evedata`` package is the :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` object as a central unit containing all relevant information.
+The :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade is the main entry point to the ``evedata`` package and hence the main interface both, for ``evedataviewer`` and ``radiometry`` packages as well as for human users. Technically speaking, you are free to extract individual data from the structure and do whatever you like with it. However, one big difference between the current state of affairs and the ``evedata`` package is the :obj:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` object as a central unit containing all relevant information.
 
 
 .. _fig-uml_evedata.measurement.boundaries.measurement:
@@ -772,14 +761,14 @@ The :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>
 .. figure:: uml/evedata.measurement.boundaries.measurement.*
     :align: center
 
-    Class hierarchy of the :mod:`measurement.boundaries.measurement <evedata.measurement.entities.measurement>` module. The :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade inherits directly from its entities counterpart. The crucial extension here is the :attr:`data <evedata.measurement.boundaries.measurement.Measurement.data>` attribute. This contains the actual data that should be plotted or processed further. Thus, the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade resembles the dataset concept known from the ASpecD framework and underlying, *i.a.*, the ``radiometry`` package. The :meth:`Measurement.set_axes() <evedata.measurement.boundaries.measurement.Measurement.set_axes>` method takes care of filling (of the axes) if necessary. Furthermore, you can set the attribute of the underlying data object to obtain the data from, if it is not ``data``, but, *e.g.*, ``std`` or an option.
+    Class hierarchy of the :mod:`measurement.boundaries.measurement <evedata.measurement.entities.measurement>` module. The :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade inherits directly from its entities counterpart. The crucial extension here is the :attr:`data <evedata.measurement.boundaries.measurement.Measurement.data>` attribute. This contains the actual data that should be plotted or processed further. Thus, the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade resembles the dataset concept known from the ASpecD framework and underlying, *i.a.*, the ``radiometry`` package. The :meth:`Measurement.set_axes() <evedata.measurement.boundaries.measurement.Measurement.set_axes>` method takes care of data joining if necessary. Furthermore, you can set the attribute of the underlying data object to obtain the data from, if it is not ``data``, but, *e.g.*, ``std`` or an option.
 
 
 A few comments on the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade:
 
 * The big difference to the :class:`Measurement entity <evedata.measurement.entities.measurement.Measurement>` is the additional attribute ``data``. It contains the actual data that should be plotted or processed further. Thus, the :class:`Measurement <evedata.measurement.boundaries.measurement.Measurement>` facade resembles the dataset concept known from the ASpecD framework and underlying, *i.a.*, the ``radiometry`` package.
 * The ``data`` attribute will usually be pre-filled with the data from the "preferred_axis" and "preferred_channel" attributes of the eveH5 file, if present. They can be set/changed using the :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>` and :meth:`Measurement.set_axes() <evedata.measurement.boundaries.measurement.Measurement.set_axes>` methods.
-* The :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>` method takes care of joining ("filling") if necessary. Furthermore, you can set the attribute of the underlying data object to obtain the data from, if it is not ``data``, but, *e.g.*, ``std`` or an option. The latter is crucial, as the data model of the :mod:`evefile <evedata.evefile>` subpackage provides abstractions from the plain HDF5 datasets where options are stored as separate datasets independent of the devices they actually belong to.
+* The :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>` method takes care of joining ("filling") if necessary. Furthermore, you can set the attribute of the underlying data object to obtain the data from, if it is not ``data``, but, *e.g.*, ``std`` or an option. The latter is crucial, as the data model of the :mod:`evefile <evedata.evefile>` subpackage provides abstractions from the plain HDF5 datasets (up to eveH5 v7) where options are stored as separate datasets independent of the devices they actually belong to.
 * The :meth:`Measurement.set_axes() <evedata.measurement.boundaries.measurement.Measurement.set_axes>` method allows to set more than one axis, hence the ``name`` parameter is a list. As an option of a dataset could be used as axis, *e.g.* the ``AcquireTime`` of images, there is an additional ``field`` parameter similar to :meth:`Measurement.set_data() <evedata.measurement.boundaries.measurement.Measurement.set_data>`.
 * What is the difference between the :meth:`Measurement.save() <evedata.measurement.boundaries.measurement.Measurement.save>` and :meth:`Measurement.export() <evedata.measurement.boundaries.measurement.Measurement.export>` methods? The idea is to have "save" save to a (to be defined) standard format, while "export" would export to whatever given format.
 
