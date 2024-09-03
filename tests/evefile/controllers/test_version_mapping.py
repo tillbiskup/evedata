@@ -820,6 +820,65 @@ class MockEveH5v4(MockEveH5):
             self.c1.snapshot.add_item(dataset)
         return [*channel_names, *nonnumeric_channel_names]
 
+    def add_mpskip(self):
+        channel_names = {
+            "MPSKIP:sx70001chan1": "SkipDetektorSX700",
+            "MPSKIP:sx70001counterchan1": "SX700-Scounter",
+            "MPSKIP:sx70001skipcountchan1": "SX700-Skipcount",
+        }
+        for uid, name in channel_names.items():
+            dataset = MockHDF5Dataset(
+                name=f"/c1/main/{uid}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "DeviceType": "Channel",
+                "Detectortype": "Standard",
+                "Access": f"ca:{uid}",
+                "Name": name,
+            }
+            dtype = np.dtype(
+                [
+                    ("PosCounter", "<i4"),
+                    (f"{uid}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([6], dtype=dtype)
+            data_["PosCounter"] = np.arange(3, 9)
+            data_[f"{uid}"] = np.ones(6) * 42.0
+            dataset.data = data_
+            self.c1.main.add_item(dataset)
+        monitor_names = [
+            "detector",
+            "limit",
+            "maxdev",
+            "reset",
+            "skipcount",
+        ]
+        for name in monitor_names:
+            dataset = MockHDF5Dataset(
+                name=f"/device/MPSKIP:sx70001{name}",
+                filename=self.filename,
+            )
+            dataset.attributes = {
+                "Access": f"ca:MPSKIP:sx70001{name}",
+                "Name": name,
+            }
+            dtype = np.dtype(
+                [
+                    ("mSecsSinceStart", "<i4"),
+                    (f"MPSKIP:sx70001{name}", "f8"),
+                ]
+            )
+            data_ = np.ndarray([1], dtype=dtype)
+            data_["mSecsSinceStart"] = -1
+            data_[f"MPSKIP:sx70001{name}"] = 42.0
+            self.add_item(
+                MockHDF5Group(name="/device", filename=self.filename)
+            )
+            self.device.add_item(dataset)
+        return list(channel_names.keys()), monitor_names
+
 
 class MockEveH5v5(MockEveH5v4):
     pass
@@ -2340,6 +2399,16 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.map(destination=evefile)
         for dataset in datasets:
             self.assertNotIn(dataset, self.mapper.datasets2map_in_snapshot)
+
+    def test_map_mpskip(self):
+        self.mapper.source = self.h5file
+        datasets, monitors = self.mapper.source.add_mpskip()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        for dataset in datasets[1:]:
+            self.assertNotIn(dataset, evefile.data)
+        for monitor in monitors:
+            self.assertNotIn(f"MPSKIP:sx70001{monitor}", evefile.monitors)
 
 
 class TestVersionMapperV6(unittest.TestCase):

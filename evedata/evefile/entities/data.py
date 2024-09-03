@@ -1950,9 +1950,9 @@ class SkipData(ChannelData):
     detector channel modelled via :class:`AverageChannelData`. Hence,
     the metadata are similar as well. However, each channel readout and
     axes RBV has its own position count. Hence, in case of such channel
-    present in a scan, usually, some post-processing of the indivudal data
+    present in a scan, usually, some post-processing of the individual data
     of both, channels and axes RBVs is necessary. This is a task
-    implemented in the :mod:`evedata.measurement.controllers` subpackage.
+    implemented in the :mod:`evedata.evefile.controllers` subpackage.
 
 
     Attributes

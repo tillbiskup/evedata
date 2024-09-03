@@ -161,6 +161,13 @@ What follows is a summary of the different aspects, for the time being
   * Map normalized channel data (and the data provided in the
     respective HDF5 groups) to :obj:`NormalizedChannelData
     <evedata.evefile.entities.data.NormalizedChannelData>`. |check|
+  * Handle MPSKIP channel(s) if present. |cross|
+
+    * Only present at SX700 and EUVR stations.
+    * Three channels and a few monitors
+    * Map to :class:`evedata.evefile.entities.data.SkipData` and
+      :class:`evedata.evefile.entities.metadata.SkipMetadata`
+
   * Map all remaining HDF5 datasets that belong to one of the already
     mapped data objects (*i.e.*, variable options) to their respective
     attributes. (Should have been done already)
@@ -280,6 +287,82 @@ How to map the values of the snapshot section to the respective camera
 classes? The same ideas as for the MCA datasets apply here, too - and
 probably more generally for all snapshot datasets, at least those where
 corresponding devices exist in the main section.
+
+
+Notes on mapping MPSKIP channels
+--------------------------------
+
+MPSKIP channels are (currently) only present at SX700 and EUVR stations.
+This is a special EPICS detector used to record individual values to
+average over and at the same time a series of axes RBVs.
+
+In a typical scan, there are three channel datasets as well as a
+series of monitor datasets present. Fortunately, the PV naming scheme of the
+MPSKIP device is generic, the base name is always:
+``MPSKIP:<station><number>``. The actual names (as seen in the GUI) are
+much less consistent, though. The three channel datasets are:
+
+* ``MPSKIP:<station><number>chan1``
+
+  * The name of this channel is ``SkipDetektor<station>``.
+  * The values of this channel would theoretically be the counts,
+    but unfortunately the channel seems to count wrongly. Hence, the value
+    of the ``MPSKIP:<station><number>counterchan1`` dataset should be used
+    instead.
+
+* ``MPSKIP:<station><number>counterchan1``
+
+  * The name of this channel is ``<station>-Scounter``
+  * The values of this channel are the counts, and they should be used
+    instead of the values in the ``MPSKIP:<station><number>chan1`` dataset.
+
+* ``MPSKIP:<station><number>skipcountchan1``
+
+  * The name of this channel is ``<station>-Skipcount``
+  * The channel is fairly useless, at it only records the number of values
+    to record, and as this is an option of the EPICS MPSKIP device,
+    this will never change during a scan module.
+  * Hence, when mapping, the corresponding dataset should be ignored and
+    removed from the list of datasets to be mapped.
+
+Crucial parameters need currently to be added manually as a monitor and
+hence reside in the ``device`` section of the HDF5 file. These include:
+
+* ``MPSKIP:<station><number>detector``
+
+  * This contains the PV (neither the name nor the XML-ID!) of the
+    detector channel used to trigger the skip event.
+
+* ``MPSKIP:<station><number>limit``
+
+  * This contains the lower limit the detector channel value needs to
+    overcome to start the comparison phase.
+
+* ``MPSKIP:<station><number>maxdev``
+
+  * This contains the maximum deviation two consecutive channel values are
+    allowed to have in the comparison phase. Note, however, that not more
+    than a given maximum number of values are recorded. This maximum value
+    is set by an additional counter motor axis in the scan module,
+    hence the information is not available from the HDF5 file, but can
+    only be inferred from the SCML.
+
+* ``MPSKIP:<station><number>skipcount``
+
+  * This is the number of values that should be recorded once the
+    comparison phase has started.
+
+* ``MPSKIP:<station><number>reset``
+
+  * This is an actual monitor toggling between "execute" and "reset" and
+    used in the scan to stop the averaging process. However, for the data
+    analysis, this is neither necessary nor useful.
+  * This monitor should be removed from the list of monitors to be mapped.
+
+All the information needs to be mapped to the
+:class:`evedata.evefile.entities.data.SkipData` and
+:class:`evedata.evefile.entities.metadata.SkipMetadata` classes.
+
 
 
 Fundamental change of eveH5 schema with v8
