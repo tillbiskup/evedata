@@ -244,35 +244,37 @@ documentation:
 
     * :class:`ChannelData`
 
-        * :class:`NonnumericChannelData`
-        * :class:`SinglePointChannelData`
+      * :class:`NonnumericChannelData`
+      * :class:`SinglePointChannelData`
 
-          * :class:`SinglePointNormalizedChannelData`
+        * :class:`SinglePointNormalizedChannelData`
 
-        * :class:`AverageChannelData`
+      * :class:`AverageChannelData`
 
-          * :class:`AverageNormalizedChannelData`
+        * :class:`AverageNormalizedChannelData`
 
-        * :class:`IntervalChannelData`
+      * :class:`IntervalChannelData`
 
-          * :class:`IntervalNormalizedChannelData`
+        * :class:`IntervalNormalizedChannelData`
 
-        * :class:`ArrayChannelData`
+      * :class:`ArrayChannelData`
 
-          * :class:`MCAChannelData`
+        * :class:`MCAChannelData`
 
-            * :class:`MCAChannelROIData`
+          * :class:`MCAChannelROIData`
 
-          * :class:`ScopeChannelData`
+        * :class:`ScopeChannelData`
 
-        * :class:`AreaChannelData`
+      * :class:`AreaChannelData`
 
-          * :class:`ScientificCameraData`
+        * :class:`ScientificCameraData`
 
-            * :class:`ScientificCameraROIData`
-            * :class:`ScientificCameraStatisticsData`
+          * :class:`ScientificCameraROIData`
+          * :class:`ScientificCameraStatisticsData`
 
-          * :class:`SampleCameraData`
+        * :class:`SampleCameraData`
+
+      * :class:`SkipData`
 
 
 Special aspects
@@ -1933,3 +1935,44 @@ class HDF5DataImporter(DataImporter):
         with h5py.File(self.source, "r") as file:
             self.data = file[self.item][...]
         return self.data
+
+
+class SkipData(ChannelData):
+    """
+    Data for skip detector channel.
+
+    A skip detector channel is a special EPICS device termed "MPSKIP" used
+    mainly to store individual values of an average detector channel,
+    but not only the individual detector channel values, but at the same
+    time RBVs of a series of motor axes of interest.
+
+    Qualitatively, the MPSKIP device behaves similar to an average
+    detector channel modelled via :class:`AverageChannelData`. Hence,
+    the metadata are similar as well. However, each channel readout and
+    axes RBV has its own position count. Hence, in case of such channel
+    present in a scan, usually, some post-processing of the indivudal data
+    of both, channels and axes RBVs is necessary. This is a task
+    implemented in the :mod:`evedata.measurement.controllers` subpackage.
+
+
+    Attributes
+    ----------
+    metadata : :class:`evedata.evefile.entities.metadata.SkipMetadata`
+        Relevant metadata for the individual device.
+
+
+    Examples
+    --------
+    The :class:`SkipData` class is not meant to be used
+    directly, as any entities, but rather indirectly by means of the
+    respective facades in the boundaries technical layer of the
+    :mod:`evedata.evefile` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.metadata = metadata.SkipMetadata()

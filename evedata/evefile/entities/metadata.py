@@ -59,31 +59,33 @@ documentation:
 
     * :class:`ChannelMetadata`
 
-        * :class:`NonnumericChannelMetadata`
-        * :class:`SinglePointChannelMetadata`
+      * :class:`NonnumericChannelMetadata`
+      * :class:`SinglePointChannelMetadata`
 
-          * :class:`SinglePointNormalizedChannelMetadata`
+        * :class:`SinglePointNormalizedChannelMetadata`
 
-        * :class:`AverageChannelMetadata`
+      * :class:`AverageChannelMetadata`
 
-          * :class:`AverageNormalizedChannelMetadata`
+        * :class:`AverageNormalizedChannelMetadata`
 
-        * :class:`IntervalChannelMetadata`
+      * :class:`IntervalChannelMetadata`
 
-          * :class:`IntervalNormalizedChannelMetadata`
+        * :class:`IntervalNormalizedChannelMetadata`
 
-        * :class:`ArrayChannelMetadata`
+      * :class:`ArrayChannelMetadata`
 
-          * :class:`MCAChannelMetadata`
+        * :class:`MCAChannelMetadata`
 
-            * :class:`MCAChannelCalibration`
+          * :class:`MCAChannelCalibration`
 
-          * :class:`ScopeChannelMetadata`
+        * :class:`ScopeChannelMetadata`
 
-        * :class:`AreaChannelMetadata`
+      * :class:`AreaChannelMetadata`
 
-          * :class:`ScientificCameraMetadata`
-          * :class:`SampleCameraMetadata`
+        * :class:`ScientificCameraMetadata`
+        * :class:`SampleCameraMetadata`
+
+      * :class:`SkipMetadata`
 
 
 Module documentation
@@ -366,16 +368,26 @@ class AverageChannelMetadata(ChannelMetadata):
     Attributes
     ----------
     n_averages : :class:`int`
-        Short description
+        Number of averages
 
     low_limit : :class:`float`
-        Short description
+        Minimum value for first reading of the channel
+
+        If set, the value of the channel is read and needs to be larger
+        than this minimum value to start the comparison phase.
 
     max_attempts : :class:`float`
-        Short description
+        Maximum number of attempts for reading the channel data.
 
     max_deviation : :class:`float`
-        Short description
+        Maximum deviation allowed between two values in the comparison phase.
+
+        If the :attr:`low_limit` is set, as soon as the value of the
+        channel is larger than the low limit, the comparison phase starts.
+        Here, two subsequent channel readouts need to be within the
+        boundary set by :attr:`max_deviation`.
+
+        However, no more than :attr:`max_attempts` channel readouts are done.
 
 
     Examples
@@ -808,3 +820,65 @@ class NonencodedAxisMetadata(AxisMetadata):
     this class. Of course, you can instantiate an object as usual.
 
     """
+
+
+class SkipMetadata(AverageChannelMetadata):
+    """
+    Metadata for skip detector channel.
+
+    This class complements the class
+    :class:`evedata.evefile.entities.data.SkipData`. See there for further
+    details. Note that in this particular case, the class hierarchy of the
+    data and metadata classes is not parallel, as this class inherits from
+    :class:`AverageChannelMetadata`. This is due to the skip detector
+    channel being close to an average detector channel regarding its
+    metadata, but not its actual data.
+
+
+    Attributes
+    ----------
+    n_averages : :class:`int`
+        Number of averages
+
+    low_limit : :class:`float`
+        Minimum value for first reading of the channel
+
+        If set, the value of the channel defined in :attr:`channel` is
+        read and needs to be larger than this minimum value to start the
+        comparison phase.
+
+    max_attempts : :class:`float`
+        Maximum number of attempts for reading the channel data.
+
+        In case of an MPSKIP EPICS channel, this value is not contained in
+        the channel itself, but set by a counter motor axis in the same
+        scan module. Hence, the value can only be obtained from the SCML.
+
+    max_deviation : :class:`float`
+        Maximum deviation allowed between two values in the comparison phase.
+
+        If the :attr:`low_limit` is set, as soon as the value of the
+        channel defined in :attr:`channel` is larger than the low limit, the
+        comparison phase starts. Here, two subsequent channel readouts
+        need to be within the boundary set by :attr:`max_deviation`.
+
+        However, no more than :attr:`max_attempts` channel readouts are done.
+
+    channel : :class:`str`
+        EPICS PV of the channel whose values are read and used.
+
+
+    Examples
+    --------
+    The :class:`SkipMetadata` class is not meant to be used
+    directly, as any entities, but rather indirectly by means of the
+    respective facades in the boundaries technical layer of the
+    :mod:`evedata.evefile` subpackage. Hence, for the time being,
+    there are no dedicated examples how to use this class. Of course,
+    you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.channel = ""

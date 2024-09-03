@@ -57,6 +57,10 @@ class AverageChannelMetadata extends ChannelMetadata {
     max_deviation : float
 }
 
+class SkipMetadata extends AverageChannelMetadata {
+    channel : string
+}
+
 class IntervalChannelMetadata extends ChannelMetadata {
     trigger_interval : float
 }

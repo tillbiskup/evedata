@@ -95,6 +95,8 @@ AverageChannelData -[hidden]> IntervalChannelData
 IntervalChannelData -[hidden]> ArrayChannelData
 ArrayChannelData -[hidden]> AreaChannelData
 
+class SkipData extends ChannelData {}
+
 class SinglePointChannelData extends ChannelData {}
 
 interface NormalizedData {

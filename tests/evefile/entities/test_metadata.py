@@ -525,3 +525,29 @@ class TestNonencodedAxisMetadata(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.metadata, attribute))
+
+
+class TestSkipMetadata(unittest.TestCase):
+    def setUp(self):
+        self.metadata = metadata.SkipMetadata()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "name",
+            "options",
+            "unit",
+            "id",
+            "pv",
+            "access_mode",
+            "n_averages",
+            "low_limit",
+            "max_attempts",
+            "max_deviation",
+            "channel",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.metadata, attribute))

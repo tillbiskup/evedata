@@ -954,3 +954,25 @@ class TestHDF5DataImporter(unittest.TestCase):
         self.importer.item = self.item
         self.importer.load()
         np.testing.assert_array_equal(np.ones([5, 2]), self.importer.data)
+
+
+class TestSkipData(unittest.TestCase):
+    def setUp(self):
+        self.data = data.SkipData()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "metadata",
+            "options",
+            "data",
+            "positions",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.data, attribute))
+
+    def test_metadata_are_of_corresponding_type(self):
+        self.assertIsInstance(self.data.metadata, metadata.SkipMetadata)
