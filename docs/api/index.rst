@@ -27,6 +27,8 @@ There are **two layers of organisation: functional layers and** within those **t
 
     evefile/index
     measurement/index
+    scan/index
+
 
 
 

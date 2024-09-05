@@ -109,7 +109,7 @@ class SnapshotModule {
 }
 
 class Axis {
-    axis_id : string
+    id : string
     stepfunction : StepFunction
     positionmode : PositionMode
     startstopstep : StartStopStep
@@ -130,7 +130,7 @@ enum PositionMode {
 }
 
 class Channel {
-    channelid : string
+    id : string
     normalize_id : string
     redoevents : Event[]
     deferredtrigger : boolean
