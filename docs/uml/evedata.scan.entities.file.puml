@@ -2,6 +2,7 @@
 
 class File {
     version : string
+    location : string
     scan : Scan
     setup : Setup
     plugins : Plugin[]

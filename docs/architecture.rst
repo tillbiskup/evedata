@@ -398,12 +398,12 @@ Given the data model to not correspond to the current eveH5 structure (v7), it m
 
 .. important::
 
-    MPSKIP is exclusively used by one group, and not only for storing the individual data points for averaging, but for recording axes RBVs for each individual detector channel readout as well, due to motor axes changing their position slightly. The axes RBVs are recorded for using pseudodetectors are/should be equipped with encoders to ensure actual values being read. The data model now supports axes objects to have more than one value for a position to account for this situation. This means, however, to convert the MPSKIP scans with individual position counts for each detector readout to scans with multiple values available per individual position.
+    MPSKIP is exclusively used by one group, and not only for storing the individual data points for averaging, but for recording axes RBVs for each individual detector channel readout as well, due to motor axes changing their position slightly. The axes RBVs are recorded for using pseudo-detectors are/should be equipped with encoders to ensure actual values being read. The data model now supports axes objects to have more than one value for a position to account for this situation. This means, however, to convert the MPSKIP scans with individual position counts for each detector readout to scans with multiple values available per individual position.
 
 
 A typical scan using MPSKIP uses the MPSKIP detector in the innermost scan module. Here, the only motor axis is a counter (defining the maximum number of attempts to record data for a single averaging), and the detector channels are the primary readout (electrometer), often a secondary electrometer, the ring current and lifetime, and a series of RBVs from motor axes. Additionally, the SM-Counter detector is used in this scan module. All the actual motor axes are set in outer scan modules, typically an overall positioning of the sample (by means of a goniometer) in the outer scan module and the monochromator in the inner scan module. This accounts for a doubly nested scan in total, and the actual detector values having positions where no motor axis (besides the RBVs that are currently pseudo-detector channels, hence marked as channel) has corresponding positions.
 
-The MPSKIP detector channel datasets get mapped to a :class:`SkipData <evedata.evefile.entities.data.SkipData>` object, and if such an object is present, all detectors in the same scan module (*i.e.*, with identical positions) need to be converted:
+The MPSKIP detector channel datasets get mapped to a :obj:`SkipData <evedata.evefile.entities.data.SkipData>` object, and if such an object is present, all detectors in the same scan module (*i.e.*, with identical positions) need to be converted:
 
 * Actual detectors (not RBVs as pseudo-detector channels) need to be mapped to either :class:`AverageChannelData <evedata.evefile.entities.data.AverageChannelData>` or :class:`AverageNormalizedChannelData <evedata.evefile.entities.data.AverageNormalizedChannelData>`.
 * The Counter (axis) data can be used to conveniently determine the positions for each individual averaging, the data object should afterwards be removed.
@@ -412,11 +412,29 @@ The MPSKIP detector channel datasets get mapped to a :class:`SkipData <evedata.e
 * What about the Time(r) data? This is the (cumulative) time in seconds.
 
 
+If the SCML is present, reading the scan part of the SCML and inferring the motor axes and detector channels where the MPSKIP detector is present makes it much easier to get the names of the data objects that need to be modified. Hence, it might be sensible to (i) implement the minimum functionality of the :mod:`scml <evedata.scml>` subpackage necessary and (ii) rely on the SCML to be present for the time being. It might be a sensible option to check for the SCML to be present if a :obj:`SkipData <evedata.evefile.entities.data.SkipData>` object has been created, and in those (probably rare) cases to issue a warning that this is currently not supported.
+
 
 Separating datasets for redefined channels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Given the data model to not correspond to the current eveH5 structure (v7), it makes sense to split datasets for channels redefined within one scan on this level. A more detailed discussion of how to handle these datasets can be found above in the section on the data model.
+Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently (eveH5 v7), all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. Generally, we need separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_.
+
+The current state of affairs (as of 09/2024) regarding a :doc:`new eveH5 scheme (v8) <eveh5>` is to separate single-point channels from average and interval channels and have average and interval channel datasets *per se* be suffixed by the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique.
+
+While the future way of storing those detector channels in eveH5 files is discussed in `#7726 <https://redmine.ahf.ptb.de/issues/7726>`_, we need a solution for **legacy data** solving two problems:
+
+1. separating the values for the different channels into separate datasets
+
+  This is rather complicated, but probably possible by looking at the different HDF5 datasets where present -- although this would require reading the *data* of the HDF5 datasets if corresponding datasets are available in the "averagemeta" or/and "standarddev" group to check for changes in these data.
+
+  Separating the data is but only necessary if corresponding datasets are available in the "averagemeta" or/and "standarddev" groups. *I.e.*, loading the data needs only to happen once this condition is met. However, as soon as this condition is met, data for legacy files need to be loaded to separate the data into separate datasets and not to have the surprise afterwards when first accessing the presumably single detector channel to all of a sudden have it split into several datasets.
+
+2. sensibly naming the resulting multiple datasets.
+
+  Generally, the same strategy as proposed for the new eveH5 scheme should be used here, *i.e.* suffixing the average and interval detector channels with the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique. The type of detector channel can be deduced from the class type.
+
+  Getting the scan module ID requires to read the SCML, though, as usually, the SMCounter pseudo-detector channel will not be present. Furthermore, mapping position counts to scan modules is far from simple. Hence, an alternative option may be to suffix the respective datasets with increasing integer numbers, without relation to the scan module ID.
 
 
 
@@ -988,7 +1006,7 @@ scan module (facade)
 .. figure:: uml/evedata.scan.boundaries.scan.*
     :align: center
 
-    Class hierarchy of the :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` module, providing the facades for the scan and setup descriptions. Currently, the basic idea is to inherit from the :class:`Scan <evedata.scan.entities.scan.Scan>` and :class:`Setup <evedata.scan.entities.setup.Setup>` entities and extend them accordingly, adding behaviour and implementing the :class:`File <evedata.scan.boundaries.scan.File>` interface.
+    Class hierarchy of the :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` module, providing the facades for the scan and setup descriptions. Currently, the basic idea is to inherit from the :class:`Scan <evedata.scan.entities.scan.Scan>` and :class:`Setup <evedata.scan.entities.setup.Setup>` entities and extend them accordingly, adding behaviour and implementing the :class:`File <evedata.scan.boundaries.scan.File>` interface. The difference between the :meth:`load() <evedata.scan.boundaries.scan.File.load>` and :meth:`extract() <evedata.scan.boundaries.scan.File.extract>` methods: While :meth:`load() <evedata.scan.boundaries.scan.File.load>` loads a file from the file system, :meth:`extract() <evedata.scan.boundaries.scan.File.extract>` extracts the SCML from a given HDF5 file.
 
 
 When loading an SCML/XML file, the :class:`SCML <evedata.scan.boundaries.scml.SCML>` class is called to read the actual XML, and afterwards, the contents are mapped to the entities defined in the :mod:`entities <evedata.scan.entities>` subpackage.
@@ -999,3 +1017,4 @@ scml module (resource)
 
 Most probably a DOM parser converting the SCML/XML read to a hierarchy of Python objects/structures.
 
+The resource must be able to cope with both, actual file handles and streams/text, as typically, SCML files are not present as files in the file system, but get extracted from an HDF5 file. For the time being (as of eveH5 v7), the SCML is stored in the user section of the HDF5 file. In the future, the SCML and station XML (not currently available in retrospect) are stored within the HDF5 file as separate datasets.
