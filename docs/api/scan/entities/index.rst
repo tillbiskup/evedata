@@ -10,5 +10,7 @@ evedata.scan.entities subpackage
 .. toctree::
     :maxdepth: 1
 
+    evedata.scan.entities.file
     evedata.scan.entities.scan
+
 

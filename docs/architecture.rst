@@ -1006,7 +1006,8 @@ scan module (facade)
 .. figure:: uml/evedata.scan.boundaries.scan.*
     :align: center
 
-    Class hierarchy of the :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` module, providing the facades for the scan and setup descriptions. Currently, the basic idea is to inherit from the :class:`Scan <evedata.scan.entities.scan.Scan>` and :class:`Setup <evedata.scan.entities.setup.Setup>` entities and extend them accordingly, adding behaviour and implementing the :class:`File <evedata.scan.boundaries.scan.File>` interface. The difference between the :meth:`load() <evedata.scan.boundaries.scan.File.load>` and :meth:`extract() <evedata.scan.boundaries.scan.File.extract>` methods: While :meth:`load() <evedata.scan.boundaries.scan.File.load>` loads a file from the file system, :meth:`extract() <evedata.scan.boundaries.scan.File.extract>` extracts the SCML from a given HDF5 file.
+    Class hierarchy of the :mod:`scan.boundaries.scan <evedata.scan.boundaries.scan>` module, providing the facades for the scan and setup descriptions. Currently, the basic idea is to inherit from the :class:`File <evedata.scan.entities.file.File>`class and extend it accordingly, adding behaviour and implementing the :class:`File <evedata.scan.boundaries.scan.File>` interface. The difference between the :meth:`load() <evedata.scan.boundaries.scan.File.load>` and :meth:`extract() <evedata.scan.boundaries.scan.Scan.extract>` methods: While :meth:`load() <evedata.scan.boundaries.scan.File.load>` loads a file from the file system, :meth:`extract() <evedata.scan.boundaries.scan.Scan.extract>` extracts the SCML from the
+    user block of a given HDF5 file.
 
 
 When loading an SCML/XML file, the :class:`SCML <evedata.scan.boundaries.scml.SCML>` class is called to read the actual XML, and afterwards, the contents are mapped to the entities defined in the :mod:`entities <evedata.scan.entities>` subpackage.

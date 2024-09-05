@@ -72,7 +72,10 @@ class TestChannel(unittest.TestCase):
         pass
 
     def test_has_attributes(self):
-        attributes = ["id", "normalize_id"]
+        attributes = [
+            "id",
+            "normalize_id",
+        ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.channel, attribute))

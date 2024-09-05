@@ -10,7 +10,9 @@ evedata.scan subpackage
 As each functional layer, the :mod:`scan <evedata.scan>` subpackage consists of three technical layers -- boundaries, controllers, entities --, each in their individual subpackage:
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
+    boundaries/index
     entities/index
+
 

@@ -3,14 +3,14 @@
 
 interface File {
     version
-    extract()
     load()
 }
 
-class Scan extends scan.entities.scan.Scan implements File {
+class Scan extends scan.entities.file.File implements File {
+    extract()
 }
 
-class Station extends scan.entities.setup.Setup implements File {
+class Station extends scan.entities.file.File implements File {
 }
 
 @enduml

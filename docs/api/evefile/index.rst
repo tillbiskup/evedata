@@ -11,7 +11,7 @@ As each functional layer, the :mod:`eevefile <evedata.evefile>` subpackage consi
 
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     boundaries/index
     controllers/index
