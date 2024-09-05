@@ -7,6 +7,8 @@ evedata.scan subpackage
    :show-inheritance:
 
 
+As each functional layer, the :mod:`scan <evedata.scan>` subpackage consists of three technical layers -- boundaries, controllers, entities --, each in their individual subpackage:
+
 .. toctree::
     :maxdepth: 1
 

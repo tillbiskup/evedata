@@ -19,10 +19,4 @@ to receive validated SCML files, some of the types of attributes are more
 relaxed as compared to the schema definition. This makes it much easier to
 map the types to standard Python types.
 
-Subpackages
-===========
-
-As each functional layer, the :mod:`scan <evedata.scan>` subpackage consists
-of three technical layers, each in their individual subpackage:
-
 """
