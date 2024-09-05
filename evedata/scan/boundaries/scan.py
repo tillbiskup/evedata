@@ -175,7 +175,7 @@ class Scan(File, SCMLFile):
 
     """
 
-    def __init__(self):
+    def __init__(self):  # noqa
         super().__init__()
 
     def extract(self, filename=""):
