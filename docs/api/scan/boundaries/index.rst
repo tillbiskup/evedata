@@ -11,4 +11,6 @@ evedata.scan.boundaries subpackage
     :maxdepth: 1
 
     evedata.scan.boundaries.scan
+    evedata.scan.boundaries.scml
+
 

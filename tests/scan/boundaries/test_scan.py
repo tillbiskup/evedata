@@ -65,6 +65,13 @@ class TestFile(unittest.TestCase):
         self.file.load()
         self.assertEqual(self.filename, self.file.filename)
 
+    @unittest.skip
+    def test_load_sets_metadata(self):
+        scmlfile = DummySCMLFile(filename=self.filename)
+        scmlfile.create()
+        self.file.load(filename=self.filename)
+        self.assertEqual(self.file.version, "9.2")
+
 
 class TestScan(unittest.TestCase):
     def setUp(self):

@@ -1,5 +1,5 @@
 """
-**High-level Python object representation of SCML file contents.**
+*High-level Python object representation of SCML file contents.*
 
 .. sidebar:: Contents
 
@@ -67,7 +67,7 @@ may be as simple as:
     from evedata.scan.boundaries.scan import Scan
 
     scan = Scan()
-    scan.load(filename="my_measurement_file.h5")
+    scan.extract(filename="my_measurement_file.h5")
 
 
 
