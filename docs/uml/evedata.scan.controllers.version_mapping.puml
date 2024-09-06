@@ -1,0 +1,45 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class VersionMapperFactory {
+    +scml : SCML
+    +get_mapper()
+}
+
+class VersionMapper {
+    +source : SCML
+    +destination : Scan | Station
+    -_mapping : Mapping
+    +map()
+}
+note left of VersionMapper
+    For Scan and SCML
+    see the respective modules
+    implementing these classes.
+
+    VersionMapper implements
+    that part of the mapping
+    functionality common to all
+    versions of the SCML schema.
+endnote
+
+class Mapping {
+    +filename : string
+    +mapping_table : dict
+    +load()
+}
+
+VersionMapper *- Mapping
+
+class VersionMapperVxmy extends VersionMapper {
+}
+note left of VersionMapperVxmy
+    Most probably, the classes for the
+    different SCML schemas are not a
+    strict hierarchy, but some direct
+    subclasses of VersionMapper.
+    Version numbers are MAJORmMINOR,
+    with x = MAJOR and y = MINOR.
+endnote
+
+@enduml

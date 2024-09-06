@@ -84,6 +84,8 @@ Module documentation
 
 import logging
 
+from evedata.scan.boundaries.scml import SCML
+from evedata.scan.controllers.version_mapping import VersionMapperFactory
 from evedata.scan.entities.file import File as SCMLFile
 
 
@@ -135,6 +137,12 @@ class File:
         """
         if filename:
             self.filename = filename
+        scml = SCML()
+        scml.load(filename=self.filename)
+        mapper_factory = VersionMapperFactory()
+        mapper = mapper_factory.get_mapper(scml)
+        # noinspection PyTypeChecker
+        mapper.map(source=scml, destination=self)
 
 
 class Scan(File, SCMLFile):

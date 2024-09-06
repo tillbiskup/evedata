@@ -34,6 +34,7 @@ Module documentation
 
 import logging
 
+from evedata.scan.entities.scan import Scan
 
 logger = logging.getLogger(__name__)
 
@@ -74,4 +75,4 @@ class File:
 
     def __init__(self):
         self.location = ""
-        self.scan = None
+        self.scan = Scan()

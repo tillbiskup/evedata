@@ -1,26 +1,23 @@
-import os
 import unittest
 import xml.etree.ElementTree as ET
 
-from evedata.scan.boundaries import scml
+from evedata.scan.boundaries.scan import Scan
+from evedata.scan.boundaries.scml import SCML
+from evedata.scan.controllers import version_mapping
 
 
-SCML = """<?xml version="1.0" encoding="UTF-8"?>
+SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
 <tns:scml xsi:schemaLocation="http://www.ptb.de/epics/SCML scml.xsd"
     xmlns:tns="http://www.ptb.de/epics/SCML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <location>TEST</location>
     <version>9.2</version>
     <scan>
         <repeatcount>0</repeatcount>
-        <savefilename>/messung/test/daten/2022/kw35/u49-test</savefilename>
+        <comment>test ccd time</comment>
+        <savefilename>/messung/test/daten/2024/kw${WEEK}/interval-detector-test-</savefilename>
         <confirmsave>false</confirmsave>
         <autonumber>true</autonumber>
-        <savescandescription>false</savescandescription>
-        <repeatcount>0</repeatcount>
-        <savefilename>/messung/test/daten/2022/kw35/u49-test</savefilename>
-        <confirmsave>false</confirmsave>
-        <autonumber>true</autonumber>
-        <savescandescription>false</savescandescription>
+        <savescandescription>true</savescandescription>
         <chain id="1">
             <pauseconditions/>
             <scanmodules>
@@ -142,119 +139,154 @@ SCML = """<?xml version="1.0" encoding="UTF-8"?>
 </tns:scml>"""
 
 
-class DummySCMLFile:
-    def __init__(self, filename=""):
-        self.filename = filename
+class MockSCML:
+    def __init__(self):
+        self.root = None
+        self.version = ""
 
-    def create(self):
-        with open(self.filename, "w") as file:
-            file.write(SCML)
+    def load(self, xml=SCML_STRING):
+        self.root = ET.fromstring(xml)
+        self.version = self.root.find("version").text
 
 
-class TestSCML(unittest.TestCase):
+class MockScan:
+    def __init__(self):
+        self.version = ""
+        self.location = ""
+        self.scan = None
+
+
+class TestVersionMapperFactory(unittest.TestCase):
     def setUp(self):
-        self.scml = scml.SCML()
-        self.filename = "file.scml"
-
-    def tearDown(self):
-        if os.path.exists(self.filename):
-            os.remove(self.filename)
+        self.factory = version_mapping.VersionMapperFactory()
+        self.scml = MockSCML()
+        self.scml.load()
 
     def test_instantiate_class(self):
         pass
 
     def test_has_attributes(self):
         attributes = [
-            "root",
-            "version",
-            "scan_modules",
-            "detectors",
-            "motors",
-            "devices",
+            "scml",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
-                self.assertTrue(hasattr(self.scml, attribute))
+                self.assertTrue(hasattr(self.factory, attribute))
 
-    def test_load_sets_root(self):
-        scmlfile = DummySCMLFile(filename=self.filename)
-        scmlfile.create()
-        self.scml.load(filename=self.filename)
-        self.assertTrue(self.scml.root)
-        self.assertIsInstance(self.scml.root, ET.Element)
+    def test_get_mapper_returns_mapper(self):
+        self.factory.scml = self.scml
+        mapper = self.factory.get_mapper()
+        self.assertIsInstance(mapper, version_mapping.VersionMapper)
 
-    def test_load_sets_version(self):
-        scmlfile = DummySCMLFile(filename=self.filename)
-        scmlfile.create()
-        self.scml.load(filename=self.filename)
-        self.assertEqual("9.2", self.scml.version)
+    def test_get_mapper_with_scml_argument_sets_scml_property(self):
+        self.factory.get_mapper(scml=self.scml)
+        self.assertEqual(self.scml, self.factory.scml)
 
-    def test_load_without_filename_raises(self):
-        with self.assertRaises(FileNotFoundError):
-            self.scml.load()
+    def test_get_mapper_without_scml_raises(self):
+        with self.assertRaises(ValueError):
+            self.factory.get_mapper()
 
-    def test_from_string_sets_root(self):
-        self.scml.from_string(SCML)
-        self.assertTrue(self.scml.root)
-        self.assertIsInstance(self.scml.root, ET.Element)
+    def test_get_mapper_returns_correct_mapper(self):
+        self.factory.scml = self.scml
+        mapper = self.factory.get_mapper()
+        self.assertIsInstance(mapper, version_mapping.VersionMapperV9m2)
 
-    def test_from_string_without_string_raises(self):
-        with self.assertRaisesRegex(ValueError, "Missing XML string"):
-            self.scml.from_string()
+    def test_get_mapper_with_unknown_version_raises(self):
+        self.scml.version = "0"
+        self.factory.scml = self.scml
+        with self.assertRaises(AttributeError):
+            self.factory.get_mapper()
 
-    def test_scan_modules_returns_list_of_elements(self):
-        scmlfile = DummySCMLFile(filename=self.filename)
-        scmlfile.create()
-        self.scml.load(filename=self.filename)
-        self.assertTrue(self.scml.scan_modules)
-        for scan_module in self.scml.scan_modules:
-            self.assertIsInstance(scan_module, ET.Element)
+    def test_get_mapper_sets_source_in_mapper(self):
+        self.factory.scml = self.scml
+        mapper = self.factory.get_mapper()
+        self.assertEqual(self.scml, mapper.source)
 
-    def test_scan_modules_without_root_returns_empty_list(self):
-        self.assertListEqual([], self.scml.scan_modules)
 
-    def test_scan_returns_scan_element(self):
-        scmlfile = DummySCMLFile(filename=self.filename)
-        scmlfile.create()
-        self.scml.load(filename=self.filename)
-        self.assertTrue(self.scml.scan)
-        self.assertEqual("scan", self.scml.scan.tag)
+class TestVersionMapper(unittest.TestCase):
+    def setUp(self):
+        self.mapper = version_mapping.VersionMapper()
 
-    def test_scan_without_root_returns_none(self):
-        self.assertIsNone(self.scml.scan)
+    def test_instantiate_class(self):
+        pass
 
-    def test_detectors_returns_list_of_elements(self):
-        scmlfile = DummySCMLFile(filename=self.filename)
-        scmlfile.create()
-        self.scml.load(filename=self.filename)
-        self.assertTrue(self.scml.detectors)
-        for detector in self.scml.detectors:
-            self.assertIsInstance(detector, ET.Element)
-            self.assertEqual("detector", detector.tag)
+    def test_has_attributes(self):
+        attributes = [
+            "source",
+            "destination",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.mapper, attribute))
 
-    def test_detectors_without_root_returns_empty_list(self):
-        self.assertListEqual([], self.scml.detectors)
+    def test_map_without_source_raises(self):
+        self.mapper.source = None
+        with self.assertRaises(ValueError):
+            self.mapper.map()
 
-    def test_motors_returns_list_of_elements(self):
-        scmlfile = DummySCMLFile(filename=self.filename)
-        scmlfile.create()
-        self.scml.load(filename=self.filename)
-        self.assertTrue(self.scml.motors)
-        for motor in self.scml.motors:
-            self.assertIsInstance(motor, ET.Element)
-            self.assertEqual("motor", motor.tag)
+    def test_map_without_destination_raises(self):
+        self.mapper.source = MockSCML()
+        self.mapper.source.load()
+        with self.assertRaises(ValueError):
+            self.mapper.map()
 
-    def test_motors_without_root_returns_empty_list(self):
-        self.assertListEqual([], self.scml.motors)
+    def test_map_sets_basic_metadata(self):
+        self.mapper.source = MockSCML()
+        self.mapper.source.load()
+        destination = MockScan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(self.mapper.source.version, destination.version)
+        self.assertEqual(
+            self.mapper.source.root.find("location").text,
+            destination.location,
+        )
 
-    def test_devices_returns_list_of_elements(self):
-        scmlfile = DummySCMLFile(filename=self.filename)
-        scmlfile.create()
-        self.scml.load(filename=self.filename)
-        self.assertTrue(self.scml.devices)
-        for device in self.scml.devices:
-            self.assertIsInstance(device, ET.Element)
-            self.assertEqual("device", device.tag)
 
-    def test_devices_without_root_returns_empty_list(self):
-        self.assertListEqual([], self.scml.devices)
+class TestVersionMapperV9m2(unittest.TestCase):
+    def setUp(self):
+        self.mapper = version_mapping.VersionMapperV9m2()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_map_sets_scan_metadata(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            int(self.mapper.source.scan.find("repeatcount").text),
+            self.mapper.destination.scan.repeat_count,
+        )
+        self.assertEqual(
+            self.mapper.source.scan.find("comment").text,
+            self.mapper.destination.scan.comment,
+        )
+
+    def test_map_creates_correct_number_of_scan_modules(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            len(self.mapper.source.scan_modules),
+            len(self.mapper.destination.scan.scan_modules.keys()),
+        )
+
+    def test_map_sets_scan_module_attributes(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            self.mapper.source.scan_modules[0].find("name").text,
+            self.mapper.destination.scan.scan_modules[15].name,
+        )
+        self.assertEqual(
+            int(self.mapper.source.scan_modules[0].find("parent").text),
+            self.mapper.destination.scan.scan_modules[15].parent,
+        )
+        self.assertEqual(
+            int(self.mapper.source.scan_modules[0].find("appended").text),
+            self.mapper.destination.scan.scan_modules[15].appended,
+        )

@@ -75,7 +75,7 @@ Module documentation
 """
 
 import logging
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree as ET  # noqa:N817
 
 
 logger = logging.getLogger(__name__)
@@ -102,6 +102,15 @@ class SCML:
     ----------
     root : :class:`xml.etree.ElementTree.Element`
         Root element of the SCML file read.
+
+    version : :class:`str`
+        Schema version of the SCML file loaded.
+
+        The reason behind directly mapping this information here is to allow
+        the :class:`VersionMapperFactory
+        <evedata.scan.controllers.version_mapper.VersionMapperFactory>` to
+        return the correct :obj:`VersionMapper
+        <evedata.scan.controllers.version_mapper.VersionMapper>` object.
 
 
     Examples
@@ -141,6 +150,7 @@ class SCML:
 
     def __init__(self):
         self.root = None
+        self.version = ""
 
     @property
     def scan(self):
@@ -185,7 +195,7 @@ class SCML:
 
         """
         if self.root:
-            modules = [element for element in self.root.iter("scanmodule")]
+            modules = list(self.root.iter("scanmodule"))
         else:
             modules = []
         return modules
@@ -213,7 +223,7 @@ class SCML:
 
         """
         if self.root:
-            detectors = [element for element in self.root.iter("detector")]
+            detectors = list(self.root.iter("detector"))
         else:
             detectors = []
         return detectors
@@ -241,7 +251,7 @@ class SCML:
 
         """
         if self.root:
-            motors = [element for element in self.root.iter("motor")]
+            motors = list(self.root.iter("motor"))
         else:
             motors = []
         return motors
@@ -269,7 +279,7 @@ class SCML:
 
         """
         if self.root:
-            devices = [element for element in self.root.iter("device")]
+            devices = list(self.root.iter("device"))
         else:
             devices = []
         return devices
@@ -287,8 +297,9 @@ class SCML:
             Name (path) of the SCML file
 
         """
-        tree = ET.parse(filename)
+        tree = ET.parse(filename)  # noqa: B314
         self.root = tree.getroot()
+        self.version = self.root.find("version").text
 
     def from_string(self, xml=""):
         """
@@ -310,4 +321,4 @@ class SCML:
         """
         if not xml:
             raise ValueError("Missing XML string")
-        self.root = ET.fromstring(xml)
+        self.root = ET.fromstring(xml)  # noqa: B314

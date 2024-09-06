@@ -13,6 +13,8 @@ As each functional layer, the :mod:`scan <evedata.scan>` subpackage consists of 
     :maxdepth: 2
 
     boundaries/index
+    controllers/index
     entities/index
+
 
 
