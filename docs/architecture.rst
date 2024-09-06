@@ -393,6 +393,11 @@ For each eveH5 schema version, there exists an individual ``VersionMapperVx`` cl
 Converting MPSKIP scans into average detector channel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Module name:
+    :mod:`mpskip <evedata.evefile.controllers.mpskip>`
+Dependencies:
+    :class:`Scan <evedata.scan.boundaries.scan.Scan>`, and here in particular the channels used in the scan module with the MPSKIP channel
+
 Given the data model to not correspond to the current eveH5 structure (v7), it makes sense to convert scans using MPSKIP to "fake" average detector channels storing the individual data points on this level.
 
 
@@ -418,6 +423,11 @@ If the SCML is present, reading the scan part of the SCML and inferring the moto
 Separating datasets for redefined channels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Module name:
+    :mod:`dataset_separation <evedata.evefile.controllers.dataset_separation>`
+Dependencies:
+    :class:`Scan <evedata.scan.boundaries.scan.Scan>`, and here the channels defined in a scan module as well as the corresponding scan module ID
+
 Generally, detector channels can be redefined within an experiment/scan, *i.e.* can have different operational modes (standard/average *vs.* interval) in different scan modules. Currently (eveH5 v7), all data are stored in the identical dataset on HDF5 level and only by "informed guessing" (if at all possible) can one deduce that they served different purposes. Generally, we need separate datasets on the HDF5 level for detector channels that change their type or attributes within a scan, see `#6879, note 16 <https://redmine.ahf.ptb.de/issues/6879#note-16>`_.
 
 The current state of affairs (as of 09/2024) regarding a :doc:`new eveH5 scheme (v8) <eveh5>` is to separate single-point channels from average and interval channels and have average and interval channel datasets *per se* be suffixed by the scan module ID. Given that one and the same channel can only be used once in a scan module, this should be unique.
@@ -440,6 +450,11 @@ While the future way of storing those detector channels in eveH5 files is discus
 
 Extract set values for axes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Module name:
+    :mod:`axes_set_values <evedata.evefile.controllers.axes_set_values>`
+Dependencies:
+    :class:`Scan <evedata.scan.boundaries.scan.Scan>`, and here the details of the axes positions defined in each scan module -- thus requiring parsing of the different ways how to define axes positions.
 
 The axes positions stored in the HDF5 file are the RBVs after positioning. If, however, an axis never reached the set value due to limit violation or other constraints, this is usually not visible from the HDF5 file, as the severity is typically not recorded. However, the set values for each axis can be inferred from the scan description. Having this information would be helpful for routine checks whether a scan ran as expected. Set values are stored in the :attr:`set_values <evedata.evefile.entities.data.AxisData.set_values>` attribute of the :class:`AxisData <evedata.evefile.entities.data.AxisData>` class.
 
@@ -980,6 +995,23 @@ What may be in here:
 
 version_mapping module
 ~~~~~~~~~~~~~~~~~~~~~~
+
+
+.. figure:: uml/evedata.scan.controllers.version_mapping.*
+    :align: center
+
+    Class hierarchy of the :mod:`evedata.scan.controllers.version_mapping`
+    module, providing the functionality to map different SCML file
+    schemas to the data structure provided by the :class:`Scan
+    <evedata.scan.boundaries.scan.Scan>` and :class:`Station
+    <evedata.scan.boundaries.scan.Station>` classes. The factory
+    will be used to get the correct mapper for a given SCML file.
+    For each SCML schema version, there exists an individual
+    ``VersionMapperVxmy`` class dealing with the version-specific mapping.
+    The idea behind the ``Mapping`` class is to provide simple mappings for
+    attributes and alike that need not be hard-coded and can be stored
+    externally, *e.g.* in YAML files. This would make it easier to account
+    for (simple) changes.
 
 
 Boundaries

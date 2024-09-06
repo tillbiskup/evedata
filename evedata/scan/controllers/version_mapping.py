@@ -1,4 +1,6 @@
 """
+.. include:: <isopub.txt>
+
 *Mapping SCML contents to the entities of the scan subpackage.*
 
 .. sidebar:: Contents
@@ -45,7 +47,7 @@ the duty of the factory to obtain the "version" attribute from the
     <evedata.scan.boundaries.scan.Station>` classes. The factory
     will be used to get the correct mapper for a given SCML file.
     For each SCML schema version, there exists an individual
-    ``VersionMapperVx_y`` class dealing with the version-specific mapping.
+    ``VersionMapperVxmy`` class dealing with the version-specific mapping.
     The idea behind the ``Mapping`` class is to provide simple mappings for
     attributes and alike that need not be hard-coded and can be stored
     externally, *e.g.* in YAML files. This would make it easier to account
@@ -64,13 +66,43 @@ account for (simple) changes.
 Mapping tasks for SCML schema up to v9.2
 ========================================
 
-TBD
+Currently, the structure of the entities in the :mod:`evedata.scan.entities`
+subpackage is not stable, and furthermore, there is no overview how much the
+SCML schema has changed for the different versions. Hence, the tasks
+described here will definitely change and evolve over time.
+
+* Map SCML metadata (version, location) |check|
+* Map scan -- if it exists
+
+  * Map scan metadata (repeat_count, comment, description, ...) (|check|)
+  * Map scan modules |cross|
+
+    * Requires mechanism to distinguish the types of scan modules
+
+* Map all devices |cross|
+
+  * Map detectors
+  * Map motors
+  * Map devices
+
+
+Currently, there is a need to map at least basic information about the scan
+modules, to proceed with several controllers from the
+:mod:`evedata.evefile.controllers` subpackage: mpskip, separating datasets
+of redefined channels, obtain set values for axes. For details, see the
+respective section of the :doc:`/architecture` document.
 
 
 Fundamental change of SCML schema with v10
 ==========================================
 
-TBD
+Most probably, the SCML schema will be changed quite substantially in the
+future, based on all the experience with developing the ``evedata`` package
+and the data models implemented therein.
+
+Depending on how dramatic this changes will be, the mappers for versions up
+to the current one (v9.x) and those of the next major version may differ
+substantially.
 
 
 Module documentation
