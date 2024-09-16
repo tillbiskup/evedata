@@ -996,6 +996,8 @@ What may be in here:
 version_mapping module
 ~~~~~~~~~~~~~~~~~~~~~~
 
+For details, see the documentation of the :mod:`version_mapping <evedata.scan.controllers.version_mapping>` module.
+
 
 .. figure:: uml/evedata.scan.controllers.version_mapping.*
     :align: center

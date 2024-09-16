@@ -95,3 +95,25 @@ class TestAxis(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.axis, attribute))
+
+
+class TestSnapshotModule(unittest.TestCase):
+    def setUp(self):
+        self.module = scan.SnapshotModule()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "id",
+            "name",
+            "parent",
+            "appended",
+            "nested",
+            "axes",
+            "channels",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.module, attribute))

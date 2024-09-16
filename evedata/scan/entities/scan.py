@@ -44,8 +44,8 @@ hierarchy is given in the UML diagram below, :numref:`Fig. %s
     <evedata.scan.entities.scan>` module, closely resembling the schema of
     the SCML file. As the scan module is already quite complicated,
     event and plot-related classes have been separated into their own
-    modules and are described below. Hint: For a larger view, you may open
-    the image in a separate tab. As it is vectorised (SVG), it scales well.
+    modules. Hint: For a larger view, you may open the image in a separate
+    tab. As it is vectorised (SVG), it scales well.
 
 
 .. important::
@@ -181,9 +181,12 @@ class AbstractScanModule:
 
 class ScanModule(AbstractScanModule):
     """
-    One sentence (on one line) describing the class.
+    Representation of a "classical" scan module.
 
-    More description comes here...
+    This type of scan modules is the generic building block of all scans and
+    very versatile. Mainly, it consists of detector channels and motor axes,
+    as well as a series of events, pre- and post-scan options, positionings
+    and plots.
 
 
     Attributes
@@ -331,3 +334,81 @@ class Axis:
 
     def __init__(self):
         self.id = ""  # noqa
+
+
+class SnapshotModule(AbstractScanModule):
+    """
+    Representation of snapshot scan modules.
+
+    Snapshot scan modules are used to record the state of devices at a given
+    point in time (an individual position count). Historically, there are
+    four different types of such snapshot scan modules: motor axes and
+    detector channels, and static and dynamic each.
+
+
+    Attributes
+    ----------
+    id : :class:`int`
+        Unique ID of the scan module.
+
+        The IDs are numeric and start with 1, as the root node is always 0.
+        Hence, the first scan module defined will have 0 as its parent.
+
+        Default: 1
+
+    name : :class:`str`
+        Name of the scan module.
+
+        The scan module appears in the graphical representation eve GUI with
+        this name. Hence, providing good names can be very valuable.
+
+    parent : :class:`id`
+        Unique ID of the parent scan module.
+
+        In case of the first scan module, this is 0.
+
+        Default: 0
+
+    appended : :class:`int`
+        Unique ID of the appended scan module.
+
+        A scan module can have 0..1 appended and 0..1 nested scan modules.
+
+        Default: None
+
+    nested : :class:`int`
+        Unique ID of the nested scan module.
+
+        A scan module can have 0..1 appended and 0..1 nested scan modules.
+
+        Default: None
+
+    axes : :class:`dict`
+        Motor axes actively being used in the scan module.
+
+        The keys are the unique IDs (UID) of the axis, while the values are
+        :obj:`Axis` objects. This allows for easy access of a given axis
+        given its UID.
+
+    channels : :class:`dict`
+        Detector channels actively being used in the scan module.
+
+        The keys are the unique IDs (UID) of the channel, while the values are
+        :obj:`Channel` objects. This allows for easy access of a given channel
+        given its UID.
+
+
+    Examples
+    --------
+    The :class:`ScanModule` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.axes = {}
+        self.channels = {}

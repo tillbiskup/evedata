@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from evedata.scan.boundaries.scan import Scan
 from evedata.scan.boundaries.scml import SCML
 from evedata.scan.controllers import version_mapping
+from evedata.scan.entities import scan
 
 
 SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
@@ -34,6 +35,8 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
                     <xpos>228</xpos>
                     <ypos>124</ypos>
                     <parent>15</parent>
+                    <nested>2</nested>
+                    <appended>3</appended>
                     <classic>
                         <valuecount>1</valuecount>
                         <settletime>0.0</settletime>
@@ -74,6 +77,85 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
                             <reset_originalvalue>true</reset_originalvalue>
                         </postscan>
                     </classic>
+                </scanmodule>
+                <scanmodule id="2">
+                    <name>SM 1</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>1</parent>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <prescan>
+                            <id>SimMt:testrack01000.LLM</id>
+                            <value type="double">30</value>
+                        </prescan>
+                        <smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1chan1</channelid>
+                            <interval>
+                                <triggerinterval>0.01</triggerinterval>
+                                <stoppedby>Timer1-det-double</stoppedby>
+                            </interval>
+                        </smchannel>
+                        <smchannel>
+                            <channelid>Timer1-det-double</channelid>
+                            <standard>
+                                <averagecount>500</averagecount>
+                                <sendreadyevent>true</sendreadyevent>
+                            </standard>
+                        </smchannel>
+                        <postscan>
+                            <id>SimMt:testrack01000.LLM</id>
+                            <reset_originalvalue>true</reset_originalvalue>
+                        </postscan>
+                    </classic>
+                </scanmodule>
+                <scanmodule id="3">
+                    <name>Static Axis Snapshot</name>
+                    <xpos>147</xpos>
+                    <ypos>57</ypos>
+                    <parent>2</parent>
+                    <appended>4</appended>
+                    <save_axis_positions>
+                        <smaxis>
+                            <axisid>DiscPosSimMt:testrack01000</axisid>
+                            <stepfunction>Plugin</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <plugin name="MotionDisabled">
+                                <parameter name="location">/path/to/referenceadd</parameter>
+                            </plugin>
+                        </smaxis>
+                    </save_axis_positions>
+                </scanmodule>
+                <scanmodule id="4">
+                    <name>Static Channel Snapshot</name>
+                    <xpos>333</xpos>
+                    <ypos>77</ypos>
+                    <parent>3</parent>
+                    <save_channel_values>
+                        <smchannel>
+                            <channelid>SmCounter-det</channelid>
+                            <standard/>
+                        </smchannel>
+                        <smchannel>
+                            <channelid>bIICurrent:Mnt1chan1</channelid>
+                            <standard/>
+                        </smchannel>
+                    </save_channel_values>
                 </scanmodule>
             </scanmodules>
         </chain>
@@ -290,3 +372,73 @@ class TestVersionMapperV9m2(unittest.TestCase):
             int(self.mapper.source.scan_modules[0].find("appended").text),
             self.mapper.destination.scan.scan_modules[15].appended,
         )
+        self.assertEqual(
+            int(self.mapper.source.scan_modules[1].find("nested").text),
+            self.mapper.destination.scan.scan_modules[1].nested,
+        )
+
+    def test_map_distinguishes_scan_module_types(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        classic_ids = [1, 2]
+        snapshot_ids = [15, 3, 4]
+        for sm_id in classic_ids:
+            self.assertIsInstance(
+                self.mapper.destination.scan.scan_modules[sm_id],
+                scan.ScanModule,
+            )
+        for sm_id in snapshot_ids:
+            self.assertIsInstance(
+                self.mapper.destination.scan.scan_modules[sm_id],
+                scan.SnapshotModule,
+            )
+
+    def test_map_adds_channels_to_classic_scan_module(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(self.mapper.destination.scan.scan_modules[1].channels)
+        for item in self.mapper.destination.scan.scan_modules[
+            1
+        ].channels.values():
+            self.assertIsInstance(item, scan.Channel)
+            self.assertTrue(item.id)
+
+    def test_map_adds_axes_to_classic_scan_module(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(self.mapper.destination.scan.scan_modules[1].axes)
+        for item in self.mapper.destination.scan.scan_modules[
+            1
+        ].axes.values():
+            self.assertIsInstance(item, scan.Axis)
+            self.assertTrue(item.id)
+
+    def test_map_adds_channels_to_static_snapshot_module(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(self.mapper.destination.scan.scan_modules[4].channels)
+        for item in self.mapper.destination.scan.scan_modules[
+            4
+        ].channels.values():
+            self.assertIsInstance(item, scan.Channel)
+            self.assertTrue(item.id)
+
+    def test_map_adds_axes_to_static_snapshot_module(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(self.mapper.destination.scan.scan_modules[3].axes)
+        for item in self.mapper.destination.scan.scan_modules[
+            3
+        ].axes.values():
+            self.assertIsInstance(item, scan.Axis)
+            self.assertTrue(item.id)

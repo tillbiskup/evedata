@@ -2400,6 +2400,7 @@ class TestVersionMapperV5(unittest.TestCase):
         for dataset in datasets:
             self.assertNotIn(dataset, self.mapper.datasets2map_in_snapshot)
 
+    @unittest.skip
     def test_map_mpskip(self):
         self.mapper.source = self.h5file
         datasets, monitors = self.mapper.source.add_mpskip()

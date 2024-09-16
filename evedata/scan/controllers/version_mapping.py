@@ -55,7 +55,9 @@ the duty of the factory to obtain the "version" attribute from the
 
 
 For each SCML schema version, there exists an individual
-``VersionMapperVx_y`` class dealing with the version-specific mapping. That
+``VersionMapperVxmy`` class dealing with the version-specific mapping.
+Currently, we assume major and minor version numbers to be relevant. Hence
+the ``xmy`` suffix for the individual mapper classes. That
 part of the mapping common to all versions of the SCML schema takes place
 in the :class:`VersionMapper` parent class. The idea behind the ``Mapping``
 class is to provide simple mappings for attributes and alike that can be
@@ -75,9 +77,14 @@ described here will definitely change and evolve over time.
 * Map scan -- if it exists
 
   * Map scan metadata (repeat_count, comment, description, ...) (|check|)
-  * Map scan modules |cross|
+  * Map scan modules (|check|)
 
-    * Requires mechanism to distinguish the types of scan modules
+    * Distinguish types of scan modules: "classic" *vs.* snapshot |check|
+    * Extract list of detector channels and motor axes |check|
+    * Map pre- and post-scans |cross|
+    * Map positionings |cross|
+    * Map plots? |cross|
+    * Map remaining information? |cross|
 
 * Map all devices |cross|
 
@@ -91,6 +98,29 @@ modules, to proceed with several controllers from the
 :mod:`evedata.evefile.controllers` subpackage: mpskip, separating datasets
 of redefined channels, obtain set values for axes. For details, see the
 respective section of the :doc:`/architecture` document.
+
+
+.. important::
+
+    Due to the reasons mentioned above (urgent need to map only basic
+    information about the scan modules), the mapping of the SCML file
+    contents to the entities from the :mod:`evedata.scan.entities`
+    subpackage is only rudimentary. Therefore, both mapping and internal
+    handling of the SCML/XML tree will probably change in the future.
+
+
+Distinguishing types of scan modules
+------------------------------------
+
+Currently, only two types of scan modules are distinguished: "classical"
+modules and snapshot modules. The distinction is based on two assumptions:
+
+* The name of snapshot modules cannot be edited/changed by the user
+* The name of snapshot modules contains the word "Snapshot" (checked
+  case-insensitive)
+
+For "classical" modules, both axes and channels are mapped, for static axis
+or channel snapshot modules, axes or channels, respectively.
 
 
 Fundamental change of SCML schema with v10
@@ -113,7 +143,8 @@ Module documentation
 import logging
 import sys
 
-from evedata.scan.entities.scan import ScanModule
+from evedata.scan.entities import scan
+
 
 logger = logging.getLogger(__name__)
 
@@ -267,8 +298,8 @@ class VersionMapper:
         destination : :class:`evedata.scan.boundaries.scan.Scan`
             High(er)-level evedata structure representing an SCML file
 
-            Can alternatively be an :obj:`evedata.scan.boundaries.scan.Station`
-            object.
+            Can alternatively be an
+            :obj:`evedata.scan.boundaries.scan.Station` object.
 
         Raises
         ------
@@ -360,12 +391,38 @@ class VersionMapperV9m2(VersionMapper):
             )
 
     def _map_scan_module(self, element=None):
-        # TODO: Distinguish types of scan modules and map appropriately
-        module = ScanModule()
+        if "snapshot" in element.find("name").text.lower():
+            module = scan.SnapshotModule()
+        else:
+            module = scan.ScanModule()
         module.name = element.find("name").text
         module.parent = int(element.find("parent").text)
         try:
             module.appended = int(element.find("appended").text)
         except AttributeError:
             pass
+        try:
+            module.nested = int(element.find("nested").text)
+        except AttributeError:
+            pass
+        for channel in element.iter("smchannel"):
+            module.channels[channel.find("channelid").text] = (
+                self._map_scan_module_channel(channel)
+            )
+        for axis in element.iter("smaxis"):
+            module.axes[axis.find("axisid").text] = (
+                self._map_scan_module_axis(axis)
+            )
         return module
+
+    @staticmethod
+    def _map_scan_module_channel(element):
+        channel = scan.Channel()
+        channel.id = element.find("channelid").text
+        return channel
+
+    @staticmethod
+    def _map_scan_module_axis(element):
+        axis = scan.Axis()
+        axis.id = element.find("axisid").text
+        return axis
