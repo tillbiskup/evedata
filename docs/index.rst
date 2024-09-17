@@ -6,6 +6,17 @@ evedata
 
 Welcome! This is the documentation for evedata, a Python package for **importing (synchrotron) radiometry data** obtained at one of the beamlines at **BESSY-II or MLS in Berlin**, mostly operated by the German National Metrology Institute, the `Physikalisch-Technische Bundesanstalt (PTB) <https://www.ptb.de/>`_. This package acts as main **interface between** the (eveH5) **data files and the processing and analysis code** and provides abstractions that allow for a convenient and intuitive access to the data and information contained in the data files. For related packages for viewing and analysing those data, have a look at the :ref:`related projects section <sec-related_projects>`.
 
+Loading the contents of a data file of a measurement may be as simple as:
+
+.. code-block::
+
+    from evedata import Measurement
+
+    measurement = Measurement(filename="my_measurement_file.h5")
+    measurement.load()
+
+Here, ``measurement`` contains a high-level abstract representation of all the information contained in the data file as a hierarchy of Python objects. For more details, see the documentation of the :mod:`measurement <evedata.measurement.boundaries.measurement>` module.
+
 
 Features
 ========
@@ -19,6 +30,8 @@ A list of (planned) features:
 * Complete information available that is contained in an eveH5 file
 
 * Access to the information stored in the scan description
+
+* Data are (only) loaded on demand, not when loading the file
 
 * Powerful and intuitive abstractions, allowing for associative access to data and information -- beyond a purely tabular view of the data
 
@@ -36,6 +49,11 @@ And to make it even more convenient for users and future-proof:
 .. warning::
     evedata is currently under active development and still considered in Alpha development state. Therefore, expect frequent changes in features and public APIs that may break your own code. Nevertheless, feedback as well as feature requests are highly welcome.
 
+Where to start
+==============
+
+Users new to evedata should probably start :doc:`at the beginning <audience>`, those familiar with its :doc:`underlying concepts <concepts>` and interested in the overall structure may have a look at the :doc:`architecture` section. The :doc:`usecases` and :doc:`terminology` sections may be worth skimming over as well.
+
 
 Installation
 ============
@@ -45,6 +63,8 @@ To install the evedata package on your computer (sensibly within a Python virtua
 .. code-block:: bash
 
     pip install evedata
+
+For further details, see the :doc:`installing` section.
 
 
 .. _sec-related_projects:
@@ -56,7 +76,7 @@ While the evedata package is explicitly *not* concerned with viewing or analysin
 
 * radiometry
 
-  A Python package for **processing and analysing (synchrotron) radiometry data** in a **reproducible** and mostly **automated** fashion. Currently, it focusses on data obtained at one of the beamlines at **BESSY-II or MLS in Berlin**, mostly operated by the German National Metrology Institute, the `Physikalisch-Technische Bundesanstalt (PTB) <https://www.ptb.de/>`_.
+  A Python package for **processing and analysing (synchrotron) radiometry data** in a **reproducible** and mostly **automated** fashion, based on the `ASpecD framework <https://docs.aspecd.de/>`_. Currently, it focusses on data obtained at one of the beamlines at **BESSY-II or MLS in Berlin**, mostly operated by the German National Metrology Institute, the `Physikalisch-Technische Bundesanstalt (PTB) <https://www.ptb.de/>`_.
 
 * evedataviewer
 

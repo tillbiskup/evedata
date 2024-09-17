@@ -6,7 +6,9 @@ class MeasureData {
     values
 }
 
-class Axis extends MeasureData {}
+class Axis #pink extends MeasureData {}
+
+class NonencodedAxis #pink extends Axis {}
 
 class Channel extends MeasureData {}
 
