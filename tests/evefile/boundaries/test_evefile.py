@@ -1,5 +1,7 @@
 import os
+import struct
 import unittest
+import zlib
 
 import h5py
 import numpy as np
@@ -7,11 +9,27 @@ import numpy as np
 from evedata.evefile.boundaries import evefile
 
 
+SCML = """<?xml version="1.0" encoding="UTF-8"?>
+<tns:scml xsi:schemaLocation="http://www.ptb.de/epics/SCML scml.xsd"
+    xmlns:tns="http://www.ptb.de/epics/SCML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <location>Test</location>
+    <version>9.2</version>
+    <scan>
+        <repeatcount>42</repeatcount>
+        <comment>test ccd time</comment>
+        <savefilename>/messung/test/daten/2022/kw35/u49-test</savefilename>
+        <confirmsave>false</confirmsave>
+        <autonumber>true</autonumber>
+        <savescandescription>true</savescandescription>
+    </scan>
+</tns:scml>"""
+
+
 class DummyHDF5File:
     def __init__(self, filename=""):
         self.filename = filename
 
-    def create(self):
+    def create(self, scml=True):
         with h5py.File(self.filename, "w") as file:
             file.attrs["EVEH5Version"] = np.bytes_(["7"])
             file.attrs["Version"] = np.bytes_(["2.0"])
@@ -61,6 +79,23 @@ class DummyHDF5File:
             )
             poscounttimer = meta.create_dataset("PosCountTimer", data=data)
             poscounttimer.attrs["Unit"] = np.bytes_(["msecs"])
+        if scml:
+            self.add_scml()
+
+    def add_scml(self):
+        with open(self.filename, "rb") as file:
+            hdf5_contents = file.read()
+        with open(self.filename, "wb") as file:
+            file.write(b"EVEcSCML")
+            compressed_scml = zlib.compress(bytes(SCML, "utf8"))
+            file.write(struct.pack("!L", len(compressed_scml)))
+            file.write(struct.pack("!L", len(SCML)))
+            file.write(compressed_scml)
+            offset = 512
+            if len(compressed_scml) > offset:
+                offset = 2 ** (len(compressed_scml) - 1).bit_length()
+            file.write(bytearray(offset - len(compressed_scml) - 16))
+            file.write(hdf5_contents)
 
 
 class TestEveFile(unittest.TestCase):
@@ -146,3 +181,9 @@ class TestEveFile(unittest.TestCase):
         self.evefile.load(filename=self.filename)
         self.assertEqual(5, len(self.evefile.data["SimChan:01"].data))
         self.assertEqual(5, len(self.evefile.data["SimMot:01"].data))
+
+    def test_load_reads_scml(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.evefile.load(filename=self.filename)
+        self.assertEqual("9.2", self.evefile.scan.version)

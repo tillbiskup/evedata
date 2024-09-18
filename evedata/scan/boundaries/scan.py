@@ -83,6 +83,8 @@ Module documentation
 """
 
 import logging
+import struct
+import zlib
 
 from evedata.scan.boundaries.scml import SCML
 from evedata.scan.controllers.version_mapping import VersionMapperFactory
@@ -124,10 +126,11 @@ class File:
         super().__init__()
         self.version = ""
         self.filename = ""
+        self._scml = SCML()
 
     def load(self, filename=""):
         """
-        Load contents of an SCML file or an eveH5 file containing an SCML file.
+        Load contents of an SCML file.
 
         Parameters
         ----------
@@ -137,12 +140,14 @@ class File:
         """
         if filename:
             self.filename = filename
-        scml = SCML()
-        scml.load(filename=self.filename)
+        self._scml.load(filename=self.filename)
+        self.map()
+
+    def map(self):
         mapper_factory = VersionMapperFactory()
-        mapper = mapper_factory.get_mapper(scml)
+        mapper = mapper_factory.get_mapper(self._scml)
         # noinspection PyTypeChecker
-        mapper.map(source=scml, destination=self)
+        mapper.map(source=self._scml, destination=self)
 
 
 class Scan(File, SCMLFile):
@@ -181,10 +186,25 @@ class Scan(File, SCMLFile):
         scan = Scan()
         scan.extract(filename="my_measurement_file.h5")
 
+    If you are ever in the situation to load a separate SCML file, this is
+    possible as well:
+
+    .. code-block::
+
+        scan = Scan()
+        scan.load(filename="my_scan_description.scml")
+
+    In most cases, however, you need not be concerned with loading the
+    SCML file at all, as the :class:`EveFile
+    <evedata.evefile.boundaries.evefile.EveFile>` and :class:`Measurement
+    <evedata.measurement.boundaries.measurement.Measurement>` classes will
+    take care of that for you.
+
     """
 
     def __init__(self):  # noqa
         super().__init__()
+        self._marker = b"EVEcSCML"
 
     def extract(self, filename=""):
         """
@@ -195,6 +215,33 @@ class Scan(File, SCMLFile):
         filename : :class:`str`
             Name of the file to load.
 
+
+        A short description of the way the scan description (SCML) is
+        contained in eveH5 files:
+
+        * Generally, the SCML is located at the beginning of the file,
+          therefore interpreted by HDF5 as "user data".
+        * The first eight bytes of an eveH5 file containing the SCML read
+          "EVEcSCML".
+        * The next four bytes are the length of the compressed SCML file
+          (encoded as big-endian unsigned integer, "!L").
+        * The next four bytes are the length of the uncompressed SCML file
+          (encoded as big-endian unsigned integer, "!L") - an information
+          that is not needed here.
+        * The next (length compressed SCML file) bytes are the
+          ZIP-compressed contents of the actual SCML file.
+        * As a user data block in HDF5 files needs to be 2^n bytes long,
+          the remaining space to the next power of 2 is padded with zeros.
+
         """
-        if filename:
-            self.filename = filename
+        if not filename:
+            filename = self.filename
+        with open(filename, "rb") as file:
+            marker = file.read(8)
+            if marker == self._marker:
+                compressed_length = struct.unpack("!L", file.read(4))[0]
+                file.read(4)  # Uncompressed length, not needed here
+                self._scml.from_string(
+                    xml=zlib.decompress(file.read(compressed_length)).decode()
+                )
+                self.map()

@@ -459,6 +459,12 @@ Dependencies:
 The axes positions stored in the HDF5 file are the RBVs after positioning. If, however, an axis never reached the set value due to limit violation or other constraints, this is usually not visible from the HDF5 file, as the severity is typically not recorded. However, the set values for each axis can be inferred from the scan description. Having this information would be helpful for routine checks whether a scan ran as expected. Set values are stored in the :attr:`set_values <evedata.evefile.entities.data.AxisData.set_values>` attribute of the :class:`AxisData <evedata.evefile.entities.data.AxisData>` class.
 
 
+.. note::
+
+    In case the axis set values in the SCML are only a reference to an external file, these values cannot reliably be read afterwards. Hence, in this case, probably either a warning should be issued or the situation silently ignored. In a future eveH5 scheme, it may be sensible to store those values in some way in the file.
+
+
+
 Correct mapping of file numbers for external files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -198,6 +198,10 @@ class TestSCML(unittest.TestCase):
         self.assertTrue(self.scml.root)
         self.assertIsInstance(self.scml.root, ET.Element)
 
+    def test_from_string_sets_version(self):
+        self.scml.from_string(SCML)
+        self.assertEqual("9.2", self.scml.version)
+
     def test_from_string_without_string_raises(self):
         with self.assertRaisesRegex(ValueError, "Missing XML string"):
             self.scml.from_string()

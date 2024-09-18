@@ -183,7 +183,7 @@ class EveFile(File):
         Each item in the list is an instance of
         :class:`evedata.evefile.entities.file.LogMessage`.
 
-    scan : :class:`Scan`
+    scan : :class:`evedata.evefile.entities.file.Scan`
         Description of the actual scan.
 
     data : :class:`dict`
@@ -293,7 +293,7 @@ class EveFile(File):
         self._read_and_map_eveh5_file()
 
     def _load_scml(self):
-        pass
+        self.scan.extract(filename=self.metadata.filename)
 
     def _read_and_map_eveh5_file(self):
         eveh5 = HDF5File()

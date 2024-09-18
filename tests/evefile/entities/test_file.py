@@ -64,6 +64,7 @@ class TestScan(unittest.TestCase):
         attributes = [
             "author",
             "filename",
+            "version",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):

@@ -30,6 +30,7 @@ Module documentation
 import datetime
 import logging
 
+import evedata.scan.boundaries.scan
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +186,7 @@ class Metadata:
         self.preferred_normalisation_channel = ""
 
 
-class Scan:
+class Scan(evedata.scan.boundaries.scan.Scan):
     """
     Description of a scan used to record data.
 
@@ -213,6 +214,7 @@ class Scan:
     """
 
     def __init__(self):
+        super().__init__()
         self.author = ""
         self.filename = ""
 

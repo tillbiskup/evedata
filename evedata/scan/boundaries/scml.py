@@ -322,3 +322,4 @@ class SCML:
         if not xml:
             raise ValueError("Missing XML string")
         self.root = ET.fromstring(xml)  # noqa: B314
+        self.version = self.root.find("version").text
