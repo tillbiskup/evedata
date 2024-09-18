@@ -140,7 +140,7 @@ class Measurement:
         Each item in the list is an instance of
         :class:`evedata.evefile.entities.file.LogMessage`.
 
-    scan : :class:`Scan`
+    scan : :class:`evedata.scan.boundaries.scan.Scan`
         Description of the actual scan.
 
     station : :class:`Station`

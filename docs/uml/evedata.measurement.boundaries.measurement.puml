@@ -20,8 +20,8 @@ class Measurement extends measurement.entities.measurement.Measurement {
 }
 
 Measurement *-- measurement.entities.metadata.Metadata
-Measurement *-- Scan
-Measurement *-- Station
+Measurement *-- evefile.entities.file.Scan
+Measurement *-- evefile.entities.file.Station
 
 class evefile.entities.file.Scan {
 }
@@ -29,9 +29,6 @@ class evefile.entities.file.Scan {
 class evefile.entities.file.Station {
 }
 
-class Scan extends evefile.entities.file.Scan
-
-class Station extends evefile.entities.file.Station
 
 class measurement.entities.measurement.Data {
     data : np.ndarray

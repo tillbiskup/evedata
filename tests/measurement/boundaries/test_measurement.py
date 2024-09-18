@@ -1,5 +1,7 @@
 import os
+import struct
 import unittest
+import zlib
 
 import h5py
 import numpy as np
@@ -9,11 +11,30 @@ from evedata.measurement.boundaries import measurement
 from evedata.measurement.controllers import joining
 
 
+SCML = """<?xml version="1.0" encoding="UTF-8"?>
+<tns:scml xsi:schemaLocation="http://www.ptb.de/epics/SCML scml.xsd"
+    xmlns:tns="http://www.ptb.de/epics/SCML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <location>TEST</location>
+    <version>9.2</version>
+    <scan>
+        <repeatcount>0</repeatcount>
+        <savefilename>/messung/test/daten/2022/kw35/u49-test</savefilename>
+        <confirmsave>false</confirmsave>
+        <autonumber>true</autonumber>
+        <savescandescription>false</savescandescription>
+    </scan>
+    <plugins/>
+    <detectors/>
+    <motors/>
+    <devices/>
+</tns:scml>"""
+
+
 class DummyHDF5File:
     def __init__(self, filename=""):
         self.filename = filename
 
-    def create(self, set_preferred=True, add_snapshot=False):
+    def create(self, set_preferred=True, add_snapshot=False, scml=True):
         with h5py.File(self.filename, "w") as file:
             file.attrs["EVEH5Version"] = np.bytes_(["7"])
             file.attrs["Version"] = np.bytes_(["2.0"])
@@ -156,6 +177,23 @@ class DummyHDF5File:
                 simchan3.attrs["Access"] = np.bytes_(["ca:bazfoo"])
                 simchan3.attrs["DeviceType"] = np.bytes_(["Channel"])
                 simchan3.attrs["Detectortype"] = np.bytes_(["Standard"])
+        if scml:
+            self.add_scml()
+
+    def add_scml(self):
+        with open(self.filename, "rb") as file:
+            hdf5_contents = file.read()
+        with open(self.filename, "wb") as file:
+            file.write(b"EVEcSCML")
+            compressed_scml = zlib.compress(bytes(SCML, "utf8"))
+            file.write(struct.pack("!L", len(compressed_scml)))
+            file.write(struct.pack("!L", len(SCML)))
+            file.write(compressed_scml)
+            offset = 512
+            if len(compressed_scml) > offset:
+                offset = 2 ** (len(compressed_scml) - 1).bit_length()
+            file.write(bytearray(offset - len(compressed_scml) - 16))
+            file.write(hdf5_contents)
 
 
 class TestMeasurement(unittest.TestCase):
@@ -306,6 +344,13 @@ class TestMeasurement(unittest.TestCase):
             ].metadata.unit,
             self.measurement.data.axes[1].unit,
         )
+
+    def test_load_maps_scan(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create()
+        self.measurement.load(filename=self.filename)
+        self.assertTrue(self.measurement.scan)
+        self.assertTrue("9.2", self.measurement.scan.version)
 
     def test_preferred_data_sets_current_data(self):
         h5file = DummyHDF5File(filename=self.filename)

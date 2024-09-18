@@ -376,7 +376,7 @@ class, these are:
 
 * Copy the :attr:`EveFile.scan
   <evedata.evefile.boundaries.evefile.EveFile.scan>` attribute to the
-  :attr:`Measurement.scan` attribute. |cross|
+  :attr:`Measurement.scan` attribute. |check|
 
 * Copy the :attr:`EveFile.station
   <evedata.evefile.boundaries.evefile.EveFile.station>` attribute to the
@@ -483,7 +483,7 @@ class Measurement(entities.Measurement):
         Each item in the list is an instance of
         :class:`evedata.evefile.entities.file.LogMessage`.
 
-    scan : :class:`Scan`
+    scan : :class:`evedata.evefile.entities.file.Scan`
         Description of the actual scan.
 
     station : :class:`Station`
@@ -723,6 +723,7 @@ class Measurement(entities.Measurement):
         if filename:
             self.metadata.filename = filename
         self._load_evefile()
+        self._map_scan()
         self._map_metadata()
         self._map_log_messages()
         self._map_devices()
@@ -733,6 +734,9 @@ class Measurement(entities.Measurement):
     def _load_evefile(self):
         self._evefile = EveFile(filename=self.metadata.filename)
         self._evefile.load()
+
+    def _map_scan(self):
+        self.scan = self._evefile.scan
 
     def _map_metadata(self):
         attributes = [
