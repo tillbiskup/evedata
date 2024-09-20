@@ -848,6 +848,7 @@ class MockEveH5v4(MockEveH5):
             data_[f"{uid}"] = np.ones(6) * 42.0
             dataset.data = data_
             self.c1.main.add_item(dataset)
+            self.c1.snapshot.add_item(dataset)
         monitor_names = [
             "detector",
             "limit",
@@ -855,6 +856,7 @@ class MockEveH5v4(MockEveH5):
             "reset",
             "skipcount",
         ]
+        self.add_item(MockHDF5Group(name="/device", filename=self.filename))
         for name in monitor_names:
             dataset = MockHDF5Dataset(
                 name=f"/device/MPSKIP:sx70001{name}",
@@ -873,9 +875,7 @@ class MockEveH5v4(MockEveH5):
             data_ = np.ndarray([1], dtype=dtype)
             data_["mSecsSinceStart"] = -1
             data_[f"MPSKIP:sx70001{name}"] = 42.0
-            self.add_item(
-                MockHDF5Group(name="/device", filename=self.filename)
-            )
+            dataset.data = data_
             self.device.add_item(dataset)
         return list(channel_names.keys()), monitor_names
 
@@ -1357,9 +1357,9 @@ class TestVersionMapperV5(unittest.TestCase):
         for key, value in mapping_table.items():
             # noinspection PyUnresolvedReferences
             self.assertEqual(
-                getattr(
-                    self.mapper.source.c1.snapshot, f"array." f"{key}"
-                ).data[f"array.{key}"][0],
+                getattr(self.mapper.source.c1.snapshot, f"array.{key}").data[
+                    f"array.{key}"
+                ][0],
                 getattr(evefile.data["array"].metadata.calibration, value),
             )
 
@@ -2400,13 +2400,89 @@ class TestVersionMapperV5(unittest.TestCase):
         for dataset in datasets:
             self.assertNotIn(dataset, self.mapper.datasets2map_in_snapshot)
 
-    @unittest.skip
     def test_map_mpskip(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_mpskip()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        dataset = "MPSKIP:sx70001"
+        dataset_id = f"{dataset}counterchan1"
+        h5_dataset = getattr(self.mapper.source.c1.main, dataset_id)
+        self.assertIn(dataset, evefile.data)
+        self.assertIsInstance(
+            evefile.data[dataset],
+            evedata.evefile.entities.data.SkipData,
+        )
+        self.assertEqual(
+            dataset_id,
+            evefile.data[dataset].metadata.id,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Name"],
+            evefile.data[dataset].metadata.name,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[1],
+            evefile.data[dataset].metadata.pv,
+        )
+        self.assertEqual(
+            h5_dataset.attributes["Access"].split(":", maxsplit=1)[0],
+            evefile.data[dataset].metadata.access_mode,
+        )
+
+    # noinspection PyUnresolvedReferences
+    def test_map_mpskip_adds_importer(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_mpskip()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        dataset = "MPSKIP:sx70001"
+        dataset_id = f"{dataset}counterchan1"
+        self.assertEqual(
+            getattr(self.mapper.source.c1.main, dataset_id).filename,
+            evefile.data[dataset].importer[0].source,
+        )
+        mapping_dict = {
+            getattr(self.mapper.source.c1.main, dataset_id).dtype.names[
+                0
+            ]: "positions",
+            getattr(self.mapper.source.c1.main, dataset_id).dtype.names[
+                1
+            ]: "data",
+        }
+        self.assertDictEqual(
+            mapping_dict, evefile.data[dataset].importer[0].mapping
+        )
+
+    def test_map_mpskip_sets_metadata(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_mpskip()
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        dataset = "MPSKIP:sx70001"
+        mapping_table = {
+            "detector": "channel",
+            "limit": "low_limit",
+            "maxdev": "max_deviation",
+            "skipcount": "n_averages",
+        }
+        for key, value in mapping_table.items():
+            # print(f"{dataset}{key}")
+            # noinspection PyUnresolvedReferences
+            self.assertEqual(
+                getattr(self.mapper.source.device, f"{dataset}{key}").data[
+                    f"{dataset}{key}"
+                ][0],
+                getattr(evefile.data[dataset].metadata, value),
+            )
+
+    def test_map_mpskip_removes_from_2map(self):
         self.mapper.source = self.h5file
         datasets, monitors = self.mapper.source.add_mpskip()
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         for dataset in datasets[1:]:
+            self.assertNotIn(dataset, evefile.snapshots)
             self.assertNotIn(dataset, evefile.data)
         for monitor in monitors:
             self.assertNotIn(f"MPSKIP:sx70001{monitor}", evefile.monitors)

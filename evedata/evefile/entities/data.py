@@ -1954,6 +1954,9 @@ class SkipData(ChannelData):
     of both, channels and axes RBVs is necessary. This is a task
     implemented in the :mod:`evedata.evefile.controllers` subpackage.
 
+    The actual MPSKIP detector channel does not contain any relevant detector
+    channel values, only parts of the information necessary to afterwards
+    post-process the data of the other axes and channels.
 
     Attributes
     ----------

@@ -97,6 +97,13 @@ What follows is a summary of the different aspects, for the time being
     * Distinguish between MCA and scope data (at least). |cross|
     * Map additional datasets in main section (and snapshot). |check|
 
+  * Handle MPSKIP channel(s) if present. |check|
+
+    * Only present at SX700 and EUVR stations.
+    * Three channels and a few monitors
+    * Map to :class:`evedata.evefile.entities.data.SkipData` and
+      :class:`evedata.evefile.entities.metadata.SkipMetadata`
+
   * Map all axis datasets to :obj:`AxisData
     <evedata.evefile.entities.data.AxisData>` objects. |check|
 
@@ -161,13 +168,6 @@ What follows is a summary of the different aspects, for the time being
   * Map normalized channel data (and the data provided in the
     respective HDF5 groups) to :obj:`NormalizedChannelData
     <evedata.evefile.entities.data.NormalizedChannelData>`. |check|
-  * Handle MPSKIP channel(s) if present. |cross|
-
-    * Only present at SX700 and EUVR stations.
-    * Three channels and a few monitors
-    * Map to :class:`evedata.evefile.entities.data.SkipData` and
-      :class:`evedata.evefile.entities.metadata.SkipMetadata`
-
   * Map all remaining HDF5 datasets that belong to one of the already
     mapped data objects (*i.e.*, variable options) to their respective
     attributes. (Should have been done already)
@@ -345,7 +345,7 @@ hence reside in the ``device`` section of the HDF5 file. These include:
     than a given maximum number of values are recorded. This maximum value
     is set by an additional counter motor axis in the scan module,
     hence the information is not available from the HDF5 file, but can
-    only be inferred from the SCML.
+    only be inferred from the scan description contained in the SCML file.
 
 * ``MPSKIP:<station><number>skipcount``
 
@@ -363,6 +363,19 @@ All the information needs to be mapped to the
 :class:`evedata.evefile.entities.data.SkipData` and
 :class:`evedata.evefile.entities.metadata.SkipMetadata` classes.
 
+Additional datasets in the ``main`` section that could be removed from the
+list are ``Counter-mot`` (Counter) and ``SmCounter-det`` (SM-Counter). The
+former counts the number of values recorded within each loop, the latter
+contains a global number of the scan module executed, with each individual
+execution of a scan module incrementing this number by one.
+
+There is an additional complication when dealing with MPSKIP scans that
+needs to be taken into account in the :mod:`mpskip
+<evedata.evefile.controllers.mpskip>` module: Due to a bug in the EPICS
+MPSKIP implementation, sometimes (and sometimes quite often) less than the
+minimal number of data points to average over are recorded. In the current
+data processing routines, a special fix is introduced, creating the missing
+values such that these additional values don't change the mean.
 
 
 Fundamental change of eveH5 schema with v8
@@ -532,6 +545,16 @@ class VersionMapper:
         every private mapping method removes those names from the list it
         handled successfully.
 
+    datasets2map_in_monitor : :class:`list`
+        Names of the datasets in the monitor section not yet mapped.
+
+        Note that the monitor section is usually termed "device".
+
+        In order to not have to check all datasets several times,
+        this list contains only those datasets not yet mapped. Hence,
+        every private mapping method removes those names from the list it
+        handled successfully.
+
     Raises
     ------
     ValueError
@@ -566,8 +589,10 @@ class VersionMapper:
         self.destination = None
         self.datasets2map_in_main = []
         self.datasets2map_in_snapshot = []
+        self.datasets2map_in_monitor = []
         self._main_group = None
         self._snapshot_group = None
+        self._monitor_group = None
 
     def map(self, source=None, destination=None):
         """
@@ -726,11 +751,12 @@ class VersionMapper:
 
     def _map(self):
         self._map_file_metadata()
-        self._map_monitor_datasets()
-        self._map_timestamp_dataset()
         # Note: The sequence of method calls can be crucial, as the mapper
         #       contains a list of datasets still to be mapped, and each
         #       mapped dataset is removed from this list.
+        self._map_mpskip_datasets()
+        self._map_monitor_datasets()
+        self._map_timestamp_dataset()
         self._map_array_datasets()
         self._map_axis_datasets()
         self._map_area_datasets()
@@ -740,10 +766,12 @@ class VersionMapper:
     def _map_file_metadata(self):
         pass
 
+    def _map_mpskip_datasets(self):
+        pass
+
     def _map_monitor_datasets(self):
-        if not hasattr(self.source, "device"):
-            return
-        for monitor in self.source.device:
+        for name in self.datasets2map_in_monitor:
+            monitor = getattr(self._monitor_group, name)
             dataset = entities.data.MonitorData()
             importer_mapping = {
                 0: "milliseconds",
@@ -941,6 +969,7 @@ class VersionMapperV5(VersionMapper):
     """
 
     def _set_dataset_names(self):
+        super()._set_dataset_names()
         # TODO: Move up to VersionMapperV4
         if hasattr(self.source.c1, "main"):
             self._main_group = self.source.c1.main
@@ -955,6 +984,11 @@ class VersionMapperV5(VersionMapper):
             self.datasets2map_in_snapshot = [
                 self.get_dataset_name(item)
                 for item in self.source.c1.snapshot
+            ]
+        if hasattr(self.source, "device"):
+            self._monitor_group = self.source.device
+            self.datasets2map_in_monitor = [
+                self.get_dataset_name(item) for item in self._monitor_group
             ]
 
     def _map(self):
@@ -1010,6 +1044,62 @@ class VersionMapperV5(VersionMapper):
         dataset.importer.append(importer)
         dataset.metadata.unit = timestampdata.attributes["Unit"]
         self.destination.position_timestamps = dataset
+
+    def _map_mpskip_datasets(self):
+        mpskip_in_main = [
+            item
+            for item in self.datasets2map_in_main
+            if item.startswith("MPSKIP")
+        ]
+        mpskip_in_snapshot = [
+            item
+            for item in self.datasets2map_in_snapshot
+            if item.startswith("MPSKIP")
+        ]
+        # Remove datasets from snapshot, even if not in main
+        for item in mpskip_in_snapshot:
+            self.datasets2map_in_snapshot.remove(item)
+        mpskip_in_monitor = [
+            item
+            for item in self.datasets2map_in_monitor
+            if item.startswith("MPSKIP")
+        ]
+        dataset = entities.data.SkipData()
+        name = [
+            item for item in mpskip_in_main if item.endswith("counterchan1")
+        ]
+        if not name:
+            return
+        item = getattr(self._main_group, name[0])
+        self.set_basic_metadata(hdf5_item=item, dataset=dataset)
+        importer_mapping = {
+            0: "positions",
+            1: "data",
+        }
+        importer = self.get_hdf5_dataset_importer(
+            dataset=item, mapping=importer_mapping
+        )
+        dataset.importer.append(importer)
+        dataset_name = name[0][: -len("counterchan1")]
+        mapping_table = {
+            "detector": "channel",
+            "limit": "low_limit",
+            "maxdev": "max_deviation",
+            "skipcount": "n_averages",
+        }
+        for key, value in mapping_table.items():
+            setattr(
+                dataset.metadata,
+                value,
+                getattr(self._monitor_group, f"{dataset_name}{key}").data[
+                    f"{dataset_name}{key}"
+                ][0],
+            )
+        self.destination.data[dataset_name] = dataset
+        for item in mpskip_in_main:
+            self.datasets2map_in_main.remove(item)
+        for item in mpskip_in_monitor:
+            self.datasets2map_in_monitor.remove(item)
 
     def _map_mca_dataset(self, hdf5_group=None):
         # TODO: Move up to VersionMapperV2 (at least the earliest one)
