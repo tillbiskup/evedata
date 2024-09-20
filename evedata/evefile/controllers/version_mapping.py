@@ -1046,6 +1046,7 @@ class VersionMapperV5(VersionMapper):
         self.destination.position_timestamps = dataset
 
     def _map_mpskip_datasets(self):
+        # TODO: Map SkipData.metadata.max_attempts attribute from SCML
         mpskip_in_main = [
             item
             for item in self.datasets2map_in_main

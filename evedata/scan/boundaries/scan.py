@@ -141,9 +141,9 @@ class File:
         if filename:
             self.filename = filename
         self._scml.load(filename=self.filename)
-        self.map()
+        self._map()
 
-    def map(self):
+    def _map(self):
         mapper_factory = VersionMapperFactory()
         mapper = mapper_factory.get_mapper(self._scml)
         # noinspection PyTypeChecker
@@ -244,4 +244,4 @@ class Scan(File, SCMLFile):
                 self._scml.from_string(
                     xml=zlib.decompress(file.read(compressed_length)).decode()
                 )
-                self.map()
+                self._map()
