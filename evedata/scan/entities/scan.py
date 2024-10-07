@@ -400,11 +400,11 @@ class SnapshotModule(AbstractScanModule):
 
     Examples
     --------
-    The :class:`ScanModule` class is not meant to be used directly, as any
-    entities, but rather indirectly by means of the respective facades in
-    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
-    Hence, for the time being, there are no dedicated examples how to use
-    this class. Of course, you can instantiate an object as usual.
+    The :class:`SnapshotModule` class is not meant to be used directly,
+    as any entities, but rather indirectly by means of the respective
+    facades in the boundaries technical layer of the :mod:`evedata.scan`
+    subpackage. Hence, for the time being, there are no dedicated examples
+    how to use this class. Of course, you can instantiate an object as usual.
 
     """
 

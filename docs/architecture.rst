@@ -417,7 +417,7 @@ The MPSKIP detector channel datasets get mapped to a :obj:`SkipData <evedata.eve
 * What about the Time(r) data? This is the (cumulative) time in seconds.
 
 
-If the SCML is present, reading the scan part of the SCML and inferring the motor axes and detector channels where the MPSKIP detector is present makes it much easier to get the names of the data objects that need to be modified. Hence, it might be sensible to (i) implement the minimum functionality of the :mod:`scml <evedata.scml>` subpackage necessary and (ii) rely on the SCML to be present for the time being. It might be a sensible option to check for the SCML to be present if a :obj:`SkipData <evedata.evefile.entities.data.SkipData>` object has been created, and in those (probably rare) cases to issue a warning that this is currently not supported.
+If the SCML is present, reading the scan part of the SCML and inferring the motor axes and detector channels where the MPSKIP detector is present makes it much easier to get the names of the data objects that need to be modified. Hence, it might be sensible to (i) implement the minimum functionality of the :mod:`scan <evedata.scan>` subpackage necessary and (ii) rely on the SCML to be present for the time being. It might be a sensible option to check for the SCML to be present if a :obj:`SkipData <evedata.evefile.entities.data.SkipData>` object has been created, and in those (probably rare) cases to issue a warning that this is currently not supported.
 
 
 Separating datasets for redefined channels

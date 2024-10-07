@@ -92,12 +92,9 @@ supported.
 
 .. note::
 
-    How to check for the SCML to be loaded? Probably the best way is to
-    check for the :attr:`Scan.scan_modules
-    <evedata.scan.entities.scan.Scan.scan_modules>` attribute that can be
-    accessed via the :attr:`EveFile.scan
-    <evedata.evefile.boundaries.evefile.EveFile.scan>` attribute. If this is
-    empty, no scan has been read.
+    How to check for the SCML to be loaded? In the meantime, there exists
+    a dedicated method for this purpose: :meth:`EveFile.has_scan()
+    <evedata.evefile.boundaries.evefile.EveFile.has_scan>`.
 
 """
 

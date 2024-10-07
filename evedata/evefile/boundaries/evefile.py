@@ -337,6 +337,26 @@ class EveFile(File):
             data = self.data[names[name]]
         return data
 
+    def has_scan(self):
+        """
+        Check whether a scan description is available.
+
+        Convenience method useful for all the functionality that needs to
+        know whether a scan description is available.
+
+        Currently, the method checks whether the version attribute of the
+        :attr:`scan` attribute has been set. In real cases, this should be
+        a sufficient criterion to determine whether a scan description is
+        available.
+
+        Returns
+        -------
+        has_scan : :class:`bool`
+            Whether a scan description is available.
+
+        """
+        return bool(self.scan.version)
+
 
 if __name__ == "__main__":
     import timeit

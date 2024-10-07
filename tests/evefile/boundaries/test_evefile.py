@@ -187,3 +187,16 @@ class TestEveFile(unittest.TestCase):
         h5file.create()
         self.evefile.load(filename=self.filename)
         self.assertEqual("9.2", self.evefile.scan.version)
+
+    def test_has_scan_with_no_scan(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(scml=False)
+        self.evefile.load(filename=self.filename)
+        self.assertIsInstance(self.evefile.has_scan(), bool)
+        self.assertFalse(self.evefile.has_scan())
+
+    def test_has_scan_with_scan(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(scml=True)
+        self.evefile.load(filename=self.filename)
+        self.assertTrue(self.evefile.has_scan())
