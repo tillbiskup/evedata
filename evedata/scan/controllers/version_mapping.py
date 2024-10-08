@@ -113,11 +113,9 @@ Distinguishing types of scan modules
 ------------------------------------
 
 Currently, only two types of scan modules are distinguished: "classical"
-modules and snapshot modules. The distinction is based on two assumptions:
-
-* The name of snapshot modules cannot be edited/changed by the user
-* The name of snapshot modules contains the word "Snapshot" (checked
-  case-insensitive)
+modules and snapshot modules. The distinction is based on the existence of
+the tag ``<classic>``: if present, we have a "classical" scan module,
+if not, we have a snapshot module.
 
 For "classical" modules, both axes and channels are mapped, for static axis
 or channel snapshot modules, axes or channels, respectively.
@@ -391,10 +389,10 @@ class VersionMapperV9m2(VersionMapper):
             )
 
     def _map_scan_module(self, element=None):
-        if "snapshot" in element.find("name").text.lower():
-            module = scan.SnapshotModule()
-        else:
+        if element.find("classic"):
             module = scan.ScanModule()
+        else:
+            module = scan.SnapshotModule()
         module.name = element.find("name").text
         module.parent = int(element.find("parent").text)
         try:
