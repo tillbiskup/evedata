@@ -93,6 +93,10 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
                             <id>SimMt:testrack01000.LLM</id>
                             <value type="double">30</value>
                         </prescan>
+                        <prescan>
+                            <id>K0617:gw24126.SCAN</id>
+                            <value type="string">Passive</value>
+                        </prescan>
                         <smaxis>
                             <axisid>Timer1-mot-double</axisid>
                             <stepfunction>Add</stepfunction>
@@ -121,6 +125,10 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
                         <postscan>
                             <id>SimMt:testrack01000.LLM</id>
                             <reset_originalvalue>true</reset_originalvalue>
+                        </postscan>
+                        <postscan>
+                            <id>K0617:gw24126.SCAN</id>
+                            <value type="string">.5 second</value>
                         </postscan>
                     </classic>
                 </scanmodule>

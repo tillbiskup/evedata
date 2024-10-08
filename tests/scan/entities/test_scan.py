@@ -63,6 +63,15 @@ class TestScanModule(unittest.TestCase):
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.module, attribute))
 
+    def test_has_mpskip_without_mpskip(self):
+        self.assertIsInstance(self.module.has_mpskip(), bool)
+        self.assertFalse(self.module.has_mpskip())
+
+    def test_has_mpskip_with_mpskip(self):
+        self.module.channels["MPSKIP:euvr01chan1"] = scan.Channel()
+        self.module.channels["MPSKIP:euvr01skipcountchan1"] = scan.Channel()
+        self.assertTrue(self.module.has_mpskip())
+
 
 class TestChannel(unittest.TestCase):
     def setUp(self):
