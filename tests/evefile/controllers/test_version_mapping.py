@@ -2476,6 +2476,21 @@ class TestVersionMapperV5(unittest.TestCase):
                 getattr(evefile.data[dataset].metadata, value),
             )
 
+    def test_map_mpskip_with_missing_metadata_logs(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_mpskip()
+        monitor2remove = "MPSKIP:sx70001maxdev"
+        self.mapper.source.device.remove_item(
+            getattr(self.mapper.source.device, monitor2remove)
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        with self.assertLogs(version_mapping.logger) as cm:
+            self.mapper.map(destination=evefile)
+        self.assertIn(
+            f"Could not find monitor dataset {monitor2remove}",
+            cm.output[0],
+        )
+
     def test_map_mpskip_removes_from_2map(self):
         self.mapper.source = self.h5file
         datasets, monitors = self.mapper.source.add_mpskip()

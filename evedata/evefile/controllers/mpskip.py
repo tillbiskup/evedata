@@ -66,7 +66,8 @@ positions) need to be converted:
   :class:`AxisData <evedata.evefile.entities.data.AxisData>` objects with the
   individual axis values stored as ragged array.
 * The SM-Counter (channel) data can be removed.
-* What about the Time(r) data? This is the (cumulative) time in seconds.
+* What about the Time(r) data? This is the (cumulative) time in seconds
+  and mostly identical to the information in the "PosCountTimer" dataset.
 
 
 .. note::

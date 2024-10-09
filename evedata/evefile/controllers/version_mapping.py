@@ -1089,13 +1089,18 @@ class VersionMapperV5(VersionMapper):
             "skipcount": "n_averages",
         }
         for key, value in mapping_table.items():
-            setattr(
-                dataset.metadata,
-                value,
-                getattr(self._monitor_group, f"{dataset_name}{key}").data[
-                    f"{dataset_name}{key}"
-                ][0],
-            )
+            try:
+                setattr(
+                    dataset.metadata,
+                    value,
+                    getattr(self._monitor_group, f"{dataset_name}{key}").data[
+                        f"{dataset_name}{key}"
+                    ][0],
+                )
+            except AttributeError:
+                logger.warning(
+                    "Could not find monitor dataset %s%s", dataset_name, key
+                )
         self.destination.data[dataset_name] = dataset
         for item in mpskip_in_main:
             self.datasets2map_in_main.remove(item)
