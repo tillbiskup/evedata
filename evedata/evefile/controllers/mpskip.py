@@ -1,7 +1,7 @@
 """
 *Converting MPSKIP scans into average detector channels.*
 
-Currently (09/2024), the eve measurement program does not store individual
+Currently (10/2024), the eve measurement program does not store individual
 values for average detector channels. Furthermore, there is sometimes a need
 to not only record the individual values for the channels, but at the same
 time the corresponding axes RBVs, as some axes may mechanically change their
@@ -60,8 +60,8 @@ positions) need to be converted:
   :class:`AverageNormalizedChannelData
   <evedata.evefile.entities.data.AverageNormalizedChannelData>`.
 * The Counter (axis) data can be used to conveniently determine the
-  positions for each individual averaging, the data object should afterwards
-  be removed.
+  positions for each individual averaging. Its values are already mapped
+  to the :obj:`SkipData <evedata.evefile.entities.data.SkipData>` object.
 * Axes RBVs (present als pseudo-detector channels) need to be mapped to
   :class:`AxisData <evedata.evefile.entities.data.AxisData>` objects with the
   individual axis values stored as ragged array.
@@ -96,6 +96,19 @@ supported.
     How to check for the SCML to be loaded? In the meantime, there exists
     a dedicated method for this purpose: :meth:`EveFile.has_scan()
     <evedata.evefile.boundaries.evefile.EveFile.has_scan>`.
+
+
+Next steps
+==========
+
+* Decide on class name for mpskip mapper
+* Implement mapping as described above
+* Decide whether ragged arrays need to be implemented already now, and if
+  so, in which way.
+
+
+Module documentation
+====================
 
 """
 

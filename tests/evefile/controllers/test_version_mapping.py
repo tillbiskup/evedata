@@ -2505,7 +2505,7 @@ class TestVersionMapperV5(unittest.TestCase):
             getattr(self.mapper.source.device, monitor2remove)
         )
         evefile = evedata.evefile.boundaries.evefile.EveFile()
-        with self.assertLogs(version_mapping.logger) as cm:
+        with self.assertLogs(version_mapping.logger.parent) as cm:
             self.mapper.map(destination=evefile)
         self.assertIn(
             f"Could not find monitor dataset {monitor2remove}",

@@ -1952,11 +1952,15 @@ class SkipData(ChannelData):
     axes RBV has its own position count. Hence, in case of such channel
     present in a scan, usually, some post-processing of the individual data
     of both, channels and axes RBVs is necessary. This is a task
-    implemented in the :mod:`evedata.evefile.controllers` subpackage.
+    implemented in the :mod:`mpskip <evedata.evefile.controllers.mpskip>`
+    module.
 
     The actual MPSKIP detector channel does not contain any relevant detector
     channel values, only parts of the information necessary to afterwards
-    post-process the data of the other axes and channels.
+    post-process the data of the other axes and channels. For the way this
+    information is obtained and mapped to the :class:`SkipData` class, see
+    the documentation of the :mod:`version_mapping
+    <evedata.evefile.controllers.version_mapping>` module.
 
     Attributes
     ----------
