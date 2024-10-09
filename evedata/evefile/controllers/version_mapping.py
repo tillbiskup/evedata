@@ -296,7 +296,7 @@ MPSKIP channels are (currently) only present at SX700 and EUVR stations.
 This is a special EPICS detector used to record individual values to
 average over and at the same time a series of axes RBVs.
 
-In a typical scan, there are three channel datasets as well as a
+In a typical scan, there are (up to) three channel datasets as well as a
 series of monitor datasets present. Fortunately, the PV naming scheme of the
 MPSKIP device is generic, the base name is always:
 ``MPSKIP:<station><number>``. The actual names (as seen in the GUI) are
@@ -306,15 +306,16 @@ much less consistent, though. The three channel datasets are:
 
   * The name of this channel is ``SkipDetektor<station>``.
   * The values of this channel would theoretically be the counts,
-    but unfortunately the channel seems to count wrongly. Hence, the value
-    of the ``MPSKIP:<station><number>counterchan1`` dataset should be used
-    instead.
+    but unfortunately the channel seems to count wrongly. Hence,
+    the values (and the entire dataset) should be ignored.
 
 * ``MPSKIP:<station><number>counterchan1``
 
-  * The name of this channel is ``<station>-Scounter``
-  * The values of this channel are the counts, and they should be used
-    instead of the values in the ``MPSKIP:<station><number>chan1`` dataset.
+  * The name of this channel is ``<station>-Scounter``.
+  * The values of this channel are the counts, with "1" being repeated if
+    the comparison does not succeed.
+  * This channel is not present in all scans, hence cannot be used
+    reliably as the data for the dataset and should therefore be ignored.
 
 * ``MPSKIP:<station><number>skipcountchan1``
 
@@ -324,6 +325,12 @@ much less consistent, though. The three channel datasets are:
     this will never change during a scan module.
   * Hence, when mapping, the corresponding dataset should be ignored and
     removed from the list of datasets to be mapped.
+
+There is always a counter dataset ``Counter-mot`` present that increments
+within an average loop in the skip scan module. While this is an axis,
+it should be used for the data of the
+:class:`evedata.evefile.entities.data.SkipData` dataset, as it is the only
+reliable dataset to determine the boundaries of each individual average loop.
 
 Crucial parameters need currently to be added manually as a monitor and
 hence reside in the ``device`` section of the HDF5 file. These include:
@@ -359,15 +366,23 @@ hence reside in the ``device`` section of the HDF5 file. These include:
     analysis, this is neither necessary nor useful.
   * This monitor should be removed from the list of monitors to be mapped.
 
+
+.. important::
+
+    With the only exception of the ``reset`` monitor (due to it being
+    present in the pre-scan phase), none of these monitors is guaranteed
+    to be present. This means, however, that there are scans where crucial
+    information cannot be inferred from the eveH5 files.
+
+
 All the information needs to be mapped to the
 :class:`evedata.evefile.entities.data.SkipData` and
 :class:`evedata.evefile.entities.metadata.SkipMetadata` classes.
 
-Additional datasets in the ``main`` section that could be removed from the
-list are ``Counter-mot`` (Counter) and ``SmCounter-det`` (SM-Counter). The
-former counts the number of values recorded within each loop, the latter
-contains a global number of the scan module executed, with each individual
-execution of a scan module incrementing this number by one.
+An additional dataset in the ``main`` section that could be removed from the
+list is ``SmCounter-det`` (SM-Counter), containing a global number of the
+scan module executed, with each individual execution of a scan module
+incrementing this number by one.
 
 There is an additional complication when dealing with MPSKIP scans that
 needs to be taken into account in the :mod:`mpskip
@@ -1065,13 +1080,11 @@ class VersionMapperV5(VersionMapper):
             for item in self.datasets2map_in_monitor
             if item.startswith("MPSKIP")
         ]
-        dataset = entities.data.SkipData()
-        name = [
-            item for item in mpskip_in_main if item.endswith("counterchan1")
-        ]
-        if not name:
+        try:
+            item = getattr(self._main_group, "Counter-mot")
+        except AttributeError:
             return
-        item = getattr(self._main_group, name[0])
+        dataset = entities.data.SkipData()
         self.set_basic_metadata(hdf5_item=item, dataset=dataset)
         importer_mapping = {
             0: "positions",
@@ -1081,7 +1094,10 @@ class VersionMapperV5(VersionMapper):
             dataset=item, mapping=importer_mapping
         )
         dataset.importer.append(importer)
-        dataset_name = name[0][: -len("counterchan1")]
+        name = [
+            item for item in mpskip_in_main if item.endswith("skipcountchan1")
+        ]
+        dataset_name = name[0][: -len("skipcountchan1")]
         mapping_table = {
             "detector": "channel",
             "limit": "low_limit",
@@ -1101,11 +1117,16 @@ class VersionMapperV5(VersionMapper):
                 logger.warning(
                     "Could not find monitor dataset %s%s", dataset_name, key
                 )
+        if not dataset.metadata.n_averages:
+            dataset.metadata.n_averages = getattr(
+                self._main_group, name[0]
+            ).data[name[0]][0]
         self.destination.data[dataset_name] = dataset
         for item in mpskip_in_main:
             self.datasets2map_in_main.remove(item)
         for item in mpskip_in_monitor:
             self.datasets2map_in_monitor.remove(item)
+        self.datasets2map_in_main.remove("Counter-mot")
 
     def _map_mca_dataset(self, hdf5_group=None):
         # TODO: Move up to VersionMapperV2 (at least the earliest one)

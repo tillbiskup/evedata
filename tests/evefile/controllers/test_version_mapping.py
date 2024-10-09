@@ -877,6 +877,27 @@ class MockEveH5v4(MockEveH5):
             data_[f"MPSKIP:sx70001{name}"] = 42.0
             dataset.data = data_
             self.device.add_item(dataset)
+        name = "Counter-mot"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/main/{name}",
+            filename=self.filename,
+        )
+        dataset.attributes = {
+            "DeviceType": "Axis",
+            "Access": f"ca:{name}",
+            "Name": name,
+        }
+        dtype = np.dtype(
+            [
+                ("PosCounter", "<i4"),
+                (f"{name}", "f8"),
+            ]
+        )
+        data_ = np.ndarray([6], dtype=dtype)
+        data_["PosCounter"] = np.arange(3, 9)
+        data_[f"{name}"] = np.ones(6) * 42.0
+        dataset.data = data_
+        self.c1.main.add_item(dataset)
         return list(channel_names.keys()), monitor_names
 
 
@@ -2406,7 +2427,7 @@ class TestVersionMapperV5(unittest.TestCase):
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         dataset = "MPSKIP:sx70001"
-        dataset_id = f"{dataset}counterchan1"
+        dataset_id = "Counter-mot"
         h5_dataset = getattr(self.mapper.source.c1.main, dataset_id)
         self.assertIn(dataset, evefile.data)
         self.assertIsInstance(
@@ -2437,7 +2458,7 @@ class TestVersionMapperV5(unittest.TestCase):
         evefile = evedata.evefile.boundaries.evefile.EveFile()
         self.mapper.map(destination=evefile)
         dataset = "MPSKIP:sx70001"
-        dataset_id = f"{dataset}counterchan1"
+        dataset_id = "Counter-mot"
         self.assertEqual(
             getattr(self.mapper.source.c1.main, dataset_id).filename,
             evefile.data[dataset].importer[0].source,
@@ -2491,6 +2512,25 @@ class TestVersionMapperV5(unittest.TestCase):
             cm.output[0],
         )
 
+    def test_map_mpskip_with_missing_skipcount_metadata(self):
+        self.mapper.source = self.h5file
+        self.mapper.source.add_mpskip()
+        monitor2remove = "MPSKIP:sx70001skipcount"
+        self.mapper.source.device.remove_item(
+            getattr(self.mapper.source.device, monitor2remove)
+        )
+        evefile = evedata.evefile.boundaries.evefile.EveFile()
+        self.mapper.map(destination=evefile)
+        dataset = "MPSKIP:sx70001"
+        key = "skipcountchan1"
+        value = "n_averages"
+        self.assertEqual(
+            getattr(self.mapper.source.c1.main, f"{dataset}{key}").data[
+                f"{dataset}{key}"
+            ][0],
+            getattr(evefile.data[dataset].metadata, value),
+        )
+
     def test_map_mpskip_removes_from_2map(self):
         self.mapper.source = self.h5file
         datasets, monitors = self.mapper.source.add_mpskip()
@@ -2501,6 +2541,7 @@ class TestVersionMapperV5(unittest.TestCase):
             self.assertNotIn(dataset, evefile.data)
         for monitor in monitors:
             self.assertNotIn(f"MPSKIP:sx70001{monitor}", evefile.monitors)
+        self.assertNotIn("Counter-mot", evefile.data)
 
 
 class TestVersionMapperV6(unittest.TestCase):
