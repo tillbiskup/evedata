@@ -62,12 +62,28 @@ positions) need to be converted:
 * The Counter (axis) data can be used to conveniently determine the
   positions for each individual averaging. Its values are already mapped
   to the :obj:`SkipData <evedata.evefile.entities.data.SkipData>` object.
-* Axes RBVs (present als pseudo-detector channels) need to be mapped to
+* Axes RBVs (present as pseudo-detector channels) need to be mapped to
   :class:`AxisData <evedata.evefile.entities.data.AxisData>` objects with the
   individual axis values stored as ragged array.
 * The SM-Counter (channel) data can be removed.
 * What about the Time(r) data? This is the (cumulative) time in seconds
   and mostly identical to the information in the "PosCountTimer" dataset.
+
+
+Just to make things a bit more interesting:
+
+* Some of the devices used in the MPSKIP scan module are used outside as
+  well. This looks like we need to split the datasets accordingly.
+
+  * Given that the channel datasets in an MPSKIP scan module are mapped to
+    :obj:`AverageChannelData
+    <evedata.evefile.entities.data.AverageChannelData>` or
+    :obj:`AverageNormalizedChannelData
+    <evedata.evefile.entities.data.AverageNormalizedChannelData>` objects,
+    we clearly need to split the datasets here.
+
+* The axis set in the next-outer scan module from the MPSKIP scan module gets
+  typically set in other scan modules as well. Do we need to distinguish here?
 
 
 .. note::
@@ -76,7 +92,14 @@ positions) need to be converted:
     datasets and axis datasets with individual values reduces the number of
     position counts, as with MPSKIP, each individual value gets its position
     count. In parallel to the usual average channel, the position count of
-    the first value should be used for each average.
+    the first value should be used for each average. To be more precise,
+    in an MPSKIP scan, there is typically an outer scan where only axes are
+    moved, and an inner scan with the counter as axis (only used to
+    distinguish the average loops internally) and otherwise only detector
+    channels (with several of these detector channels being
+    pseudo-detector channels alias axes RBVs). Therefore, the position count
+    of the next-outer scan module (with only axes moving) should be used for
+    each inner (averaging) loop.
 
 
 If the SCML is present, reading the scan part of the SCML and inferring the
@@ -101,6 +124,9 @@ supported.
 Next steps
 ==========
 
+* Decide how and where to implement actual mapping: Data are read *on
+  demand*, hence mapping can -- technically speaking -- happen only once
+  data are loaded.
 * Decide on class name for mpskip mapper
 * Implement mapping as described above
 * Decide whether ragged arrays need to be implemented already now, and if
