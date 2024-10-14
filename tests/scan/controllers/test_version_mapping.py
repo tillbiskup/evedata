@@ -415,6 +415,15 @@ class TestVersionMapperV9m2(unittest.TestCase):
             self.mapper.destination.scan.scan_modules[1].nested,
         )
 
+    def test_map_sets_is_nested_attribute(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_STRING)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(
+            self.mapper.destination.scan.scan_modules[2].is_nested
+        )
+
     def test_map_distinguishes_scan_module_types(self):
         self.mapper.source = SCML()
         self.mapper.source.from_string(xml=SCML_STRING)

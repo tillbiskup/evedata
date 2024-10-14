@@ -160,6 +160,18 @@ class AbstractScanModule:
 
         Default: None
 
+    is_nested : :class:`bool`
+        Whether the scan module itself is nested.
+
+        A scan module can either be appended or nested. Given that the
+        scan modules are unaware of the other scan modules and (currently)
+        only contain IDs as references to their parent and appended or
+        nested scan module, this information needs to be set from outside,
+        *e.g.* during mapping by the :class:`VersionMapper
+        <evedata.scan.controllers.version_mapping.VersionMapper>` class.
+
+        Default: False
+
 
     Examples
     --------
@@ -177,6 +189,7 @@ class AbstractScanModule:
         self.parent = 0
         self.appended = None
         self.nested = None
+        self.is_nested = False
 
 
 class ScanModule(AbstractScanModule):
@@ -225,6 +238,18 @@ class ScanModule(AbstractScanModule):
         A scan module can have 0..1 appended and 0..1 nested scan modules.
 
         Default: None
+
+    is_nested : :class:`bool`
+        Whether the scan module itself is nested.
+
+        A scan module can either be appended or nested. Given that the
+        scan modules are unaware of the other scan modules and (currently)
+        only contain IDs as references to their parent and appended or
+        nested scan module, this information needs to be set from outside,
+        *e.g.* during mapping by the :class:`VersionMapper
+        <evedata.scan.controllers.version_mapping.VersionMapper>` class.
+
+        Default: False
 
     axes : :class:`dict`
         Motor axes actively being used in the scan module.

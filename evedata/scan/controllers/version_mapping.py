@@ -79,6 +79,8 @@ described here will definitely change and evolve over time.
   * Map scan metadata (repeat_count, comment, description, ...) (|check|)
   * Map scan modules (|check|)
 
+    * Map basic metadata |check|
+    * Map parent, appended, nested, is_nested |check|
     * Distinguish types of scan modules: "classic" *vs.* snapshot |check|
     * Extract list of detector channels and motor axes |check|
     * Map pre- and post-scans |cross|
@@ -396,6 +398,13 @@ class VersionMapperV9m2(VersionMapper):
             self.destination.scan.scan_modules[int(module.get("id"))] = (
                 self._map_scan_module(module)
             )
+        nested_scan_modules = [
+            int(module.find("nested").text)
+            for module in connected_scan_modules
+            if module.find("nested") is not None
+        ]
+        for module in nested_scan_modules:
+            self.destination.scan.scan_modules[module].is_nested = True
 
     def _map_scan_module(self, element=None):
         if element.find("classic"):

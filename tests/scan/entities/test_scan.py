@@ -36,6 +36,7 @@ class TestAbstractScanModule(unittest.TestCase):
             "parent",
             "appended",
             "nested",
+            "is_nested",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
