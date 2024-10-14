@@ -165,6 +165,30 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
                         </smchannel>
                     </save_channel_values>
                 </scanmodule>
+                <scanmodule id="42">
+                    <name>Not connected scan module</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>-1</parent>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>
+                    </classic>
+                </scanmodule>
             </scanmodules>
         </chain>
         <monitoroptions type="none"/>
@@ -358,8 +382,14 @@ class TestVersionMapperV9m2(unittest.TestCase):
         self.mapper.source.from_string(xml=SCML_STRING)
         destination = Scan()
         self.mapper.map(destination=destination)
+        # Note: There is one disconnected scan module in source!
+        connected_scan_modules = [
+            module
+            for module in self.mapper.source.scan_modules
+            if int(module.find("parent").text) != -1
+        ]
         self.assertEqual(
-            len(self.mapper.source.scan_modules),
+            len(connected_scan_modules),
             len(self.mapper.destination.scan.scan_modules.keys()),
         )
 

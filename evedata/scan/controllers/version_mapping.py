@@ -346,6 +346,10 @@ class VersionMapperV9m2(VersionMapper):
         Furthermore, only a minimal set of mappings is currently performed,
         far from being a complete mapping of the contents of an SCML file.
 
+    .. note::
+        Only those scan modules that are actually connected (either to the
+        root node or to another scan module) are actually mapped and
+        contained in the list of scan modules.
 
     Attributes
     ----------
@@ -383,7 +387,12 @@ class VersionMapperV9m2(VersionMapper):
             self.source.scan.find("repeatcount").text
         )
         self.destination.scan.comment = self.source.scan.find("comment").text
-        for module in self.source.scan_modules:
+        connected_scan_modules = [
+            module
+            for module in self.source.scan_modules
+            if int(module.find("parent").text) != -1
+        ]
+        for module in connected_scan_modules:
             self.destination.scan.scan_modules[int(module.get("id"))] = (
                 self._map_scan_module(module)
             )
