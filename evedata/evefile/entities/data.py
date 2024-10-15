@@ -1724,6 +1724,9 @@ class DataImporter:
     Actual importer classes inherit from this base class and implement the
     private method :meth:`_load`. This method simply returns the loaded data.
 
+    Optionally, preprocessing will be applied to the data loaded, if the
+    list :attr:`preprocessing` is not empty.
+
 
     Attributes
     ----------
@@ -1731,6 +1734,12 @@ class DataImporter:
         Source the data should be loaded from.
 
         Typically, a file name.
+
+    preprocessing : :class:`list`
+        Preprocessing steps applied after loading the original data.
+
+        Each entry in the list is an object of type
+        :class:`ImporterPreprocessingStep`.
 
     Raises
     ------
@@ -1761,6 +1770,7 @@ class DataImporter:
 
     def __init__(self, source=""):
         self.source = source
+        self.preprocessing = []
 
     def load(self, source=""):
         """
@@ -1770,6 +1780,9 @@ class DataImporter:
         calls out to the private method :meth:`_load` that does the actual
         business. Child classes hence need to implement this private method.
         Make sure to return the loaded data from this method.
+
+        Once loaded, the data are preprocessed with each of the
+        preprocessing steps defined in :attr:`preprocessing`.
 
         Parameters
         ----------
@@ -1795,7 +1808,10 @@ class DataImporter:
             self.source = source
         if not self.source:
             raise ValueError("No source provided to load data from.")
-        return self._load()
+        raw_data = self._load()
+        for task in self.preprocessing:
+            raw_data = task.process(raw_data)
+        return raw_data
 
     def _load(self):
         pass
@@ -1983,3 +1999,82 @@ class SkipData(ChannelData):
     def __init__(self):
         super().__init__()
         self.metadata = metadata.SkipMetadata()
+
+
+class ImporterPreprocessingStep:
+    """
+    Abstract preprocessing step optionally hooked into data importers.
+
+    Sometimes, data need to be preprocessed after loading from the source.
+    Typical examples are extracting only parts of the HDF5 dataset,
+    but can be much more involved.
+
+
+    Attributes
+    ----------
+    data : any
+        Data loaded from the source.
+
+        The actual type of data depends on the source and importer type.
+
+
+    Examples
+    --------
+    The class operates on data as read from the source during import using
+    a :class:`DataImporter`. Hence, the actual type of data depends
+    heavily on the importer used. Processing is done by calling the
+    :meth:`process` method.
+
+    There are two basic ways of using the class, differing only by where
+    the data are set. You can set the data while instantiating the
+    processing step:
+
+    .. code-block::
+
+        task = ImporterPreprocessingStep(data="foo")
+        data = task.process()
+
+    Alternatively, you can set the data when calling the :meth:`process`
+    method:
+
+    .. code-block::
+
+        task = ImporterPreprocessingStep()
+        data = task.process(data="foo")
+
+    Of course, processing steps can be chained, *i.e.*, applied in a
+    sequence. Hence, they should never change the basic format/type of the
+    data.
+
+    """
+
+    def __init__(self, data=None):
+        self.data = data
+
+    def process(self, data=None):
+        """
+        Perform the preprocessing step on the data.
+
+        The actual task is implemented in the :meth:`_process` method.
+
+        Parameters
+        ----------
+        data : any
+            Data loaded from the source.
+
+            The actual type of data depends on the source and importer type.
+
+        Returns
+        -------
+        data : any
+            Processed data.
+
+            The actual type of data depends on the source and importer type.
+
+        """
+        if data:
+            self.data = data
+        return self._process(data=self.data)
+
+    def _process(self, data=None):
+        pass

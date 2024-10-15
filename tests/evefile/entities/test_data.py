@@ -872,6 +872,7 @@ class TestDataImporter(unittest.TestCase):
     def test_has_attributes(self):
         attributes = [
             "source",
+            "preprocessing",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -900,6 +901,21 @@ class TestDataImporter(unittest.TestCase):
         source = "baz"
         importer = data.DataImporter(source=source)
         self.assertEqual(source, importer.source)
+
+    def test_load_performs_preprocessing_data(self):
+
+        class MockDataImporter(data.DataImporter):
+            def _load(self):
+                return self.source
+
+        class MockImporterPreprocessingStep(data.ImporterPreprocessingStep):
+            def _process(self, data=None):
+                return data * 2
+
+        importer = MockDataImporter()
+        importer.preprocessing = [MockImporterPreprocessingStep()]
+        importer.source = "baz"
+        self.assertEqual(importer.source * 2, importer.load())
 
 
 class TestHDF5DataImporter(unittest.TestCase):
@@ -976,3 +992,38 @@ class TestSkipData(unittest.TestCase):
 
     def test_metadata_are_of_corresponding_type(self):
         self.assertIsInstance(self.data.metadata, metadata.SkipMetadata)
+
+
+class TestImporterPreprocessingStep(unittest.TestCase):
+    def setUp(self):
+        self.preprocessing = data.ImporterPreprocessingStep()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "data",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.preprocessing, attribute))
+
+    def test_process_with_data_sets_data(self):
+        self.preprocessing.process(data="foo")
+        self.assertEqual("foo", self.preprocessing.data)
+
+    def test_process_returns_processed_data(self):
+
+        class MockImporterPreprocessingStep(data.ImporterPreprocessingStep):
+            def _process(self, data=None):
+                return data * 2
+
+        preprocessing = MockImporterPreprocessingStep()
+        preprocessing.data = "baz"
+        self.assertEqual(preprocessing.data * 2, preprocessing.process())
+
+    def test_instantiate_with_data_sets_data(self):
+        test_data = "baz"
+        preprocessing = data.ImporterPreprocessingStep(data=test_data)
+        self.assertEqual(test_data, preprocessing.data)
