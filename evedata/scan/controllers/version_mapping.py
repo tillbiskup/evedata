@@ -400,11 +400,14 @@ class VersionMapperV9m2(VersionMapper):
             for scan_module in self.source.scan_modules
             if int(scan_module.find("parent").text) != -1
         }
-        root_module_id = [
-            id
-            for id, scan_module in scan_modules.items()
-            if int(scan_module.find("parent").text) == 0
-        ][0]
+        try:
+            root_module_id = [
+                id
+                for id, scan_module in scan_modules.items()
+                if int(scan_module.find("parent").text) == 0
+            ][0]
+        except IndexError:
+            return
         connected_scan_module_ids = []
 
         def traverse(scan_module_id):
