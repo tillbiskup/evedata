@@ -31,9 +31,9 @@ channels storing the individual data points on this level.
     pseudo-detectors are/should be equipped with encoders to ensure actual
     values being read. The data model now supports axes objects to have more
     than one value for a position to account for this situation. This means,
-    however, to convert the MPSKIP scans with individual position counts for
-    each detector readout to scans with multiple values available per
-    individual position.
+    however, to convert the datasets contained in a module with MPSKIP
+    with individual position counts for each detector readout to datasets
+    with multiple values available per individual position.
 
 
 A typical scan using MPSKIP uses the MPSKIP detector in the innermost scan
@@ -73,17 +73,10 @@ positions) need to be converted:
 Just to make things a bit more interesting:
 
 * Some of the devices used in the MPSKIP scan module are used outside as
-  well. This looks like we need to split the datasets accordingly.
-
-  * Given that the channel datasets in an MPSKIP scan module are mapped to
-    :obj:`AverageChannelData
-    <evedata.evefile.entities.data.AverageChannelData>` or
-    :obj:`AverageNormalizedChannelData
-    <evedata.evefile.entities.data.AverageNormalizedChannelData>` objects,
-    we clearly need to split the datasets here.
-
-* The axis set in the next-outer scan module from the MPSKIP scan module gets
-  typically set in other scan modules as well. Do we need to distinguish here?
+  well. Hence, we need to split the datasets accordingly.
+* The axis set in the next-outer scan module from the MPSKIP scan module
+  may get set in other scan modules as well. Do we need to distinguish
+  here as well?
 
 
 .. note::
@@ -102,35 +95,70 @@ Just to make things a bit more interesting:
     each inner (averaging) loop.
 
 
-If the SCML is present, reading the scan part of the SCML and inferring the
-motor axes and detector channels where the MPSKIP detector is present makes
-it much easier to get the names of the data objects that need to be
-modified. Hence, it might be sensible to (i) implement the minimum
-functionality of the :mod:`scml <evedata.scml>` subpackage necessary and
-(ii) rely on the SCML to be present for the time being. It might be a
-sensible option to check for the SCML to be present if a :obj:`SkipData
-<evedata.evefile.entities.data.SkipData>` object has been created, and in
-those (probably rare) cases to issue a warning that this is currently not
-supported.
+Mapping MPSKIP data can only sensibly be done with the SCML being present.
+It might be a sensible option to check for the SCML to be present if a
+:obj:`SkipData <evedata.evefile.entities.data.SkipData>` object has been
+created, and in those (probably rare) cases where *no* SCML is present to
+issue a warning that this is currently not supported. Checking for the
+SCML to be loaded can be done using the dedicated method
+:meth:`EveFile.has_scan()
+<evedata.evefile.boundaries.evefile.EveFile.has_scan>`.
 
 
-.. note::
+What happens when mapping MPSKIP scans?
+=======================================
 
-    How to check for the SCML to be loaded? In the meantime, there exists
-    a dedicated method for this purpose: :meth:`EveFile.has_scan()
-    <evedata.evefile.boundaries.evefile.EveFile.has_scan>`.
+The assumption for the time being is: There is *only one* module using
+MPSKIP per scan.
+
+* Find inner scan module with MPSKIP detector, using the
+  :meth:`ScanModule.has_mpskip()
+  <evedata.scan.entities.scan.ScanModule.has_mpskip>` method and looping
+  over all scan modules in :attr:`scan_modules
+  <evedata.scan.entities.scan.Scan.scan_modules>`.
+* Get all datasets (channels and axes) belonging to this scan module,
+  using :attr:`channels <evedata.scan.entities.scan.ScanModule.channels>`
+  and :attr:`axes <evedata.scan.entities.scan.ScanModule.axes>`,
+  and checking whether the corresponding datasets still exist (some may
+  have been removed/not mapped during mapping, and for good reasons).
+* Create additional/new datasets for averaged channels and axes.
+
+  * For the time being, these datasets may be suffixed with the scan
+    module ID of the next-outer scan module.
+  * Later, this may change, if datasets are separated according to scan
+    modules.
+
+* Obtain split positions for each averaging loop, by using the data
+  in the :class:`SkipData <evedata.evefile.entities.data.SkipData>` dataset.
+* Add preprocessing steps to the importers of each of the channel and axis
+  datasets newly created above:
+
+  * Use only positions from :class:`SkipData
+    <evedata.evefile.entities.data.SkipData>` dataset: :class:`SelectPositions
+    <evedata.evefile.controllers.preprocessing.SelectPositions>`.
+  * Map raw values for each average loop to position (count) of outer axis
+    (class name to be defined, contained in *this* module).
+
+* Merge scan modules: inner skip and next outer module.
+
+  * How to name this merged module? Identical to the outer module?
 
 
 Next steps
 ==========
 
-* Decide how and where to implement actual mapping: Data are read *on
-  demand*, hence mapping can -- technically speaking -- happen only once
-  data are loaded.
-* Decide on class name for mpskip mapper
-* Implement mapping as described above
+* Decide on class name for mpskip mapper. :class:`Mpskip`?
+
+  * Operates on a :obj:`File <evedata.evefile.entities.file.File>` object.
+
+* Decide on class name for preprocessing step. :class:`ExtractRawValues`?
+* Implement mapping as described above.
 * Decide whether ragged arrays need to be implemented already now, and if
-  so, in which way.
+  so, in which way. Possible options:
+
+  * Array of lists
+  * List of arrays
+  * ``ragged`` package: `<https://github.com/scikit-hep/ragged>`_
 
 
 Independent of the items above:
@@ -138,8 +166,9 @@ Independent of the items above:
 * Implement an additional class creating missing values using the average
   of the available values.
 
-  Independent of the actual MPSKIP mapping and rather an optional
-  post-processing step.
+  * Independent of the actual MPSKIP mapping and rather an optional
+    post-processing step.
+  * Would this better be a processing step of the ``radiometry`` package?
 
 
 Module documentation
