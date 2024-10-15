@@ -11,6 +11,8 @@ evedata.evefile.controllers subpackage
     :maxdepth: 1
 
     evedata.evefile.controllers.mpskip
+    evedata.evefile.controllers.preprocessing
     evedata.evefile.controllers.version_mapping
+
 
 

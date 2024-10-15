@@ -1808,7 +1808,7 @@ class DataImporter:
             self.source = source
         if not self.source:
             raise ValueError("No source provided to load data from.")
-        raw_data = self._load()
+        raw_data = self._load()  # noqa
         for task in self.preprocessing:
             raw_data = task.process(raw_data)
         return raw_data
@@ -2009,6 +2009,10 @@ class ImporterPreprocessingStep:
     Typical examples are extracting only parts of the HDF5 dataset,
     but can be much more involved.
 
+    For a series of (more) generic preprocessing steps, see the
+    :mod:`preprocessing <evedata.evefile.controllers.preprocessing>` module
+    in the :mod:`controllers <evedata.evefile.controllers>` subpackage.
+
 
     Attributes
     ----------
@@ -2072,7 +2076,7 @@ class ImporterPreprocessingStep:
             The actual type of data depends on the source and importer type.
 
         """
-        if data:
+        if data is not None:
             self.data = data
         return self._process(data=self.data)
 
