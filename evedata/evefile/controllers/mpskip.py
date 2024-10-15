@@ -133,6 +133,15 @@ Next steps
   so, in which way.
 
 
+Independent of the items above:
+
+* Implement an additional class creating missing values using the average
+  of the available values.
+
+  Independent of the actual MPSKIP mapping and rather an optional
+  post-processing step.
+
+
 Module documentation
 ====================
 
