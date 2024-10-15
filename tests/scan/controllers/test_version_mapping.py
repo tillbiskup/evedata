@@ -170,6 +170,56 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
                     <xpos>228</xpos>
                     <ypos>124</ypos>
                     <parent>-1</parent>
+                    <appended>43</appended>
+                    <nested>44</nested>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>
+                    </classic>
+                </scanmodule>
+                <scanmodule id="43">
+                    <name>Not connected scan module</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>42</parent>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>
+                    </classic>
+                </scanmodule>
+                <scanmodule id="44">
+                    <name>Not connected scan module</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>42</parent>
                     <classic>
                         <valuecount>1</valuecount>
                         <settletime>0.0</settletime>
@@ -382,11 +432,12 @@ class TestVersionMapperV9m2(unittest.TestCase):
         self.mapper.source.from_string(xml=SCML_STRING)
         destination = Scan()
         self.mapper.map(destination=destination)
-        # Note: There is one disconnected scan module in source!
+        # Note: Disconnected scan modules have ID>=42 in our example source,
+        #       to allow for simpler tests
         connected_scan_modules = [
             module
             for module in self.mapper.source.scan_modules
-            if int(module.find("parent").text) != -1
+            if int(module.get("id")) < 42
         ]
         self.assertEqual(
             len(connected_scan_modules),

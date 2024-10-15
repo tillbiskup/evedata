@@ -385,51 +385,79 @@ class VersionMapperV9m2(VersionMapper):
     """
 
     def _map_scan(self):
+        self._map_scan_metadata()
+        self._map_scan_modules()
+
+    def _map_scan_metadata(self):
         self.destination.scan.repeat_count = int(
             self.source.scan.find("repeatcount").text
         )
         self.destination.scan.comment = self.source.scan.find("comment").text
+
+    def _map_scan_modules(self):
+        scan_modules = {
+            int(scan_module.get("id")): scan_module
+            for scan_module in self.source.scan_modules
+            if int(scan_module.find("parent").text) != -1
+        }
+        root_module_id = [
+            id
+            for id, scan_module in scan_modules.items()
+            if int(scan_module.find("parent").text) == 0
+        ][0]
+        connected_scan_module_ids = []
+
+        def traverse(scan_module_id):
+            connected_scan_module_ids.append(scan_module_id)
+            scan_module = scan_modules[scan_module_id]
+            if scan_module.find("nested") is not None:
+                traverse(int(scan_module.find("nested").text))
+            if scan_module.find("appended") is not None:
+                traverse(int(scan_module.find("appended").text))
+
+        traverse(root_module_id)
+
         connected_scan_modules = [
-            module
-            for module in self.source.scan_modules
-            if int(module.find("parent").text) != -1
+            scan_module
+            for scan_module in self.source.scan_modules
+            if int(scan_module.get("id")) in connected_scan_module_ids
         ]
-        for module in connected_scan_modules:
-            self.destination.scan.scan_modules[int(module.get("id"))] = (
-                self._map_scan_module(module)
+        for scan_module in connected_scan_modules:
+            self.destination.scan.scan_modules[int(scan_module.get("id"))] = (
+                self._map_scan_module(scan_module)
             )
         nested_scan_modules = [
-            int(module.find("nested").text)
-            for module in connected_scan_modules
-            if module.find("nested") is not None
+            int(scan_module.find("nested").text)
+            for scan_module in connected_scan_modules
+            if scan_module.find("nested") is not None
         ]
-        for module in nested_scan_modules:
-            self.destination.scan.scan_modules[module].is_nested = True
+        for scan_module in nested_scan_modules:
+            self.destination.scan.scan_modules[scan_module].is_nested = True
 
     def _map_scan_module(self, element=None):
         if element.find("classic"):
-            module = scan.ScanModule()
+            scan_module = scan.ScanModule()
         else:
-            module = scan.SnapshotModule()
-        module.name = element.find("name").text
-        module.parent = int(element.find("parent").text)
+            scan_module = scan.SnapshotModule()
+        scan_module.name = element.find("name").text
+        scan_module.parent = int(element.find("parent").text)
         try:
-            module.appended = int(element.find("appended").text)
+            scan_module.appended = int(element.find("appended").text)
         except AttributeError:
             pass
         try:
-            module.nested = int(element.find("nested").text)
+            scan_module.nested = int(element.find("nested").text)
         except AttributeError:
             pass
         for channel in element.iter("smchannel"):
-            module.channels[channel.find("channelid").text] = (
+            scan_module.channels[channel.find("channelid").text] = (
                 self._map_scan_module_channel(channel)
             )
         for axis in element.iter("smaxis"):
-            module.axes[axis.find("axisid").text] = (
+            scan_module.axes[axis.find("axisid").text] = (
                 self._map_scan_module_axis(axis)
             )
-        return module
+        return scan_module
 
     @staticmethod
     def _map_scan_module_channel(element):
