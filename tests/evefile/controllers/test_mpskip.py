@@ -1,3 +1,4 @@
+import logging
 import unittest
 
 import numpy as np
@@ -56,3 +57,117 @@ class TestRearrangeRawValues(unittest.TestCase):
         self.processing.skip_data = self.skip_data
         result = self.processing.process(self.data)
         self.assertListEqual([4, 7, 11, 16], list(result["PosCounter"]))
+
+
+class MockEveFile:
+
+    def __init__(self):
+        self.scan = MockScanBoundary()
+
+    def has_scan(self):
+        return bool(self.scan)
+
+
+class MockScanBoundary:
+
+    def __init__(self):
+        self.scan = MockScan()
+
+
+class MockScan:
+
+    def __init__(self):
+        self.scan_modules = {}
+
+    def add_scan_modules(self):
+        outer_module = MockScanModule()
+        outer_module.id = 1
+        outer_module.name = "WL"
+        outer_module.parent = 0
+        outer_module.add_axis("nmEnerg:io2600wl2e.A")
+        self.scan_modules.update({outer_module.id: outer_module})
+
+        inner_module = MockScanModule()
+        inner_module.id = 2
+        inner_module.name = "Skip"
+        inner_module.parent = 1
+        channel_names = [
+            "MPSKIP:euvr01chan1",
+            "MPSKIP:euvr01skipcountchan1",
+            "K0617:gw24126chan1",
+            "A2980:gw24103chan1",
+            "PPESM9:pi03500000.RBVchan1",
+            "Energ:io2600e2wlchan1",
+        ]
+        for channel_name in channel_names:
+            inner_module.add_channel(channel_name)
+        inner_module.add_axis("Counter-mot")
+        self.scan_modules.update({inner_module.id: inner_module})
+
+
+class MockScanModule:
+
+    def __init__(self):
+        self.id = -1
+        self.name = ""
+        self.parent = -1
+        self.axes = {}
+        self.channels = {}
+
+    def has_mpskip(self):
+        return bool(
+            [name for name in self.channels if name.startswith("MPSKIP")]
+        )
+
+    def add_axis(self, id=""):
+        self.axes.update({id: MockAxisChannel(id=id)})
+
+    def add_channel(self, id=""):
+        self.channels.update({id: MockAxisChannel(id=id)})
+
+
+class MockAxisChannel:
+
+    def __init__(self, id=""):
+        self.id = id
+
+
+class TestMpskip(unittest.TestCase):
+    def setUp(self):
+        self.mapper = mpskip.Mpskip()
+        self.logger = logging.getLogger(name="evedata")
+        self.logger.setLevel(logging.WARNING)
+        self.source = MockEveFile()
+        self.source.scan.scan.add_scan_modules()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "source",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.mapper, attribute))
+
+    def test_map_without_source_raises(self):
+        self.mapper.source = None
+        with self.assertRaises(ValueError):
+            self.mapper.map()
+
+    def test_map_with_source_sets_source(self):
+        self.mapper.map(source=self.source)
+        self.assertEqual(self.source, self.mapper.source)
+
+    def test_map_without_scan_logs(self):
+        source = MockEveFile()
+        source.scan = None
+        self.logger.setLevel(logging.DEBUG)
+        with self.assertLogs(level=logging.DEBUG) as captured:
+            self.mapper.map(source=source)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "No scan, hence no mpskip mapping.",
+        )

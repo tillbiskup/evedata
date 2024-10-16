@@ -116,12 +116,24 @@ MPSKIP per scan.
   <evedata.scan.entities.scan.ScanModule.has_mpskip>` method and looping
   over all scan modules in :attr:`scan_modules
   <evedata.scan.entities.scan.Scan.scan_modules>`.
-* Get all datasets (channels and axes) belonging to this scan module,
-  using :attr:`channels <evedata.scan.entities.scan.ScanModule.channels>`
-  and :attr:`axes <evedata.scan.entities.scan.ScanModule.axes>`,
-  and checking whether the corresponding datasets still exist (some may
+* Get all channels belonging to this scan module,
+  using :attr:`channels <evedata.scan.entities.scan.ScanModule.channels>`,
+  and check whether the corresponding datasets still exist (some may
   have been removed/not mapped during mapping, and for good reasons).
+
+  * We need not be concerned with axes here, as only channels are sensible.
+    The only axis present should be the counter that is been taken care of.
+
 * Create additional/new datasets for averaged channels and axes.
+
+  * Actual detectors (not RBVs as pseudo-detector channels) need to be mapped
+    to either :class:`AverageChannelData
+    <evedata.evefile.entities.data.AverageChannelData>` or
+    :class:`AverageNormalizedChannelData
+    <evedata.evefile.entities.data.AverageNormalizedChannelData>`.
+  * Axes RBVs (present as pseudo-detector channels) need to be mapped to
+    :class:`AxisData <evedata.evefile.entities.data.AxisData>` objects
+    with the individual axis values stored as ragged array.
 
   * For the time being, these datasets may be suffixed with the scan
     module ID of the next-outer scan module.
@@ -143,22 +155,22 @@ MPSKIP per scan.
 
   * How to name this merged module? Identical to the outer module?
 
+* Remove the :class:`SkipData <evedata.evefile.entities.data.SkipData>`
+  dataset?
+
+  * Should no longer be necessary, and removing it would make the
+    :class:`Mpskip` class potentially (more) idempotent.
+
 
 Next steps
 ==========
 
-* Decide on class name for mpskip mapper. :class:`Mpskip`?
+* Decide on class name for mpskip mapper: :class:`Mpskip`
 
-  * Operates on a :obj:`File <evedata.evefile.entities.file.File>` object.
+  * Operates on an :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>`
+    object.
 
 * Implement mapping as described above.
-* Decide whether ragged arrays need to be implemented already now, and if
-  so, in which way. Possible options:
-
-  * Array of lists
-  * List of arrays
-  * Array of arrays (actually the way h5py returns vlen data in HDF5 datasets)
-  * ``ragged`` package: `<https://github.com/scikit-hep/ragged>`_
 
 
 Independent of the items above:
@@ -208,6 +220,18 @@ class RearrangeRawValues(ImporterPreprocessingStep):
     two named fields. The new numpy ndarray containing the rearranged data
     has the same field names, and for the first field the same dtype as
     the original data.
+
+    Ragged arrays are currently implemented as array of arrays, as the
+    ragged part is one "field" in the current data numpy array.
+
+    Generally, the following options exist to implement ragged arrays in
+    Python:
+
+      * Array of lists
+      * List of arrays
+      * Array of arrays (actually the way h5py returns vlen data in HDF5
+        datasets)
+      * ``ragged`` package: `<https://github.com/scikit-hep/ragged>`_
 
 
     Attributes
@@ -270,3 +294,80 @@ class RearrangeRawValues(ImporterPreprocessingStep):
             data[data.dtype.names[1]], cut_at
         )
         return new_data
+
+
+class Mpskip:
+    """
+    Transforming datasets in MPSKIP scan modules.
+
+    The data recorded using the MPSKIP EPICS feature need to be
+    transformed, rearranged and mapped to average channels and axes with
+    raw values. Furthermore, the MPSKIP scan module and the next-outer
+    scan module need to be joined.
+
+
+    Attributes
+    ----------
+    source : :class:`evedata.evefile.boundaries.evefile.EveFile`
+        High-level Python object representation of eveH5 file contents.
+
+        Actually the object that uses :class:`Mpskip` on itself.
+
+    Raises
+    ------
+    ValueError
+        Raised if no source is provided
+
+
+    Examples
+    --------
+    The :class:`Mpskip` class operates on an :obj:`EveFile
+    <evedata.evefile.boundaries.evefile.EveFile>` object and is typically
+    called from within this object (here referred to using ``self``):
+
+    .. code-block::
+
+        mpskip = Mpskip()
+        mpskip.map(source=self)
+
+    This should convert all datasets within the MPSKIP scan module
+    accordingly. Note that "converting" always means that appropriate
+    preprocessing steps are added to the importers of the respective data
+    objects, as the data themselves are typically loaded on demand. However,
+    the other steps independent of loading actual data are performed already.
+
+    """
+
+    def __init__(self):
+        self.source = None
+
+    def map(self, source=None):
+        """
+        Map raw values of data in MPSKIP scan modules
+
+        Parameters
+        ----------
+        source : :class:`evedata.evefile.boundaries.evefile.EveFile`
+            Python object representation of an eveH5 file
+
+        Raises
+        ------
+        ValueError
+            Raised if no source is provided
+
+        """
+        if source:
+            self.source = source
+        if not self.source:
+            raise ValueError("Missing source to map from.")
+        if not self.source.has_scan():
+            logger.debug("No scan, hence no mpskip mapping.")
+            return
+
+        # So far untested code ;-)
+        mpskip_module = [
+            scan_module
+            for scan_module in self.source.scan.scan.scan_modules.values()
+            if scan_module.has_mpskip()
+        ][0]
+        print(mpskip_module.axes, mpskip_module.channels)

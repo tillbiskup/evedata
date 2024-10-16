@@ -541,7 +541,7 @@ class VersionMapper:
     source : :class:`evedata.evefile.boundaries.eveh5.HDF5File`
         Python object representation of an eveH5 file
 
-    destination : :class:`evedata.evefile.boundaries.evefile.File`
+    destination : :class:`evedata.evefile.boundaries.evefile.EveFile`
         High(er)-level evedata structure representing an eveH5 file
 
     datasets2map_in_main : :class:`list`
@@ -618,7 +618,7 @@ class VersionMapper:
         source : :class:`evedata.evefile.boundaries.eveh5.HDF5File`
             Python object representation of an eveH5 file
 
-        destination : :class:`evedata.evefile.boundaries.evefile.File`
+        destination : :class:`evedata.evefile.boundaries.evefile.EveFile`
             High(er)-level evedata structure representing an eveH5 file
 
         Raises
