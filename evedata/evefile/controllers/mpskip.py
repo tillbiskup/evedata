@@ -127,17 +127,17 @@ MPSKIP per scan.
     module ID of the next-outer scan module.
   * Later, this may change, if datasets are separated according to scan
     modules.
+  * Add metadata as far as available from the :class:`SkipData
+    <evedata.evefile.entities.data.SkipData>` dataset.
 
-* Obtain split positions for each averaging loop, by using the data
-  in the :class:`SkipData <evedata.evefile.entities.data.SkipData>` dataset.
 * Add preprocessing steps to the importers of each of the channel and axis
   datasets newly created above:
 
   * Use only positions from :class:`SkipData
     <evedata.evefile.entities.data.SkipData>` dataset: :class:`SelectPositions
     <evedata.evefile.controllers.preprocessing.SelectPositions>`.
-  * Map raw values for each average loop to position (count) of outer axis
-    (class name to be defined, contained in *this* module).
+  * Rearrange raw values for each average loop and map to to position
+    (count) of outer axis: :class:`RearrangeRawValues`.
 
 * Merge scan modules: inner skip and next outer module.
 
@@ -151,13 +151,13 @@ Next steps
 
   * Operates on a :obj:`File <evedata.evefile.entities.file.File>` object.
 
-* Decide on class name for preprocessing step. :class:`ExtractRawValues`?
 * Implement mapping as described above.
 * Decide whether ragged arrays need to be implemented already now, and if
   so, in which way. Possible options:
 
   * Array of lists
   * List of arrays
+  * Array of arrays (actually the way h5py returns vlen data in HDF5 datasets)
   * ``ragged`` package: `<https://github.com/scikit-hep/ragged>`_
 
 
@@ -178,5 +178,95 @@ Module documentation
 
 import logging
 
+import numpy as np
+
+from evedata.evefile.entities.data import ImporterPreprocessingStep
+
 
 logger = logging.getLogger(__name__)
+
+
+class RearrangeRawValues(ImporterPreprocessingStep):
+    """
+    Rearrange raw values from MPSKIP scan: ragged array with new positions.
+
+    For each dataset contained in a scan module with the MPSKIP detector,
+    two things need to be done:
+
+    * The 1D array of individual raw values needs to be rearranged into a
+      ragged array, with one row per averaging loop.
+    * The position (count)s need to be remapped to the positions of the
+      next-outer scan module, such that each average loop gets one position.
+
+    The latter is inferred indirectly from the positions of the
+    :obj:`SkipData <evedata.evefile.entities.data.SkipData>` object
+    contained in :attr:`skip_data`.
+
+    The class makes no assumptions on the dtype of the original data other
+    than the first named row corresponding to the positions and the second
+    to the actual data. Furthermore, it assumes the data to contain only
+    two named fields. The new numpy ndarray containing the rearranged data
+    has the same field names, and for the first field the same dtype as
+    the original data.
+
+
+    Attributes
+    ----------
+    skip_data : :class:`evedata.evefile.entities.data.SkipData`
+        Data from skip detector channel.
+
+        These data (both, actual data and positions) are used to rearrange
+        the data from the individual datasets.
+
+
+    Examples
+    --------
+    Rearranging the data of a given dataset requires a a :obj:`SkipData
+    <evedata.evefile.entities.data.SkipData>` object, here referred to as
+    ``skip_data``, and of course the corresponding data:
+
+    .. code-block::
+
+        task = RearrangeRawValues()
+        task.skip_data = skip_data
+        result = task.process(data)
+
+    The selected data are returned by :meth:`process`, as shown above.
+
+    Typically, a lot of data(sets) needs to be rearranged with the same
+    parameters, as a scan module using MPSKIP will contain a list of
+    data(sets). Hence, you can once instantiate the
+    :obj:`RearrangeRawValues` object and use it afterwards for the
+    individual datasets, appending it to the preprocessing tasks of their
+    importer:
+
+    .. code-block::
+
+        task = RearrangeRawValues()
+        task.skip_data = skip_data
+
+        for device in devices:
+            device.importer[0].preprocessing.append(task)
+
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.skip_data = None
+
+    def _process(self, data=None):
+        cut_at = np.where(np.diff(self.skip_data.data) < 0)[0] + 1
+        new_positions = self.skip_data.positions[np.hstack([0, cut_at])] - 1
+        np.dtype(data.dtype.fields)
+        new_dtype = dict(data.dtype.fields)
+        new_dtype[data.dtype.names[1]] = (
+            np.dtype("object"),
+            len(new_positions),
+        )
+        new_data = np.ndarray([len(new_positions)], dtype=np.dtype(new_dtype))
+        new_data[data.dtype.names[0]] = new_positions
+        new_data[data.dtype.names[1]] = np.split(
+            data[data.dtype.names[1]], cut_at
+        )
+        return new_data
