@@ -19,16 +19,11 @@ class Root << (G,orchid) >> {
     Description : string
     Comment : string
     Simulation : int | "boolean" enum
-    - PreferredAxis : string
-    - PreferredChannel : string
-    - PreferredNormalizationChannel : string
 }
 
 
 Root *-- main
 Root *-- snapshot
-Root *-- positioning
-Root *-- pre_postscan
 Root *-- meta
 
 pre_postscan -[hidden]> positioning
@@ -72,6 +67,18 @@ note left of DetectorType
 endnote
 
 class main << (G,orchid) >> {}
+
+class "<scanmodule_id>" << (G,orchid) >> {
+    Name: string
+    ID: int32
+    Parent: int32
+    Appended: int32
+    Nested: int32
+    NumberOfMeasurements: int32
+    - PreferredAxis : string
+    - PreferredChannel : string
+    - PreferredNormalizationChannel : string
+}
 
 class snapshot << (G,orchid) >> {}
 
@@ -173,22 +180,27 @@ class "<singlepointdata>" << (D,orange) >> {
     - NormalizingData : float64
 }
 
-main *-- "<axisdata>"
-main *-- "<singlepointdata>"
-main *-- "<averagedata>_sm<#>"
-main *-- "<intervaldata>_sm<#>"
-main *-- "<mcadata>_sm<#>"
-main *-- "<samplecameradata>"
-main *-- "<scientificcameradata>_sm<#>"
+main *-- "<scanmodule_id>"
+
+"<scanmodule_id>" *-- positioning
+"<scanmodule_id>" *-- pre_postscan
+
+"<scanmodule_id>" *-- "<axisdata>"
+"<scanmodule_id>" *-- "<singlepointdata>"
+"<scanmodule_id>" *-- "<averagedata>"
+"<scanmodule_id>" *-- "<intervaldata>"
+"<scanmodule_id>" *-- "<mcadata>"
+"<scanmodule_id>" *-- "<samplecameradata>"
+"<scanmodule_id>" *-- "<scientificcameradata>"
 
 "<axisdata>" -[hidden]> "<singlepointdata>"
-"<singlepointdata>" -[hidden]> "<averagedata>_sm<#>"
-"<averagedata>_sm<#>" -[hidden]> "<intervaldata>_sm<#>"
-"<intervaldata>_sm<#>" -[hidden]> "<mcadata>_sm<#>"
-"<mcadata>_sm<#>" -[hidden]> "<samplecameradata>"
-"<samplecameradata>" -[hidden]> "<scientificcameradata>_sm<#>"
+"<singlepointdata>" -[hidden]> "<averagedata>"
+"<averagedata>" -[hidden]> "<intervaldata>"
+"<intervaldata>" -[hidden]> "<mcadata>"
+"<mcadata>" -[hidden]> "<samplecameradata>"
+"<samplecameradata>" -[hidden]> "<scientificcameradata>"
 
-class "<averagedata>_sm<#>" << (D,orange) >> {
+class "<averagedata>" << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -211,7 +223,7 @@ class "<averagedata>_sm<#>" << (D,orange) >> {
     - NormalizingData : vlen_float64
 }
 
-class "<intervaldata>_sm<#>" << (D,orange) >> {
+class "<intervaldata>" << (D,orange) >> {
     PV : string
     AccessMode : string
     Name : string
@@ -239,13 +251,13 @@ note as sm_channel_note
     The "Name" attribute should have the same suffix.
 end note
 
-"<intervaldata>_sm<#>" .. sm_channel_note
-"<averagedata>_sm<#>" .. sm_channel_note
+"<intervaldata>" .. sm_channel_note
+"<averagedata>" .. sm_channel_note
 
-class "<mcadata>_sm<#>" << (G,orchid) >> {}
+class "<mcadata>" << (G,orchid) >> {}
 
-"<mcadata>_sm<#>" *-- mca_data
-"<mcadata>_sm<#>" *-- "0..n" "mca_roi<#>"
+"<mcadata>" *-- mca_data
+"<mcadata>" *-- "0..n" "mca_roi<#>"
 
 class "mca_data" << (D,orange) >> {
     PV : string
@@ -288,11 +300,11 @@ class "<samplecameradata>" << (D,orange) >> {
     Data : array | string
 }
 
-class "<scientificcameradata>_sm<#>" << (G,orchid) >> {}
+class "<scientificcameradata>" << (G,orchid) >> {}
 
-"<scientificcameradata>_sm<#>" *-- scientificcamera_data
-"<scientificcameradata>_sm<#>" *-- "0..n" "scientificcamera_roi<#>"
-"<scientificcameradata>_sm<#>" *-- "0..n" "scientificcamera_statistics<#>"
+"<scientificcameradata>" *-- scientificcamera_data
+"<scientificcameradata>" *-- "0..n" "scientificcamera_roi<#>"
+"<scientificcameradata>" *-- "0..n" "scientificcamera_statistics<#>"
 
 class scientificcamera_data << (D,orange) >> {
     PV : string
@@ -403,6 +415,10 @@ LogMessages -[hidden]> ErrorMessages
 ErrorMessages -[hidden]> Positions2Milliseconds
 Positions2Milliseconds -[hidden]> Station
 Station -[hidden]> Scan
+
+snapshot -[hidden]> main
+main -[hidden]> meta
+'main -[hidden]> meta
 
 note as SCML_note
     XML should be a fixed_length string
