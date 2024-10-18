@@ -47,14 +47,17 @@ Some of the most important differences with respect to the previous scheme, v7:
 
   * Will this be a problem?
 
-* Channels whose attributes can change between scan modules are suffixed with their respective scan module ID.
+* Datasets (channels, axes) are organised according to the scan modules they appear in.
+
+  * General structure of the scan is preserved in the HDF5 file.
+  * New group "pre_postscan" containing datasets for each device that is set in the pre-/postscan phase of a scan module.
+
+    * Options of devices set are contained in the device datasets as static attributes.
+
+  * New group "positioning" containing datasets for each axis that has been positioned by a positioning plugin.
+
 * Array and area channels are modelled as HDF5 datasets. The reason to still have individual groups per channel is storing the variable number of ROI datasets together with the respective channel.
 * Snapshot group is no longer optional, as snapshots containing *all* devices currently available will be carried out automatically at the begin and end of a scan in the future.
-* New group "pre_postscan" containing datasets for each device that is set in the pre-/postscan phase of a scan module.
-
-  * Options of devices set are contained in the device datasets as static attributes.
-
-* New group "positioning" containing datasets for each axis that has been positioned by a positioning plugin.
 * No group "device" (aka monitor) any more
 
 
