@@ -16,7 +16,7 @@ class TestFile(unittest.TestCase):
             "metadata",
             "log_messages",
             "scan",
-            "data",
+            "scan_modules",
             "snapshots",
             "monitors",
             "position_timestamps",
@@ -93,3 +93,24 @@ class TestLogMessage(unittest.TestCase):
             self.log_message.timestamp,
         )
         self.assertEqual(message, self.log_message.message)
+
+
+class TestScanModule(unittest.TestCase):
+    def setUp(self):
+        self.scan_module = file.ScanModule()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "name",
+            "id",
+            "parent",
+            "appended",
+            "nested",
+            "data",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.scan_module, attribute))

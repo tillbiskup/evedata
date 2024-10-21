@@ -60,11 +60,14 @@ class File:
     scan : :class:`Scan`
         Description of the actual scan.
 
-    data : :class:`dict`
-        Data recorded from the devices involved in a measurement.
+    scan_modules : :class:`dict`
+        Modules the scan consists of.
 
-        Each item is an instance of
-        :class:`evedata.evefile.entities.data.Data`.
+        Each item is an instance of :class:`ScanModule` and contains the
+        data recorded within the given scan module.
+
+        In case of no scan description present, a "dummy" scan module will
+        be created containing *all* data.
 
     snapshots : :class:`dict`
         Device data recorded as snapshot during a measurement.
@@ -101,6 +104,7 @@ class File:
         self.metadata = Metadata()
         self.log_messages = []
         self.scan = Scan()
+        self.scan_modules = {}
         self.data = {}
         self.snapshots = {}
         self.monitors = {}
@@ -272,3 +276,73 @@ class LogMessage:
         timestamp, message = string.split(": ", maxsplit=1)
         self.timestamp = datetime.datetime.fromisoformat(timestamp)
         self.message = message
+
+
+class ScanModule:
+    """
+    Representation of a scan module, containing the corresponding data.
+
+    Scans are organised in scan modules, and despite the flat organisation of
+    the data files up to eveH5 v7, organising the data according to the
+    scan modules they are recorded in is not only sensible, but sometimes
+    necessary to properly deal with the data.
+
+
+    Attributes
+    ----------
+    name : :class:`str`
+        Given name of the scan module, as displayed in the eve GUI.
+
+    id : :class:`int`
+        Unique (numeric) ID of the scan module.
+
+        Typically, when a scan gets created using the eve GUI, a unique ID
+        will automatically be assigned to each individual scan module.
+
+        IDs are required to be unique.
+
+    parent : :class:`id`
+        Unique ID of the parent scan module.
+
+        In case of the first scan module, this is 0.
+
+        Default: 0
+
+    appended : :class:`int`
+        Unique ID of the appended scan module.
+
+        A scan module can have 0..1 appended and 0..1 nested scan modules.
+
+        Default: None
+
+    nested : :class:`int`
+        Unique ID of the nested scan module.
+
+        A scan module can have 0..1 appended and 0..1 nested scan modules.
+
+        Default: None
+
+    data : :class:`dict`
+        Data recorded from the devices involved in the scan module.
+
+        Each item is an instance of
+        :class:`evedata.evefile.entities.data.Data`.
+
+
+    Examples
+    --------
+    The :class:`ScanModule` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.evefile` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        self.name = ""
+        self.id = 0  # noqa
+        self.parent = -1
+        self.appended = None
+        self.nested = None
+        self.data = None

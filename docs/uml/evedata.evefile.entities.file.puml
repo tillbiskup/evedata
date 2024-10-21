@@ -5,14 +5,14 @@ class File {
     log_messages : LogMessage[]
     scan : Scan
     station : Station
-    data : Data{}
+    scan_modules : ScanModules{}
     snapshots : Data{}
     monitors : Data{}
     position_timestamps : TimestampData
 }
 
+File *-- "n" ScanModule
 File *-- "n" Data
-note bottom: See diagram for\ndata module.
 
 class Metadata{
     filename : string
@@ -33,6 +33,19 @@ class LogMessage {
     timestamp : datetime
     message : string
 }
+
+
+class ScanModule {
+    name : string
+    id : int
+    parent : int
+    appended : int
+    nested : int
+    data : Data{}
+}
+
+ScanModule *-- "n" Data
+note right of Data: See diagram for\ndata module.
 
 class Scan extends scan.boundaries.scan.Scan {
     author : string

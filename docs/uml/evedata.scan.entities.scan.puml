@@ -25,13 +25,11 @@ File *- Scan
 note left of File: See separate\nfile module.
 
 class AbstractScanModule {
-    name : string
-    xpos : integer
-    ypos : integer
-    parent : integer
-    nested : integer
-    appended : integer
     id : integer
+    name : string
+    parent : integer
+    appended : integer
+    nested : integer
 }
 AbstractScanModule <|-- ScanModule
 AbstractScanModule <|-- SnapshotModule
