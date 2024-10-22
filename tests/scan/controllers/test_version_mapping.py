@@ -584,7 +584,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
             self.assertTrue(item.id)
 
     def test_map_axis_with_unknown_step_function_logs(self):
-        SMAXIS_ADD = """<smaxis>
+        smaxis_add = """<smaxis>
                             <axisid>Timer1-mot-double</axisid>
                             <stepfunction>Nonexisting</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -592,7 +592,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_ADD)
+            xml=template.substitute(smaxis=smaxis_add)
         )
         destination = Scan()
         self.logger.setLevel(logging.WARN)
@@ -605,7 +605,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_add_sets_step_function(self):
-        SMAXIS_ADD = """<smaxis>
+        smaxis_add = """<smaxis>
                             <axisid>Timer1-mot-double</axisid>
                             <stepfunction>Add</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -619,7 +619,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_ADD)
+            xml=template.substitute(smaxis=smaxis_add)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -631,7 +631,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_add_sets_position_mode(self):
-        SMAXIS_ADD = """<smaxis>
+        smaxis_add = """<smaxis>
                             <axisid>Timer1-mot-double</axisid>
                             <stepfunction>Add</stepfunction>
                             <positionmode>relative</positionmode>
@@ -645,7 +645,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_ADD)
+            xml=template.substitute(smaxis=smaxis_add)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -657,7 +657,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_add_sets_main_axis_true(self):
-        SMAXIS_ADD = """<smaxis>
+        smaxis_add = """<smaxis>
                             <axisid>Timer1-mot-double</axisid>
                             <stepfunction>Add</stepfunction>
                             <positionmode>relative</positionmode>
@@ -671,7 +671,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_ADD)
+            xml=template.substitute(smaxis=smaxis_add)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -682,7 +682,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_add_sets_main_axis_false(self):
-        SMAXIS_ADD = """<smaxis>
+        smaxis_add = """<smaxis>
                             <axisid>Timer1-mot-double</axisid>
                             <stepfunction>Add</stepfunction>
                             <positionmode>relative</positionmode>
@@ -696,7 +696,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_ADD)
+            xml=template.substitute(smaxis=smaxis_add)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -707,7 +707,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_add_sets_positions(self):
-        SMAXIS_ADD = """<smaxis>
+        smaxis_add = """<smaxis>
                             <axisid>Timer1-mot-double</axisid>
                             <stepfunction>Add</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -721,7 +721,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_ADD)
+            xml=template.substitute(smaxis=smaxis_add)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -735,7 +735,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_positionlist_sets_positions(self):
-        SMAXIS_POSITIONLIST = """<smaxis>
+        smaxis_positionlist = """<smaxis>
                             <axisid>Counter-mot</axisid>
                             <stepfunction>Positionlist</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -744,7 +744,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_POSITIONLIST)
+            xml=template.substitute(smaxis=smaxis_positionlist)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -756,7 +756,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_range_sets_positions(self):
-        SMAXIS_RANGE = """<smaxis>
+        smaxis_range = """<smaxis>
                             <axisid>Counter-mot</axisid>
                             <stepfunction>Range</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -768,7 +768,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_RANGE)
+            xml=template.substitute(smaxis=smaxis_range)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -780,7 +780,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_file_sets_positions_to_empty_array(self):
-        SMAXIS_RANGE = """<smaxis>
+        smaxis_range = """<smaxis>
                             <axisid>Counter-mot</axisid>
                             <stepfunction>File</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -789,7 +789,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_RANGE)
+            xml=template.substitute(smaxis=smaxis_range)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -801,7 +801,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_file_logs_warning(self):
-        SMAXIS_RANGE = """<smaxis>
+        smaxis_range = """<smaxis>
                             <axisid>Counter-mot</axisid>
                             <stepfunction>File</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -810,7 +810,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_RANGE)
+            xml=template.substitute(smaxis=smaxis_range)
         )
         destination = Scan()
         self.logger.setLevel(logging.WARN)
@@ -822,8 +822,35 @@ class TestVersionMapperV9m2(unittest.TestCase):
             "Step function 'file' does not allow to obtain positions.",
         )
 
+    def test_map_axis_plugin_logs_warning(self):
+        smaxis_plugin = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Plugin</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <plugin name="ReferenceAdd">
+                                <parameter name="location">/path/to/referenceadd</parameter>
+                                <parameter name="summand">0.0</parameter>
+                                <parameter name="referenceaxis">Timer1-mot-double</parameter>
+                            </plugin>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=smaxis_plugin)
+        )
+        destination = Scan()
+        self.logger.setLevel(logging.WARN)
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.mapper.map(destination=destination)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "Step function 'plugin' currently does not allow to obtain "
+            "positions.",
+        )
+
     def test_map_axis_multiply_sets_positions(self):
-        SMAXIS_MULTIPLY = """<smaxis>
+        smaxis_multiply = """<smaxis>
                             <axisid>Counter-mot</axisid>
                             <stepfunction>Multiply</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -837,7 +864,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_MULTIPLY)
+            xml=template.substitute(smaxis=smaxis_multiply)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -851,7 +878,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_axis_multiply_sets_position_mode_to_relative(self):
-        SMAXIS_MULTIPLY = """<smaxis>
+        smaxis_multiply = """<smaxis>
                             <axisid>Counter-mot</axisid>
                             <stepfunction>Multiply</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -865,7 +892,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_MULTIPLY)
+            xml=template.substitute(smaxis=smaxis_multiply)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -877,7 +904,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
 
     def test_map_positionings(self):
-        SMAXIS_POSITIONINGS = """<smaxis>
+        smaxis_positionings = """<smaxis>
                             <axisid>SimMt:testrack01000</axisid>
                             <stepfunction>Range</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -908,7 +935,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_POSITIONINGS)
+            xml=template.substitute(smaxis=smaxis_positionings)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -927,7 +954,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
             self.assertTrue(positioning.type)
 
     def test_map_positionings_parameters(self):
-        SMAXIS_POSITIONINGS = """<smaxis>
+        smaxis_positionings = """<smaxis>
                             <axisid>SimMt:testrack01000</axisid>
                             <stepfunction>Range</stepfunction>
                             <positionmode>absolute</positionmode>
@@ -959,7 +986,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=SMAXIS_POSITIONINGS)
+            xml=template.substitute(smaxis=smaxis_positionings)
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -967,3 +994,120 @@ class TestVersionMapperV9m2(unittest.TestCase):
             1
         ].positionings:
             self.assertTrue(positioning.parameters)
+
+    def test_number_of_positions_per_pass(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        axis_positions = {
+            "1": np.asarray([1, 2, 3, 4, 5]),
+            "2": np.asarray([3, 5, 7, 9]),
+        }
+        for id, positions in axis_positions.items():
+            axis = scan.Axis(id=id)
+            axis.positions = positions
+            scan_module.axes[id] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis_positions = {
+            "1": np.asarray([1, 4, 5]),
+            "2": np.asarray([3, 5, 7, 9]),
+        }
+        for id, positions in axis_positions.items():
+            axis = scan.Axis(id=id)
+            axis.positions = positions
+            scan_module.axes[id] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertTrue(scan_module.number_of_positions_per_pass)
+            self.assertEqual(
+                max(
+                    [
+                        axis.positions.size
+                        for axis in scan_module.axes.values()
+                    ]
+                ),
+                scan_module.number_of_positions_per_pass,
+            )
+
+    def test_number_of_positions_per_pass_with_positioning(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        axis_positions = {
+            "1": np.asarray([1, 2, 3, 4, 5]),
+            "2": np.asarray([3, 5, 7, 9]),
+        }
+        for id, positions in axis_positions.items():
+            axis = scan.Axis(id=id)
+            axis.positions = positions
+            scan_module.axes[id] = axis
+        scan_module.positionings.append(scan.Positioning())
+        destination.scan.scan_modules[1] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertEqual(
+                max(
+                    [
+                        axis.positions.size
+                        for axis in scan_module.axes.values()
+                    ]
+                )
+                + 1,
+                scan_module.number_of_positions_per_pass,
+            )
+
+    def test_map_number_of_positions_per_pass(self):
+        smaxis_multiply = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Multiply</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="int">1</start>
+                                <stop type="int">5</stop>
+                                <stepwidth type="int">1</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=smaxis_multiply)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            5,
+            self.mapper.destination.scan.scan_modules[
+                1
+            ].number_of_positions_per_pass,
+        )
+
+    def test_map_number_of_measurements(self):
+        smaxis = """<smaxis>
+                            <axisid>SimMt:testrack01000</axisid>
+                            <stepfunction>Range</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <range>
+                                <expression>1:20</expression>
+                                <positionlist>1, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0</positionlist>
+                            </range>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=smaxis).replace(
+                "<valuecount>1", "<valuecount>2"
+            )
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            2,
+            self.mapper.destination.scan.scan_modules[
+                1
+            ].number_of_measurements,
+        )

@@ -63,6 +63,7 @@ class TestScanModule(unittest.TestCase):
             "axes",
             "channels",
             "positionings",
+            "number_of_measurements",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -135,6 +136,10 @@ class TestSnapshotModule(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.module, attribute))
+
+    def test_default_setting_of_some_attributes(self):
+        self.assertEqual(1, self.module.number_of_positions)
+        self.assertEqual(1, self.module.number_of_positions_per_pass)
 
 
 class TestPositioning(unittest.TestCase):

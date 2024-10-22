@@ -391,6 +391,7 @@ class VersionMapperV9m2(VersionMapper):
     def _map_scan(self):
         self._map_scan_metadata()
         self._map_scan_modules()
+        self._calculate_positions()
 
     def _map_scan_metadata(self):
         self.destination.scan.repeat_count = int(
@@ -444,6 +445,9 @@ class VersionMapperV9m2(VersionMapper):
     def _map_scan_module(self, element=None):
         if element.find("classic"):
             scan_module = scan.ScanModule()
+            scan_module.number_of_measurements = int(
+                element.find("classic").find("valuecount").text
+            )
         else:
             scan_module = scan.SnapshotModule()
         scan_module.name = element.find("name").text
@@ -548,6 +552,11 @@ class VersionMapperV9m2(VersionMapper):
 
     @staticmethod
     def _map_axis_stepfunction_plugin(element):  # noqa
+        # TODO: Implement positions somewhere, probably in later code
+        logger.warning(
+            "Step function 'plugin' currently does not allow to obtain "
+            "positions."
+        )
         return np.asarray([])
 
     @staticmethod
@@ -562,3 +571,17 @@ class VersionMapperV9m2(VersionMapper):
                     {parameter.attrib["name"]: parameter.text}
                 )
         return positioning
+
+    def _calculate_positions(self):
+        for scan_module in self.destination.scan.scan_modules.values():
+            try:
+                scan_module.number_of_positions_per_pass = max(
+                    [
+                        axis.positions.size
+                        for axis in scan_module.axes.values()
+                    ]
+                )
+            except ValueError:
+                pass
+            if scan_module.positionings:
+                scan_module.number_of_positions_per_pass += 1

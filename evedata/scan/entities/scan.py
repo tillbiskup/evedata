@@ -197,7 +197,7 @@ class AbstractScanModule:
 
         Default: 0
 
-    positions : :class:`list` | :class:`numpy.array`
+    positions : :class:`numpy.array`
         Actual positions created during the scan module.
 
         These positions cannot necessarily be inferred from the definition
@@ -224,7 +224,7 @@ class AbstractScanModule:
         self.is_nested = False
         self.number_of_positions = 0
         self.number_of_positions_per_pass = 0
-        self.positions = []
+        self.positions = None
 
 
 class ScanModule(AbstractScanModule):
@@ -286,6 +286,38 @@ class ScanModule(AbstractScanModule):
 
         Default: False
 
+    number_of_positions : :class:`int`
+        Number of positions created during the scan module.
+
+        Positions are the fundamental quantisation of the data in eveH5
+        files. Each position axes are moved to is assigned a "position
+        count", *i.e.* a unique integer value. Furthermore, positionings
+        of axes at the end of the scan module (in the "positioning phase")
+        get their own position number.
+
+        For snapshot modules, things are quite simple: Each snapshot
+        module creates its own position, one per module.
+
+        Default: 0
+
+    number_of_positions_per_pass : :class:`int`
+        Number of positions created during *one pass* of the scan module.
+
+        Scan modules can be nested, and even though a given scan module
+        is not nested itself, it can be in a chain of scan modules that
+        are nested. Hence, the total number of positions created during a
+        scan for a given scan module can be different from the number of
+        positions during a single pass.
+
+        Default: 0
+
+    positions : :class:`numpy.array`
+        Actual positions created during the scan module.
+
+        These positions cannot necessarily be inferred from the definition
+        of the scan module itself, but sometimes only be obtained from the
+        actual measurement.
+
     axes : :class:`dict`
         Motor axes actively being used in the scan module.
 
@@ -310,6 +342,13 @@ class ScanModule(AbstractScanModule):
 
         Each element in the list is a :obj:`Positioning` object.
 
+    number_of_measurements : :class:`int`
+        Number of measurements performed per axes position.
+
+        Each measurement gets its individual position count.
+
+        Default: 1
+
 
     Examples
     --------
@@ -326,6 +365,7 @@ class ScanModule(AbstractScanModule):
         self.axes = {}
         self.channels = {}
         self.positionings = []
+        self.number_of_measurements = 1
 
     def has_mpskip(self):
         """
@@ -440,7 +480,7 @@ class Axis:
 
         Default: "absolute"
 
-    positions : :class:`list` | :class:`numpy.array`
+    positions : :class:`numpy.array`
         Set values the axis should have been moved to.
 
         Whether the axis ever reached these positions is an entirely
@@ -468,8 +508,8 @@ class Axis:
 
     """
 
-    def __init__(self):
-        self.id = ""  # noqa
+    def __init__(self, id=""):
+        self.id = id  # noqa
         self.step_function = ""
         self.position_mode = "absolute"
         self.positions = None
@@ -523,6 +563,50 @@ class SnapshotModule(AbstractScanModule):
 
         Default: None
 
+    is_nested : :class:`bool`
+        Whether the scan module itself is nested.
+
+        A scan module can either be appended or nested. Given that the
+        scan modules are unaware of the other scan modules and (currently)
+        only contain IDs as references to their parent and appended or
+        nested scan module, this information needs to be set from outside,
+        *e.g.* during mapping by the :class:`VersionMapper
+        <evedata.scan.controllers.version_mapping.VersionMapper>` class.
+
+        Default: False
+
+    number_of_positions : :class:`int`
+        Number of positions created during the scan module.
+
+        Positions are the fundamental quantisation of the data in eveH5
+        files. Each position axes are moved to is assigned a "position
+        count", *i.e.* a unique integer value. Furthermore, positionings
+        of axes at the end of the scan module (in the "positioning phase")
+        get their own position number.
+
+        For snapshot modules, things are quite simple: Each snapshot
+        module creates its own position, one per module.
+
+        Default: 1
+
+    number_of_positions_per_pass : :class:`int`
+        Number of positions created during *one pass* of the scan module.
+
+        Scan modules can be nested, and even though a given scan module
+        is not nested itself, it can be in a chain of scan modules that
+        are nested. Hence, the total number of positions created during a
+        scan for a given scan module can be different from the number of
+        positions during a single pass.
+
+        Default: 1
+
+    positions : :class:`list` | :class:`numpy.array`
+        Actual positions created during the scan module.
+
+        These positions cannot necessarily be inferred from the definition
+        of the scan module itself, but sometimes only be obtained from the
+        actual measurement.
+
     axes : :class:`dict`
         Motor axes actively being used in the scan module.
 
@@ -550,6 +634,8 @@ class SnapshotModule(AbstractScanModule):
 
     def __init__(self):
         super().__init__()
+        self.number_of_positions = 1
+        self.number_of_positions_per_pass = 1
         self.axes = {}
         self.channels = {}
 
