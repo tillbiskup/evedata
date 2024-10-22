@@ -143,6 +143,8 @@ Module documentation
 import logging
 import sys
 
+import numpy as np
+
 from evedata.scan.entities import scan
 
 
@@ -468,8 +470,76 @@ class VersionMapperV9m2(VersionMapper):
         channel.id = element.find("channelid").text
         return channel
 
-    @staticmethod
-    def _map_scan_module_axis(element):
+    def _map_scan_module_axis(self, element):
         axis = scan.Axis()
         axis.id = element.find("axisid").text
+        axis.step_function = element.find("stepfunction").text.lower()
+        if axis.step_function in ["add", "multiply"]:
+            is_main_axis = (
+                element.find("startstopstep").find("ismainaxis").text
+            )
+            if is_main_axis == "true":
+                axis.is_main_axis = True
+            else:
+                axis.is_main_axis = False
+        if axis.step_function in ["multiply"]:
+            axis.position_mode = "relative"
+        else:
+            axis.position_mode = element.find("positionmode").text
+        try:
+            axis.positions = getattr(
+                self, f"_map_axis_stepfunction_{axis.step_function}"
+            )(element)
+        except AttributeError:
+            logger.warning(
+                "Step function '%s' not understood.", axis.step_function
+            )
         return axis
+
+    @staticmethod
+    def _map_axis_stepfunction_add(element):
+        start = float(element.find("startstopstep").find("start").text)
+        stop = float(element.find("startstopstep").find("stop").text)
+        step_width = float(
+            element.find("startstopstep").find("stepwidth").text
+        )
+        return np.arange(start, stop + step_width, step_width)
+
+    @staticmethod
+    def _map_axis_stepfunction_multiply(element):
+        start = float(element.find("startstopstep").find("start").text)
+        stop = float(element.find("startstopstep").find("stop").text)
+        step_width = float(
+            element.find("startstopstep").find("stepwidth").text
+        )
+        return np.arange(start, stop + step_width, step_width)
+
+    @staticmethod
+    def _map_axis_stepfunction_positionlist(element):
+        positions = [
+            float(item)
+            for item in element.find("positionlist").text.split(",")
+        ]
+        return np.asarray(positions)
+
+    @staticmethod
+    def _map_axis_stepfunction_range(element):
+        positions = [
+            float(item)
+            for item in element.find("range")
+            .find("positionlist")
+            .text.split(",")
+        ]
+        return np.asarray(positions)
+
+    @staticmethod
+    def _map_axis_stepfunction_file(element):  # noqa
+        # No chance to get any positions.
+        logger.warning(
+            "Step function 'file' does not allow to obtain positions."
+        )
+        return np.asarray([])
+
+    @staticmethod
+    def _map_axis_stepfunction_plugin(element):  # noqa
+        return np.asarray([])

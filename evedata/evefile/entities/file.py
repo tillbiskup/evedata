@@ -340,9 +340,9 @@ class ScanModule:
     """
 
     def __init__(self):
-        self.name = ""
-        self.id = 0  # noqa
-        self.parent = -1
+        self.name = "main"
+        self.id = 1  # noqa
+        self.parent = 0
         self.appended = None
         self.nested = None
         self.data = None

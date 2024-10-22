@@ -1,5 +1,10 @@
+import logging
 import unittest
 import xml.etree.ElementTree as ET
+
+from string import Template
+
+import numpy as np
 
 from evedata.scan.boundaries.scan import Scan
 from evedata.scan.boundaries.scml import SCML
@@ -303,6 +308,41 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
 </tns:scml>"""
 
 
+MINIMAL_SCML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
+<tns:scml xsi:schemaLocation="http://www.ptb.de/epics/SCML scml.xsd"
+    xmlns:tns="http://www.ptb.de/epics/SCML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <location>TEST</location>
+    <version>9.2</version>
+    <scan>
+        <repeatcount>0</repeatcount>
+        <comment>test</comment>
+        <savefilename>/messung/test/daten/2024/kw42/interval-detector-test-</savefilename>
+        <confirmsave>false</confirmsave>
+        <autonumber>true</autonumber>
+        <savescandescription>true</savescandescription>
+        <chain id="1">
+            <pauseconditions/>
+            <scanmodules>
+                <scanmodule id="1">
+                    <name>SM 1</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>0</parent>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        $smaxis
+                    </classic>
+                </scanmodule>
+            </scanmodules>
+        </chain>
+    </scan>
+</tns:scml>"""
+
+
 class MockSCML:
     def __init__(self):
         self.root = None
@@ -409,6 +449,8 @@ class TestVersionMapper(unittest.TestCase):
 class TestVersionMapperV9m2(unittest.TestCase):
     def setUp(self):
         self.mapper = version_mapping.VersionMapperV9m2()
+        self.logger = logging.getLogger(name="evedata")
+        self.logger.setLevel(logging.ERROR)
 
     def test_instantiate_class(self):
         pass
@@ -540,3 +582,296 @@ class TestVersionMapperV9m2(unittest.TestCase):
         ].axes.values():
             self.assertIsInstance(item, scan.Axis)
             self.assertTrue(item.id)
+
+    def test_map_axis_with_unknown_step_function_logs(self):
+        SMAXIS_ADD = """<smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Nonexisting</stepfunction>
+                            <positionmode>absolute</positionmode>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_ADD)
+        )
+        destination = Scan()
+        self.logger.setLevel(logging.WARN)
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.mapper.map(destination=destination)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "Step function 'nonexisting' not understood.",
+        )
+
+    def test_map_axis_add_sets_step_function(self):
+        SMAXIS_ADD = """<smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_ADD)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            "add",
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Timer1-mot-double"]
+            .step_function,
+        )
+
+    def test_map_axis_add_sets_position_mode(self):
+        SMAXIS_ADD = """<smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>relative</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_ADD)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            "relative",
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Timer1-mot-double"]
+            .position_mode,
+        )
+
+    def test_map_axis_add_sets_main_axis_true(self):
+        SMAXIS_ADD = """<smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>relative</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>true</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_ADD)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Timer1-mot-double"]
+            .is_main_axis,
+        )
+
+    def test_map_axis_add_sets_main_axis_false(self):
+        SMAXIS_ADD = """<smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>relative</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_ADD)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertFalse(
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Timer1-mot-double"]
+            .is_main_axis,
+        )
+
+    def test_map_axis_add_sets_positions(self):
+        SMAXIS_ADD = """<smaxis>
+                            <axisid>Timer1-mot-double</axisid>
+                            <stepfunction>Add</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="double">1.0</start>
+                                <stop type="double">5.0</stop>
+                                <stepwidth type="double">1.0</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_ADD)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        np.testing.assert_array_equal(
+            np.asarray(
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+            ),
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Timer1-mot-double"]
+            .positions,
+        )
+
+    def test_map_axis_positionlist_sets_positions(self):
+        SMAXIS_POSITIONLIST = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Positionlist</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <positionlist>1, 2,3, 4 ,5</positionlist>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_POSITIONLIST)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        np.testing.assert_array_equal(
+            np.asarray([1, 2, 3, 4, 5]),
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .positions,
+        )
+
+    def test_map_axis_range_sets_positions(self):
+        SMAXIS_RANGE = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Range</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <range>
+                                <expression>1:5,1:2:5,1:5/2</expression>
+                                <positionlist>1, 2, 3, 4, 5, 1, 3, 5, 1, 3, 5</positionlist>
+                            </range>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_RANGE)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        np.testing.assert_array_equal(
+            np.asarray([1, 2, 3, 4, 5, 1, 3, 5, 1, 3, 5]),
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .positions,
+        )
+
+    def test_map_axis_file_sets_positions_to_empty_array(self):
+        SMAXIS_RANGE = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>File</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <stepfilename>/dev/null</stepfilename>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_RANGE)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        np.testing.assert_array_equal(
+            np.asarray([]),
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .positions,
+        )
+
+    def test_map_axis_file_logs_warning(self):
+        SMAXIS_RANGE = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>File</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <stepfilename>/dev/null</stepfilename>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_RANGE)
+        )
+        destination = Scan()
+        self.logger.setLevel(logging.WARN)
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.mapper.map(destination=destination)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "Step function 'file' does not allow to obtain positions.",
+        )
+
+    def test_map_axis_multiply_sets_positions(self):
+        SMAXIS_MULTIPLY = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Multiply</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="int">1</start>
+                                <stop type="int">5</stop>
+                                <stepwidth type="int">1</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_MULTIPLY)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        np.testing.assert_array_equal(
+            np.asarray(
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+            ),
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .positions,
+        )
+
+    def test_map_axis_multiply_sets_position_mode_to_relative(self):
+        SMAXIS_MULTIPLY = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Multiply</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="int">1</start>
+                                <stop type="int">5</stop>
+                                <stepwidth type="int">1</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_MULTIPLY)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            "relative",
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .position_mode,
+        )

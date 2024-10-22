@@ -37,6 +37,9 @@ class TestAbstractScanModule(unittest.TestCase):
             "appended",
             "nested",
             "is_nested",
+            "number_of_positions",
+            "number_of_positions_per_pass",
+            "positions",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -59,6 +62,7 @@ class TestScanModule(unittest.TestCase):
             "nested",
             "axes",
             "channels",
+            "positionings",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -101,6 +105,10 @@ class TestAxis(unittest.TestCase):
     def test_has_attributes(self):
         attributes = [
             "id",
+            "step_function",
+            "position_mode",
+            "positions",
+            "is_main_axis",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -127,3 +135,23 @@ class TestSnapshotModule(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.module, attribute))
+
+
+class TestPositioning(unittest.TestCase):
+    def setUp(self):
+        self.positioning = scan.Positioning()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "axis_id",
+            "channel_id",
+            "normalize_channel_id",
+            "type",
+            "parameters",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.positioning, attribute))
