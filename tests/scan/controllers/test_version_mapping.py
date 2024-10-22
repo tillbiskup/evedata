@@ -875,3 +875,95 @@ class TestVersionMapperV9m2(unittest.TestCase):
             .axes["Counter-mot"]
             .position_mode,
         )
+
+    def test_map_positionings(self):
+        SMAXIS_POSITIONINGS = """<smaxis>
+                            <axisid>SimMt:testrack01000</axisid>
+                            <stepfunction>Range</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <range>
+                                <expression>1:20</expression>
+                                <positionlist>1, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0</positionlist>
+                            </range>
+                        </smaxis>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1chan1</channelid>
+                            <standard/>
+                        </smchannel>
+                        <positioning>
+                            <axis_id>SimMt:testrack01000</axis_id>
+                            <channel_id>mlsCurrent:Mnt1chan1</channel_id>
+                            <plugin name="CENTER">
+                                <parameter name="location">/path/to/plugin3</parameter>
+                                <parameter name="threshold">50</parameter>
+                            </plugin>
+                        </positioning>
+                        <positioning>
+                            <axis_id>Counter-mot</axis_id>
+                            <channel_id>mlsCurrent:Mnt1chan1</channel_id>
+                            <plugin name="PEAK">
+                                <parameter name="location">/path/to/plugin3</parameter>
+                            </plugin>
+                        </positioning>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_POSITIONINGS)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(
+            self.mapper.destination.scan.scan_modules[1].positionings
+        )
+        self.assertEqual(
+            2,
+            len(self.mapper.destination.scan.scan_modules[1].positionings),
+        )
+        for positioning in self.mapper.destination.scan.scan_modules[
+            1
+        ].positionings:
+            self.assertTrue(positioning.axis_id)
+            self.assertTrue(positioning.channel_id)
+            self.assertTrue(positioning.type)
+
+    def test_map_positionings_parameters(self):
+        SMAXIS_POSITIONINGS = """<smaxis>
+                            <axisid>SimMt:testrack01000</axisid>
+                            <stepfunction>Range</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <range>
+                                <expression>1:20</expression>
+                                <positionlist>1, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0</positionlist>
+                            </range>
+                        </smaxis>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1chan1</channelid>
+                            <standard/>
+                        </smchannel>
+                        <positioning>
+                            <axis_id>SimMt:testrack01000</axis_id>
+                            <channel_id>mlsCurrent:Mnt1chan1</channel_id>
+                            <plugin name="CENTER">
+                                <parameter name="location">/path/to/plugin3</parameter>
+                                <parameter name="threshold">50</parameter>
+                            </plugin>
+                        </positioning>
+                        <positioning>
+                            <axis_id>Counter-mot</axis_id>
+                            <channel_id>mlsCurrent:Mnt1chan1</channel_id>
+                            <plugin name="EDGE">
+                                <parameter name="location">/path/to/plugin3</parameter>
+                                <parameter name="number from left">1</parameter>
+                            </plugin>
+                        </positioning>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=SMAXIS_POSITIONINGS)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        for positioning in self.mapper.destination.scan.scan_modules[
+            1
+        ].positionings:
+            self.assertTrue(positioning.parameters)

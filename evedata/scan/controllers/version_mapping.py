@@ -84,7 +84,9 @@ described here will definitely change and evolve over time.
     * Distinguish types of scan modules: "classic" *vs.* snapshot |check|
     * Extract list of detector channels and motor axes |check|
     * Map pre- and post-scans |cross|
-    * Map positionings |cross|
+    * Map positionings |check|
+    * Calculate number of positions per pass/total and actual positions
+      |cross|
     * Map plots? |cross|
     * Map remaining information? |cross|
 
@@ -462,6 +464,10 @@ class VersionMapperV9m2(VersionMapper):
             scan_module.axes[axis.find("axisid").text] = (
                 self._map_scan_module_axis(axis)
             )
+        for positioning in element.iter("positioning"):
+            scan_module.positionings.append(
+                self._map_scan_module_positioning(positioning)
+            )
         return scan_module
 
     @staticmethod
@@ -543,3 +549,16 @@ class VersionMapperV9m2(VersionMapper):
     @staticmethod
     def _map_axis_stepfunction_plugin(element):  # noqa
         return np.asarray([])
+
+    @staticmethod
+    def _map_scan_module_positioning(element):
+        positioning = scan.Positioning()
+        positioning.axis_id = element.find("axis_id").text
+        positioning.channel_id = element.find("channel_id").text
+        positioning.type = element.find("plugin").attrib["name"].lower()
+        for parameter in element.find("plugin").iter("parameter"):
+            if parameter.attrib["name"] != "location":
+                positioning.parameters.update(
+                    {parameter.attrib["name"]: parameter.text}
+                )
+        return positioning
