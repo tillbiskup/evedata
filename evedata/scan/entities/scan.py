@@ -508,8 +508,8 @@ class Axis:
 
     """
 
-    def __init__(self, id=""):
-        self.id = id  # noqa
+    def __init__(self, sm_id=""):
+        self.id = sm_id  # noqa
         self.step_function = ""
         self.position_mode = "absolute"
         self.positions = None

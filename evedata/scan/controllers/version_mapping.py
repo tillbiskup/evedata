@@ -576,10 +576,7 @@ class VersionMapperV9m2(VersionMapper):
         for scan_module in self.destination.scan.scan_modules.values():
             try:
                 scan_module.number_of_positions_per_pass = max(
-                    [
-                        axis.positions.size
-                        for axis in scan_module.axes.values()
-                    ]
+                    axis.positions.size for axis in scan_module.axes.values()
                 )
             except ValueError:
                 pass
@@ -589,18 +586,49 @@ class VersionMapperV9m2(VersionMapper):
             if scan_module.positionings:
                 scan_module.number_of_positions_per_pass += 1
 
-        def traverse(scan_module_id, factor=1):
-            scan_module = self.destination.scan.scan_modules[scan_module_id]
-            scan_module.number_of_positions = (
-                scan_module.number_of_positions_per_pass * factor
-            )
-            if scan_module.nested:
-                factor = scan_module.number_of_positions
-                if scan_module.positionings:
-                    factor -= 1
-                traverse(scan_module.nested, factor)
-            if scan_module.appended:
-                traverse(scan_module.appended, factor)
+        try:
+            root_module_id = list(self.destination.scan.scan_modules.keys())[
+                0
+            ]
+            self._traverse_n_positions(root_module_id)
+            self._traverse_positions(root_module_id)
+        except IndexError:
+            pass
 
-        root_module_id = list(self.destination.scan.scan_modules.keys())[0]
-        traverse(root_module_id)
+    def _traverse_n_positions(self, scan_module_id, factor=1):
+        scan_module = self.destination.scan.scan_modules[scan_module_id]
+        scan_module.number_of_positions = (
+            scan_module.number_of_positions_per_pass * factor
+        )
+        if scan_module.nested:
+            factor = scan_module.number_of_positions
+            if scan_module.positionings:
+                factor -= 1
+            self._traverse_n_positions(scan_module.nested, factor)
+        if scan_module.appended:
+            self._traverse_n_positions(scan_module.appended, factor)
+
+    def _traverse_positions(self, scan_module_id, startpos=1):
+        scan_module = self.destination.scan.scan_modules[scan_module_id]
+        if scan_module.positions is None:
+            scan_module.positions = np.array([])
+        number_of_positions_per_pass = (
+            scan_module.number_of_positions_per_pass
+        )
+        if scan_module.positionings:
+            number_of_positions_per_pass -= 1
+        for _ in range(number_of_positions_per_pass):
+            scan_module.positions = np.append(scan_module.positions, startpos)
+            startpos += 1
+            if scan_module.nested:
+                startpos = self._traverse_positions(
+                    scan_module.nested, startpos
+                )
+        if scan_module.positionings:
+            scan_module.positions = np.append(scan_module.positions, startpos)
+            startpos += 1
+        if scan_module.appended:
+            startpos = self._traverse_positions(
+                scan_module.appended, startpos
+            )
+        return startpos

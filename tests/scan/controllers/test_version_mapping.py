@@ -5,6 +5,7 @@ import xml.etree.ElementTree as ET
 from string import Template
 
 import numpy as np
+from setuptools.namespaces import flatten
 
 from evedata.scan.boundaries.scan import Scan
 from evedata.scan.boundaries.scml import SCML
@@ -1004,7 +1005,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
             "2": np.asarray([3, 5, 7, 9]),
         }
         for id, positions in axis_positions.items():
-            axis = scan.Axis(id=id)
+            axis = scan.Axis(sm_id=id)
             axis.positions = positions
             scan_module.axes[id] = axis
         destination.scan.scan_modules[1] = scan_module
@@ -1014,7 +1015,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
             "2": np.asarray([3, 5, 7, 9]),
         }
         for id, positions in axis_positions.items():
-            axis = scan.Axis(id=id)
+            axis = scan.Axis(sm_id=id)
             axis.positions = positions
             scan_module.axes[id] = axis
         destination.scan.scan_modules[2] = scan_module
@@ -1041,7 +1042,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
             "2": np.asarray([3, 5, 7, 9]),
         }
         for id, positions in axis_positions.items():
-            axis = scan.Axis(id=id)
+            axis = scan.Axis(sm_id=id)
             axis.positions = positions
             scan_module.axes[id] = axis
         scan_module.positionings.append(scan.Positioning())
@@ -1145,13 +1146,13 @@ class TestVersionMapperV9m2(unittest.TestCase):
         destination = Scan()
         scan_module = scan.ScanModule()
         scan_module.appended = 2
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[1] = scan_module
         scan_module = scan.ScanModule()
         scan_module.parent = 1
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[2] = scan_module
@@ -1166,12 +1167,12 @@ class TestVersionMapperV9m2(unittest.TestCase):
         destination = Scan()
         scan_module = scan.ScanModule()
         scan_module.nested = 2
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[1] = scan_module
         scan_module = scan.ScanModule()
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[2] = scan_module
@@ -1193,18 +1194,18 @@ class TestVersionMapperV9m2(unittest.TestCase):
         destination = Scan()
         scan_module = scan.ScanModule()
         scan_module.nested = 2
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[1] = scan_module
         scan_module = scan.ScanModule()
         scan_module.nested = 3
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[2] = scan_module
         scan_module = scan.ScanModule()
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[3] = scan_module
@@ -1230,24 +1231,24 @@ class TestVersionMapperV9m2(unittest.TestCase):
         destination = Scan()
         scan_module = scan.ScanModule()
         scan_module.nested = 2
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[1] = scan_module
         scan_module = scan.ScanModule()
         scan_module.nested = 3
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[2] = scan_module
         scan_module = scan.ScanModule()
         scan_module.nested = 4
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[3] = scan_module
         scan_module = scan.ScanModule()
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[4] = scan_module
@@ -1277,13 +1278,13 @@ class TestVersionMapperV9m2(unittest.TestCase):
         destination = Scan()
         scan_module = scan.ScanModule()
         scan_module.nested = 2
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         scan_module.positionings.append(scan.Positioning())
         destination.scan.scan_modules[1] = scan_module
         scan_module = scan.ScanModule()
-        axis = scan.Axis(id="1")
+        axis = scan.Axis(sm_id="1")
         axis.positions = np.asarray([1, 2, 3, 4, 5])
         scan_module.axes["1"] = axis
         destination.scan.scan_modules[2] = scan_module
@@ -1298,4 +1299,138 @@ class TestVersionMapperV9m2(unittest.TestCase):
         self.assertEqual(
             25,
             self.mapper.destination.scan.scan_modules[2].number_of_positions,
+        )
+
+    def test_positions_with_nested_scan_module(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertIsNotNone(scan_module.positions)
+        np.testing.assert_array_equal(
+            np.linspace(1, 25, 5),
+            self.mapper.destination.scan.scan_modules[1].positions,
+        )
+        np.testing.assert_array_equal(
+            np.array(
+                [
+                    [2, 3, 4, 5, 6],
+                    [8, 9, 10, 11, 12],
+                    [14, 15, 16, 17, 18],
+                    [20, 21, 22, 23, 24],
+                    [26, 27, 28, 29, 30],
+                ]
+            ).flatten(),
+            self.mapper.destination.scan.scan_modules[2].positions,
+        )
+
+    def test_positions_with_nested_and_appended_scan_module(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        scan_module.appended = 3
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[3] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertIsNotNone(scan_module.positions)
+        np.testing.assert_array_equal(
+            np.linspace(1, 3 * 3, 3),
+            self.mapper.destination.scan.scan_modules[1].positions,
+        )
+        np.testing.assert_array_equal(
+            np.array(
+                [
+                    [2, 3, 4],
+                    [6, 7, 8],
+                    [10, 11, 12],
+                ]
+            ).flatten(),
+            self.mapper.destination.scan.scan_modules[2].positions,
+        )
+        np.testing.assert_array_equal(
+            np.linspace(13, 15, 3),
+            self.mapper.destination.scan.scan_modules[3].positions,
+        )
+
+    def test_positions_with_appended_scan_module_and_positioning(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.appended = 2
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        scan_module.positionings.append(scan.Positioning())
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertIsNotNone(scan_module.positions)
+        np.testing.assert_array_equal(
+            np.linspace(1, 6, 6),
+            self.mapper.destination.scan.scan_modules[1].positions,
+        )
+        np.testing.assert_array_equal(
+            np.linspace(7, 11, 5),
+            self.mapper.destination.scan.scan_modules[2].positions,
+        )
+
+    def test_positions_with_nested_scan_module_and_positioning(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1])
+        scan_module.axes["1"] = axis
+        scan_module.positionings.append(scan.Positioning())
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertIsNotNone(scan_module.positions)
+        np.testing.assert_array_equal(
+            np.array([1, 7]),
+            self.mapper.destination.scan.scan_modules[1].positions,
+        )
+        np.testing.assert_array_equal(
+            np.linspace(2, 6, 5),
+            self.mapper.destination.scan.scan_modules[2].positions,
         )
