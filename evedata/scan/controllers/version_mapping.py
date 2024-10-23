@@ -583,5 +583,24 @@ class VersionMapperV9m2(VersionMapper):
                 )
             except ValueError:
                 pass
+            scan_module.number_of_positions_per_pass *= (
+                scan_module.number_of_measurements
+            )
             if scan_module.positionings:
                 scan_module.number_of_positions_per_pass += 1
+
+        def traverse(scan_module_id, factor=1):
+            scan_module = self.destination.scan.scan_modules[scan_module_id]
+            scan_module.number_of_positions = (
+                scan_module.number_of_positions_per_pass * factor
+            )
+            if scan_module.nested:
+                factor = scan_module.number_of_positions
+                if scan_module.positionings:
+                    factor -= 1
+                traverse(scan_module.nested, factor)
+            if scan_module.appended:
+                traverse(scan_module.appended, factor)
+
+        root_module_id = list(self.destination.scan.scan_modules.keys())[0]
+        traverse(root_module_id)

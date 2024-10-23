@@ -1111,3 +1111,191 @@ class TestVersionMapperV9m2(unittest.TestCase):
                 1
             ].number_of_measurements,
         )
+
+    def test_map_n_positions_per_pass_w_multiple_measurements(self):
+        smaxis = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Multiply</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <startstopstep>
+                                <start type="int">1</start>
+                                <stop type="int">5</stop>
+                                <stepwidth type="int">1</stepwidth>
+                                <ismainaxis>false</ismainaxis>
+                            </startstopstep>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=smaxis).replace(
+                "<valuecount>1", "<valuecount>2"
+            )
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            5 * 2,
+            self.mapper.destination.scan.scan_modules[
+                1
+            ].number_of_positions_per_pass,
+        )
+
+    def test_number_of_positions_with_appended_scan_module(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.appended = 2
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        scan_module.parent = 1
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertTrue(scan_module.number_of_positions)
+            self.assertEqual(5, scan_module.number_of_positions)
+
+    def test_number_of_positions_with_nested_scan_module(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertTrue(scan_module.number_of_positions)
+        self.assertEqual(
+            5,
+            self.mapper.destination.scan.scan_modules[1].number_of_positions,
+        )
+        self.assertEqual(
+            25,
+            self.mapper.destination.scan.scan_modules[2].number_of_positions,
+        )
+
+    def test_number_of_positions_with_doubly_nested_scan_module(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        scan_module.nested = 3
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[3] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertTrue(scan_module.number_of_positions)
+        self.assertEqual(
+            5,
+            self.mapper.destination.scan.scan_modules[1].number_of_positions,
+        )
+        self.assertEqual(
+            5 * 5,
+            self.mapper.destination.scan.scan_modules[2].number_of_positions,
+        )
+        self.assertEqual(
+            5 * 5 * 5,
+            self.mapper.destination.scan.scan_modules[3].number_of_positions,
+        )
+
+    def test_number_of_positions_with_triply_nested_scan_module(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        scan_module.nested = 3
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        scan_module = scan.ScanModule()
+        scan_module.nested = 4
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[3] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[4] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertTrue(scan_module.number_of_positions)
+        self.assertEqual(
+            5,
+            self.mapper.destination.scan.scan_modules[1].number_of_positions,
+        )
+        self.assertEqual(
+            5 * 4,
+            self.mapper.destination.scan.scan_modules[2].number_of_positions,
+        )
+        self.assertEqual(
+            5 * 4 * 3,
+            self.mapper.destination.scan.scan_modules[3].number_of_positions,
+        )
+        self.assertEqual(
+            5 * 4 * 3 * 2,
+            self.mapper.destination.scan.scan_modules[4].number_of_positions,
+        )
+
+    def test_number_of_positions_w_nested_scan_module_and_positionings(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        scan_module.positionings.append(scan.Positioning())
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertTrue(scan_module.number_of_positions)
+        self.assertEqual(
+            6,
+            self.mapper.destination.scan.scan_modules[1].number_of_positions,
+        )
+        self.assertEqual(
+            25,
+            self.mapper.destination.scan.scan_modules[2].number_of_positions,
+        )
