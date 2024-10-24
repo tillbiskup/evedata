@@ -56,13 +56,29 @@ the duty of the factory to obtain the "version" attribute from the
 
 For each SCML schema version, there exists an individual
 ``VersionMapperVxmy`` class dealing with the version-specific mapping.
-Currently, we assume major and minor version numbers to be relevant. Hence
+Currently, we assume major and minor version numbers to be relevant. Hence,
 the ``xmy`` suffix for the individual mapper classes. That
 part of the mapping common to all versions of the SCML schema takes place
 in the :class:`VersionMapper` parent class. The idea behind the ``Mapping``
 class is to provide simple mappings for attributes and alike that can be
 stored externally, *e.g.* in YAML files. This would make it easier to
 account for (simple) changes.
+
+
+General aspects
+===============
+
+Both, representing the SCML contents as well as mapping the information from
+a given SCML file to their representing entities do not strive to preserve
+the full information available. The ``evedata`` interface is in the
+luxurious situation to *not* require all information nor to perform scans.
+Hence, for the time being, only those parts necessary for interpreting an
+eveH5 file and providing the valuable abstractions for the users are
+obtained from an SCML file and mapped to the respective representations.
+
+One particularly important aspect: **Only those scan modules that are
+actually connected** (either to the root node or to another scan module) **are**
+actually mapped and **contained in the list of scan modules.**
 
 
 Mapping tasks for SCML schema up to v9.2
@@ -86,7 +102,7 @@ described here will definitely change and evolve over time.
     * Map pre- and post-scans |cross|
     * Map positionings |check|
     * Calculate number of positions per pass/total and actual positions
-      |cross|
+      |check|
     * Map plots? |cross|
     * Map remaining information? |cross|
 
@@ -95,6 +111,14 @@ described here will definitely change and evolve over time.
   * Map detectors
   * Map motors
   * Map devices
+
+
+.. todo::
+
+    Implement mapping of positions for axes using plugins as step function.
+    The reason for not yet having implemented this case: these axes need to
+    have access to another reference axis, and the current implementation
+    cannot guarantee this axis being present.
 
 
 Currently, there is a need to map at least basic information about the scan
@@ -123,6 +147,101 @@ if not, we have a snapshot module.
 
 For "classical" modules, both axes and channels are mapped, for static axis
 or channel snapshot modules, axes or channels, respectively.
+
+
+Creating positions for individual scan modules
+----------------------------------------------
+
+Currently, (up to eveH5 schema version 7), the storage layer does not resemble
+nor preserve the structure of a scan, particularly its composition of distinct
+scan modules. To allow for sensible access to the data, the ``evedata``
+interface tries to reconstruct this structure, at least as long as the SCML
+is available from the eveH5 file. This means that for each individual HDF5
+dataset, the positions belonging to the individual scan modules need to be
+known, as one and the same channel or axis can be used in different scan
+modules. Hence, the mapper tries to calculate the number of positions per
+pass for each scan module, the number of total positions for each scan
+module, and finally the actual position (count)s for each scan module.
+
+With the current way the engine stores the data, determining the actual
+position counts belonging to each individual scan module is not possible in
+full generality. Situations that may corrupt the algorithm to determine the
+positions from the scan description or even make it impossible to proceed
+contain:
+
+* Axes positions defined as lists in external files.
+
+  Axes positions can be loaded from external files. However, only the file
+  name (and path) are stored in the SCML. There is no guarantee at all
+  that the file contents are the same as they were during scan execution.
+  Besides that, the ``evedata`` interface usually cannot access the file
+  containing the positions. In case the axis whose positions are defined
+  using an external file has *more* positions set than any other axis in the
+  scan module (the same applies if it is the only axis in the scan module),
+  the algorithm calculating the (number of) positions for the scan module
+  will fail.
+
+* External events leading to skipping execution of parts of a scan module.
+
+  Generally, users can skip parts of a scan module. Similarly, events can be
+  defined in scans that skip parts of a scan module given a specific
+  condition. In both cases, these events will *not* be saved in any way in
+  the resulting eveH5 file. Hence, there is no way in determining that an
+  event occurred. This most probably leads to a full corruption of the
+  positions determined by the algorithm.
+
+* Scans containing the MPSKIP detector
+
+  This is a special situation dealt with by the :mod:`mpskip
+  <evedata.evefile.controllers.mpskip>` module. Intrinsically, the positions
+  cannot be determined algorithmically. However, given certain assumptions
+  discussed in the documentation of the :mod:`mpskip
+  <evedata.evefile.controllers.mpskip>` module, mapping should be possible.
+
+Besides these general problems with accurately determining the (number
+of) positions per scan module, the algorithm generally proceeds as follows,
+assuming a list of those scan modules to be available that are part of the
+actual scan, together with the information on nesting and appending:
+
+* For each scan module, obtain all axes, and for each axis, determine the
+  number of positions. The maximum of the number of positions of all axes
+  within a scan module defines the number of positions per pass of a scan
+  module, stored in the :attr:`ScanModule.number_of_positions_per_pass
+  <evedata.scan.entities.scan.ScanModule.number_of_positions_per_pass>`
+  attribute.
+
+* For each scan module, check the "number of measurements" parameter (known
+  also as "measurements per point", MPP, or "valuecount" in the SCML schema),
+  and multiply the number of positions per pass with its value, to obtain
+  the correct number of positions per pass.
+
+* For each scan module, determine whether a positioning takes place.
+  Positionings get their own position (count) after all positions in the
+  scan module have been accessed. In case of nested scan modules, the nested
+  scan modules are executed for each individual position of the next-higher
+  scan module. Hence, the parent scan module of a (series of) nested scan
+  module(s) acts as a "for loop".
+
+* For each scan module, determine whether it is nested, and if so, multiply
+  the number of positions per pass by the number of positions of the
+  next-higher scan module, stored in the :attr:`ScanModule.number_of_positions
+  <evedata.scan.entities.scan.ScanModule.number_of_positions>` attribute.
+
+* For each scan module, obtain the actual position counts, starting with the
+  first scan module with parent ``0`` (defined as root node and start of the
+  scan) and with ``1`` as first position (count), stored in the
+  :attr:`ScanModule.positions <evedata.scan.entities.scan.ScanModule.positions>`
+  attribute.
+
+
+A general plausibility check is to compare the number of positions
+calculated by this algorithm with the number of positions created during the
+actual scan. The latter can be easily obtained using the special HDF5
+dataset containing the mapping of position (count)s to timestamps.
+Furthermore, obtaining the shape of the data in an HDF5 dataset is a "cheap"
+operation *not* requiring reading the data themselves, hence, not breaking
+with the general philosophy of the ``evedata`` interface to read data
+usually only on demand.
 
 
 Fundamental change of SCML schema with v10
@@ -407,8 +526,8 @@ class VersionMapperV9m2(VersionMapper):
         }
         try:
             root_module_id = [
-                id
-                for id, scan_module in scan_modules.items()
+                smid
+                for smid, scan_module in scan_modules.items()
                 if int(scan_module.find("parent").text) == 0
             ][0]
         except IndexError:
@@ -626,6 +745,8 @@ class VersionMapperV9m2(VersionMapper):
                 )
         if scan_module.positionings:
             scan_module.positions = np.append(scan_module.positions, startpos)
+            for positioning in scan_module.positionings:
+                positioning.position = startpos
             startpos += 1
         if scan_module.appended:
             startpos = self._traverse_positions(

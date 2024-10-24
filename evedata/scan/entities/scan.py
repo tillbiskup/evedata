@@ -694,6 +694,15 @@ class Positioning:
         Whether a given :attr:`type` has parameters can be seen from the
         table above.
 
+    position : :class:`int`
+        Actual position created during the scan.
+
+        Positions are the fundamental quantisation of the data in eveH5
+        files. Each position axes are moved to is assigned a "position
+        count", *i.e.* a unique integer value. Furthermore, positionings
+        of axes at the end of the scan module (in the "positioning phase")
+        get their own position number.
+
 
     Examples
     --------
@@ -711,3 +720,4 @@ class Positioning:
         self.normalize_channel_id = None
         self.type = ""
         self.parameters = {}
+        self.position = None

@@ -1434,3 +1434,21 @@ class TestVersionMapperV9m2(unittest.TestCase):
             np.linspace(2, 6, 5),
             self.mapper.destination.scan.scan_modules[2].positions,
         )
+
+    def test_positions_with_positioning_sets_positioning_position(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        scan_module.positionings.append(scan.Positioning())
+        destination.scan.scan_modules[1] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        self.assertEqual(
+            6,
+            self.mapper.destination.scan.scan_modules[1]
+            .positionings[0]
+            .position,
+        )

@@ -156,6 +156,7 @@ class TestPositioning(unittest.TestCase):
             "normalize_channel_id",
             "type",
             "parameters",
+            "position",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):

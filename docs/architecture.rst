@@ -103,7 +103,7 @@ Despite the opposite chain of dependencies, starting with the :mod:`file <evedat
 .. figure:: uml/evedata.evefile.entities.file.*
     :align: center
 
-    Class hierarchy of the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. The :class:`File <evedata.evefile.entities.file.File>` class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage. Furthermore, "Scan" inherits from the identically named facade of the scan functional layer and contains the full information of the SCML file.
+    Class hierarchy of the :mod:`evefile.entities.file <evedata.evefile.entities.file>` module. The :class:`File <evedata.evefile.entities.file.File>` class is sort of the central interface to the entire subpackage, as this class provides a faithful representation of all information available from a given eveH5 file. To this end, it incorporates instances of classes of the other modules of the subpackage. Furthermore, "Scan" inherits from the identically named facade of the scan functional layer and contains the full information of the SCML file (if the SCML file is present in the eveH5 file).
 
 
 .. admonition:: Points to discuss further (without claiming to be complete)
@@ -114,7 +114,7 @@ Despite the opposite chain of dependencies, starting with the :mod:`file <evedat
 
       The setup part of the SCML file sent to the engine is not necessarily identical to the XML file with the setup description loaded by the engine. Hence, it may make sense to have both stored separately, or have a "Scan" facade that contains only the scan description, and a "Station" facade containing the information on the relevant devices.
 
-      Which version is eventually saved in the HDF5 files? As it is the engine saving these files, it should be the version with the setup part updated. But is this really the case?
+      Although the engine saves the SCML file to the HDF5 file, it saves the SCML as obtained when submitting a scan. The "only" part the engine currently looks up in the station-related XML (``messplatz.xml``) is the information necessary for the dynamic snapshots. This somewhat unclear situation led and still leads sometimes to confusion. Which part of what file is saved where in the :class:`File <evedata.evefile.entities.file.File>` class remains to be seen.
 
 
 Some comments (not discussions any more):
@@ -122,6 +122,10 @@ Some comments (not discussions any more):
 * "data", "snapshots", "monitors": lists or dicts?
 
   In the meantime, the three attributes are modelled as dictionaries. How about modelling them as dictionaries, with the keys being the names of the corresponding datasets (*i.e.*, the last part of the path within the HDF5 file).
+
+* Organisation of datasets in main according to the scan module structure
+
+  Despite the current structure of the eveH5 files, datasets will be organised and split according to their use in the different scan modules. In case no SCML is available, a "dummy" scan module will be created containing all the datasets in main.
 
 
 data module

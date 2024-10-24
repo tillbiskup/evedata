@@ -2,6 +2,15 @@
 
 *Entities representing an eveH5 file on the entire file level.*
 
+While the entities in this module represent the contents of an eveH5 file,
+they clearly abstract from the internal structure of these files.
+Furthermore, there are different versions of the underlying schema
+(*i.e.*, organisation) of these files, and the entities abstract away from
+these differences as well. The key concept is to provide users of the
+``evedata`` interface with useful abstractions allowing to convenienly
+access all the data present in an eveH5 file.
+
+
 Overview
 ========
 
@@ -19,7 +28,7 @@ hierarchy is given in the UML diagram below.
     it incorporates instances of classes of the other modules of the
     subpackage. Furthermore, "Scan" inherits from the identically named
     facade of the scan functional layer and contains the full information
-    of the SCML file.
+    of the SCML file (if the SCML file is present in the eveH5 file).
 
 
 Module documentation
