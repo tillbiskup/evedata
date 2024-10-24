@@ -1758,7 +1758,7 @@ class DataImporter:
         data = importer.import(source="myfilename")
 
     For convenience, you can set the source when instantiating the object.
-    This makes actually importing simpler, not having to worry any more
+    This makes actually importing simpler, not having to worry anymore
     about the source:
 
     .. code-block::

@@ -58,6 +58,14 @@ data files. Hence, the key characteristics of the module are:
 
   * Some features may only be available for newer eveH5 versions, though.
 
+* Organising data in scan modules.
+
+  * For eveH5 files up to schema version 7, this means (trying to) recreate
+    the scan (module) structure and requires an SCML file to be stored
+    within the HDF5 file.
+  * In case no SCML file is present, a "dummy" scan module will be created
+    containing all datasets.
+
 * Powerful abstractions on the device level.
 
   * Options to devices appear as attributes of the device objects, not as
@@ -130,9 +138,15 @@ steps are necessary:
 
 * Check whether the eveH5 file contains the scan description (SCML) file.
 
-    * If so, extract (up to eveH5 v7) and import the scan description.
-    * If not, we're probably doomed, as some of the mappings are hard to do
-      otherwise.
+  * If so, extract (up to eveH5 v7) and import the scan description.
+  * If not, we're probably doomed, as some of the mappings are hard to do
+    otherwise.
+
+* Create scan modules
+
+  * If an SCML file was read, these are the actual scan modules.
+  * If no SCML file was read, there is only one "dummy" scan module named
+    "main".
 
 * Read the eveH5 file (actually, an HDF5 file).
 * Get the correct :class:`VersionMapper
@@ -148,7 +162,7 @@ Module documentation
 
 import logging
 
-from evedata.evefile.entities.file import File
+from evedata.evefile.entities.file import File, ScanModule
 from evedata.evefile.boundaries.eveh5 import HDF5File
 from evedata.evefile.controllers import version_mapping
 
@@ -186,11 +200,15 @@ class EveFile(File):
     scan : :class:`evedata.evefile.entities.file.Scan`
         Description of the actual scan.
 
-    data : :class:`dict`
-        Data recorded from the devices involved in a measurement.
+    scan_modules : :class:`dict`
+        Modules the scan consists of.
 
         Each item is an instance of
-        :class:`evedata.evefile.entities.data.Data`.
+        :class:`evedata.evefile.entities.file.ScanModule` and contains the
+        data recorded within the given scan module.
+
+        In case of no scan description present, a "dummy" scan module will
+        be created containing *all* data.
 
     snapshots : :class:`dict`
         Device data recorded as snapshot during a measurement.
@@ -290,10 +308,33 @@ class EveFile(File):
         if filename:
             self.metadata.filename = filename
         self._load_scml()
+        self._create_scan_modules()
         self._read_and_map_eveh5_file()
 
     def _load_scml(self):
         self.scan.extract(filename=self.metadata.filename)
+
+    def _create_scan_modules(self):
+        if self.has_scan():
+            for name, scan_module in self.scan.scan.scan_modules.items():
+                self.scan_modules[name] = self._map_scan_module(scan_module)
+        else:
+            scan_module = ScanModule()
+            self.scan_modules[scan_module.name] = scan_module
+
+    @staticmethod
+    def _map_scan_module(scan_module):
+        new_scan_module = ScanModule()
+        public_attributes = [
+            attribute
+            for attribute in dir(scan_module)
+            if not attribute.startswith("_")
+        ]
+        for attribute in public_attributes:
+            setattr(
+                new_scan_module, attribute, getattr(scan_module, attribute)
+            )
+        return new_scan_module
 
     def _read_and_map_eveh5_file(self):
         eveh5 = HDF5File()

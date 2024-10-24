@@ -105,11 +105,25 @@ SCML to be loaded can be done using the dedicated method
 <evedata.evefile.boundaries.evefile.EveFile.has_scan>`.
 
 
+Assumptions
+===========
+
+Given that only one group currently uses the MPSKIP feature, chances are
+quite high that the number of different scans is rather low and even in case
+some scans miss important information, this information could be obtained by
+"informed guessing".
+
+The basic assumptions underlying the handling of datasets with MPSKIP are:
+
+* There is *only one* module using MPSKIP per scan.
+* The MPSKIP module is always the last and innermost scan module.
+
+
 What happens when mapping MPSKIP scans?
 =======================================
 
-The assumption for the time being is: There is *only one* module using
-MPSKIP per scan.
+The assumptions underlying the mapping are laid out in the separate section
+above. Mapping MPSKIP scans consists of the following steps:
 
 * Find inner scan module with MPSKIP detector, using the
   :meth:`ScanModule.has_mpskip()
@@ -122,7 +136,7 @@ MPSKIP per scan.
   have been removed/not mapped during mapping, and for good reasons).
 
   * We need not be concerned with axes here, as only channels are sensible.
-    The only axis present should be the counter that is been taken care of.
+    The only axis present should be the counter that has been taken care of.
 
 * Create additional/new datasets for averaged channels and axes.
 
@@ -148,7 +162,7 @@ MPSKIP per scan.
   * Use only positions from :class:`SkipData
     <evedata.evefile.entities.data.SkipData>` dataset: :class:`SelectPositions
     <evedata.evefile.controllers.preprocessing.SelectPositions>`.
-  * Rearrange raw values for each average loop and map to to position
+  * Rearrange raw values for each average loop and map to position
     (count) of outer axis: :class:`RearrangeRawValues`.
 
 * Merge scan modules: inner skip and next outer module.
@@ -245,7 +259,7 @@ class RearrangeRawValues(ImporterPreprocessingStep):
 
     Examples
     --------
-    Rearranging the data of a given dataset requires a a :obj:`SkipData
+    Rearranging the data of a given dataset requires a :obj:`SkipData
     <evedata.evefile.entities.data.SkipData>` object, here referred to as
     ``skip_data``, and of course the corresponding data:
 

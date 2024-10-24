@@ -6,6 +6,7 @@ import zlib
 import h5py
 import numpy as np
 
+import evedata.evefile.entities.file
 from evedata.evefile.boundaries import evefile
 
 
@@ -21,6 +22,50 @@ SCML = """<?xml version="1.0" encoding="UTF-8"?>
         <confirmsave>false</confirmsave>
         <autonumber>true</autonumber>
         <savescandescription>true</savescandescription>
+        <chain id="1">
+            <pauseconditions/>
+            <scanmodules>
+                <scanmodule id="1">
+                    <name>SM 1</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>0</parent>
+                    <appended>2</appended>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Positionlist</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <positionlist>1, 2,3, 4 ,5</positionlist>
+                        </smaxis>
+                    </classic>
+                </scanmodule>
+                <scanmodule id="2">
+                    <name>SM 2</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>1</parent>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Positionlist</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <positionlist>1, 2,3, 4 ,5</positionlist>
+                        </smaxis>
+                    </classic>
+                </scanmodule>
+            </scanmodules>
+        </chain>
     </scan>
 </tns:scml>"""
 
@@ -200,3 +245,35 @@ class TestEveFile(unittest.TestCase):
         h5file.create(scml=True)
         self.evefile.load(filename=self.filename)
         self.assertTrue(self.evefile.has_scan())
+
+    def test_load_without_scml_creates_default_scan_module(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(scml=False)
+        self.evefile.load(filename=self.filename)
+        self.assertTrue(self.evefile.scan_modules)
+        self.assertIsInstance(
+            self.evefile.scan_modules["main"],
+            evedata.evefile.entities.file.ScanModule,
+        )
+
+    def test_load_with_scml_creates_scan_modules(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(scml=True)
+        self.evefile.load(filename=self.filename)
+        self.assertTrue(self.evefile.scan_modules)
+        for scan_module in self.evefile.scan_modules.values():
+            self.assertIsInstance(
+                scan_module,
+                evedata.evefile.entities.file.ScanModule,
+            )
+
+    def test_load_with_scml_maps_scan_modules(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(scml=True)
+        self.evefile.load(filename=self.filename)
+        self.assertTrue(self.evefile.scan_modules)
+        for scan_module in self.evefile.scan_modules.values():
+            self.assertNotEqual(
+                "main",
+                scan_module.name,
+            )

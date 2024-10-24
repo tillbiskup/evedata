@@ -116,7 +116,7 @@ What follows is a summary of the different aspects, for the time being
       * In case of axes with encoders, there may be additional datasets
         present, *e.g.*, those with suffix ``_Enc``.
       * In this case, instead of :obj:`NonencodedAxisData
-        <evedata.evefile.entities.data.NonecodedAxisData>`,
+        <evedata.evefile.entities.data.NonencodedAxisData>`,
         an :obj:`AxisData <evedata.evefile.entities.data.AxisData>`
         object needs to be created. (Currently, only :obj:`AxisData
         <evedata.evefile.entities.data.AxisData>` objects are created,
@@ -205,6 +205,27 @@ Other tasks not in the realm of the version mappers, but part of the
 * Mapping scans using the EPICS MPSKIP feature to record individual values
   for actual average detectors to :obj:`AverageChannelData
   <evedata.evefile.entities.data.AverageChannelData>` objects.
+
+
+.. todo::
+
+    In light of the newly added scan modules layer and the necessary mapping
+    of datasets to scan modules: Where and how to check whether creating
+    position (count)s during reading the SCML did work (consistency check)
+    and where to actually distribute the datasets to the scan modules?
+
+    Probably the best way is to first map all datasets from main to dataset
+    objects within the mapper, and only afterwards (deep)copy these dataset
+    objects where necessary and distribute them to the scan modules, adding
+    the preprocessing step selecting position counts to the respective
+    importer(s).
+
+    When exactly the MPSKIP scans are dealt with needs to be decided.
+    Definitely, the general mapping of datasets needs to be done first,
+    as only this creates and maps the special
+    :class:`SkipData <evedata.evefile.entities.data.SkipData>` dataset
+    necessary to carry out the tasks of the :mod:`mpskip
+    <evedata.evefile.controllers.mpskip>` module.
 
 
 .. admonition:: Questions to address

@@ -4,7 +4,7 @@ Architecture
 
 Each software has some kind of architecture, and this is the place to describe it in broad terms, to make it easier for developers to get around the code. Following the scheme of a layered architecture as featured by the "Clean Architecture" (Robert Martin) or the "hexagonal architecture", alternatively known as "ports and adapters" (Alistair Cockburn), the different layers are described successively from the inside out.
 
-Just to make matters a bit more interesting, the evedata package has basically **two disjunct interfaces**: one towards the data file format (eveH5), the other towards the users of the actual data, *e.g.* the ``radiometry`` and ``evedataviewer`` packages. See :numref:`Fig. %s <fig-uml_evedata_in_context>` for a first overview.
+Just to make matters a bit more interesting, the evedata package has basically **two disjunctive interfaces**: one towards the data file format (eveH5), the other towards the users of the actual data, *e.g.* the ``radiometry`` and ``evedataviewer`` packages. See :numref:`Fig. %s <fig-uml_evedata_in_context>` for a first overview.
 
 
 .. _fig-uml_evedata_in_context:
@@ -152,7 +152,7 @@ Some comments (not discussions any more, though):
 
 * MonitorData with more than one value per time
 
-  MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_. However, this should be regarded as a bug (and if actually occuring in an eveH5 file, treated in some deterministic way). A special case are monitor data occurring before starting the actual scan, as these all get the special timestamp ``-1``, see `#7688, note-10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_. In this case, only the last (youngest) data point should be retained/used.
+  MonitorData should have only one value per time, although it can currently not completely be excluded that the same value is monitored multiple times, most probably resulting in identical values at identical times, see `#7688, note-11 <https://redmine.ahf.ptb.de/issues/7688#note-11>`_. However, this should be regarded as a bug (and if actually occurring in an eveH5 file, treated in some deterministic way). A special case are monitor data occurring before starting the actual scan, as these all get the special timestamp ``-1``, see `#7688, note-10 <https://redmine.ahf.ptb.de/issues/7688#note-10>`_. In this case, only the last (youngest) data point should be retained/used.
 
 * Values of MonitorData
 

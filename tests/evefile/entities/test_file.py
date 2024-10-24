@@ -110,6 +110,7 @@ class TestScanModule(unittest.TestCase):
             "appended",
             "nested",
             "data",
+            "positions",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
