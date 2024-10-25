@@ -1,6 +1,12 @@
 """
 *Converting MPSKIP scans into average detector channels.*
 
+.. sidebar:: Contents
+
+    .. contents::
+        :local:
+        :depth: 2
+
 Currently (10/2024), the eve measurement program does not store individual
 values for average detector channels. Furthermore, there is sometimes a need
 to not only record the individual values for the channels, but at the same

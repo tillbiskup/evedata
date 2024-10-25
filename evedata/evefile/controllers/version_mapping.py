@@ -529,6 +529,9 @@ class VersionMapperFactory:
         ValueError
             Raised if no eveh5 object is present
 
+        AttributeError
+            Raised if no matching :class:`VersionMapper` class can be found
+
         """
         if eveh5:
             self.eveh5 = eveh5
@@ -540,7 +543,9 @@ class VersionMapperFactory:
                 sys.modules[__name__], f"VersionMapperV{version}"
             )()
         except AttributeError as exc:
-            raise AttributeError(f"No mapper for version {version}") from exc
+            message = f"No mapper for version {version}"
+            logger.error(message)
+            raise AttributeError(message) from exc
         mapper.source = self.eveh5
         return mapper
 
@@ -790,9 +795,9 @@ class VersionMapper:
         # Note: The sequence of method calls can be crucial, as the mapper
         #       contains a list of datasets still to be mapped, and each
         #       mapped dataset is removed from this list.
+        self._map_timestamp_dataset()
         self._map_mpskip_datasets()
         self._map_monitor_datasets()
-        self._map_timestamp_dataset()
         self._map_array_datasets()
         self._map_axis_datasets()
         self._map_area_datasets()
@@ -867,6 +872,11 @@ class VersionMapper:
         )
         dataset.importer.append(importer)
         self.set_basic_metadata(hdf5_item=hdf5_dataset, dataset=dataset)
+        self._assign_axis_dataset(dataset, hdf5_dataset, section)
+
+    def _assign_axis_dataset(
+        self, dataset=None, hdf5_dataset=None, section=""
+    ):
         getattr(self.destination, section)[
             self.get_dataset_name(hdf5_dataset)
         ] = dataset
@@ -1004,6 +1014,10 @@ class VersionMapperV5(VersionMapper):
 
     """
 
+    def __init__(self):
+        super().__init__()
+        self._data = {}
+
     def _set_dataset_names(self):
         super()._set_dataset_names()
         # TODO: Move up to VersionMapperV4
@@ -1029,6 +1043,7 @@ class VersionMapperV5(VersionMapper):
 
     def _map(self):
         super()._map()
+        self._map_main_datasets_to_scan_modules()
         self._map_log_messages()
 
     def _map_file_metadata(self):
@@ -1142,7 +1157,7 @@ class VersionMapperV5(VersionMapper):
             dataset.metadata.n_averages = getattr(
                 self._main_group, name[0]
             ).data[name[0]][0]
-        self.destination.data[dataset_name] = dataset
+        self._data[dataset_name] = dataset
         for item in mpskip_in_main:
             self.datasets2map_in_main.remove(item)
         for item in mpskip_in_monitor:
@@ -1156,7 +1171,7 @@ class VersionMapperV5(VersionMapper):
         self._mca_dataset_set_data(dataset=dataset, hdf5_group=hdf5_group)
         self._mca_dataset_set_options_in_main(dataset=dataset)
         self._mca_dataset_set_options_in_snapshot(dataset=dataset)
-        self.destination.data[self.get_dataset_name(hdf5_group)] = dataset
+        self._data[self.get_dataset_name(hdf5_group)] = dataset
 
     def _mca_dataset_set_data(self, dataset=None, hdf5_group=None):
         # Create positions vector and add it (needs to be done here)
@@ -1320,7 +1335,7 @@ class VersionMapperV5(VersionMapper):
                 "Option %s unmapped", ":".join(name.rsplit(":")[-2:])
             )
             self.datasets2map_in_snapshot.remove(name)
-        self.destination.data[camera] = dataset
+        self._data[camera] = dataset
 
     def _scientific_camera_add_data(
         self, camera=None, sources=None, destination=None
@@ -1431,7 +1446,7 @@ class VersionMapperV5(VersionMapper):
             datasets=camera_datasets_in_main,
             dataset=dataset,
         )
-        self.destination.data[camera] = dataset
+        self._data[camera] = dataset
 
     def _sample_camera_set_data(self, camera="", dataset=None):
         hdf5_name = f"{camera}:uvc1:chan1"
@@ -1604,7 +1619,7 @@ class VersionMapperV5(VersionMapper):
             hdf5_item=getattr(self.source.c1.main, hdf5_name),
             dataset=dataset,
         )
-        self.destination.data[hdf5_name] = dataset
+        self._data[hdf5_name] = dataset
         self.datasets2map_in_main.remove(hdf5_name)
 
     def _map_interval_dataset(self, hdf5_name=None, normalized=False):
@@ -1671,7 +1686,7 @@ class VersionMapperV5(VersionMapper):
                 dataset=dataset,
             )
             self.datasets2map_in_main.remove(hdf5_name)
-        self.destination.data[hdf5_name] = dataset
+        self._data[hdf5_name] = dataset
 
     def _map_average_dataset(self, hdf5_name=None, normalized=False):
         if normalized:
@@ -1739,10 +1754,24 @@ class VersionMapperV5(VersionMapper):
             self.source.c1.main.averagemeta,
             f"{hdf5_name}__AverageCount",
         ).data["AverageCount"][0]
-        self.destination.data[basename] = dataset
+        self._data[basename] = dataset
         self.datasets2map_in_main.remove(basename)
         if hdf5_name in self.datasets2map_in_main:
             self.datasets2map_in_main.remove(hdf5_name)
+
+    def _assign_axis_dataset(
+        self, dataset=None, hdf5_dataset=None, section=""
+    ):
+        if section == "data":
+            self._data[self.get_dataset_name(hdf5_dataset)] = dataset
+        else:
+            getattr(self.destination, section)[
+                self.get_dataset_name(hdf5_dataset)
+            ] = dataset
+
+    def _map_main_datasets_to_scan_modules(self):
+        for key, value in self._data.items():
+            self.destination.data[key] = value
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

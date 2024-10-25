@@ -914,6 +914,7 @@ class TestVersionMapperFactory(unittest.TestCase):
     def setUp(self):
         self.factory = version_mapping.VersionMapperFactory()
         self.eveh5 = MockEveH5()
+        self.logger = logging.getLogger(name="evedata")
 
     def test_instantiate_class(self):
         pass
@@ -955,6 +956,20 @@ class TestVersionMapperFactory(unittest.TestCase):
         self.factory.eveh5 = self.eveh5
         with self.assertRaises(AttributeError):
             self.factory.get_mapper()
+
+    def test_get_mapper_with_unknown_version_logs(self):
+        self.eveh5.attributes["EVEH5Version"] = "0"
+        self.factory.eveh5 = self.eveh5
+        self.logger.setLevel(logging.ERROR)
+        self.logger.addHandler(logging.NullHandler())
+        with self.assertLogs(level=logging.ERROR) as captured:
+            with self.assertRaises(AttributeError):
+                self.factory.get_mapper()
+            self.assertEqual(len(captured.records), 1)
+            self.assertEqual(
+                captured.records[0].getMessage(),
+                "No mapper for version 0",
+            )
 
     def test_get_mapper_sets_source_in_mapper(self):
         self.factory.eveh5 = self.eveh5
