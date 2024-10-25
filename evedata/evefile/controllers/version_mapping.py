@@ -1043,6 +1043,7 @@ class VersionMapperV5(VersionMapper):
 
     def _map(self):
         super()._map()
+        self._check_scan_modules_for_consistency()
         self._map_main_datasets_to_scan_modules()
         self._map_log_messages()
 
@@ -1768,6 +1769,9 @@ class VersionMapperV5(VersionMapper):
             getattr(self.destination, section)[
                 self.get_dataset_name(hdf5_dataset)
             ] = dataset
+
+    def _check_scan_modules_for_consistency(self):
+        pass
 
     def _map_main_datasets_to_scan_modules(self):
         for key, value in self._data.items():
