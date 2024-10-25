@@ -1,7 +1,7 @@
 import datetime
 import unittest
 
-from evedata.evefile.entities import file
+from evedata.evefile.entities import file, data
 
 
 class TestFile(unittest.TestCase):
@@ -111,7 +111,16 @@ class TestScanModule(unittest.TestCase):
             "nested",
             "data",
             "positions",
+            "device_names",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.scan_module, attribute))
+
+    def test_device_names_returns_list_of_device_names(self):
+        devices = {"foo": "foo:id", "bar": "bar:id"}
+        for name, device_id in devices.items():
+            device_data = data.MeasureData()
+            device_data.metadata.name = name
+            self.scan_module.data[device_id] = device_data
+        self.assertDictEqual(devices, self.scan_module.device_names)

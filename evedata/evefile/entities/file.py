@@ -361,5 +361,32 @@ class ScanModule:
         self.parent = 0
         self.appended = None
         self.nested = None
-        self.data = None
+        self.data = {}
         self.positions = None
+
+    @property
+    def device_names(self):
+        """
+        Name of the devices contained in :attr:`data`.
+
+        The keys used in :attr:`data` are the XML-IDs and names of the
+        HDF5 datasets. However, usually each device has a more readable
+        and pronounceable name that it is known by.
+
+        Note that device names are not guaranteed to be unique. For all
+        devices in the :attr:`data` attribute, this should be the case,
+        though.
+
+        Returns
+        -------
+        device_names : :class:`dict`
+            Names of the devices contained in :attr:`data`.
+
+            The keys are the readable and pronounceable names of the
+            devices, the values are the corresponding XML-IDs.
+
+        """
+        return {
+            device.metadata.name: device_id
+            for device_id, device in self.data.items()
+        }

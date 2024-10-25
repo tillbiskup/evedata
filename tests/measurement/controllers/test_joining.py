@@ -15,11 +15,20 @@ class MockDevice:
         pass
 
 
+class MockScanModule:
+    def __init__(self, data=None):
+        self.data = data
+
+
 class MockMeasurement:
     def __init__(self, snapshots=False):
-        self.devices = {
-            "SimChan:01": MockDevice(),
-            "SimMot:01": MockDevice(),
+        self.scan_modules = {
+            "main": MockScanModule(
+                {
+                    "SimChan:01": MockDevice(),
+                    "SimMot:01": MockDevice(),
+                }
+            )
         }
         if snapshots:
             self.device_snapshots = {
@@ -87,14 +96,16 @@ class TestAxesLastFill(unittest.TestCase):
 
     def test_join_returns_list_of_numpy_arrays(self):
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         self.assertTrue(result)
         for element in result:
             self.assertIsInstance(element, np.ndarray)
 
     def test_join_returns_only_values_for_data_positions(self):
-        self.join.measurement.devices = {
+        self.join.measurement.scan_modules["main"].data = {
             "SimChan:01": MockDevice(
                 data=np.random.random(5), positions=np.linspace(0, 4, 5)
             ),
@@ -103,12 +114,14 @@ class TestAxesLastFill(unittest.TestCase):
             ),
         }
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         self.assertEqual(len(result[0]), len(result[1]))
 
     def test_join_returns_only_values_for_data_positions_with_gaps(self):
-        self.join.measurement.devices = {
+        self.join.measurement.scan_modules["main"].data = {
             "SimChan:01": MockDevice(
                 data=np.random.random(4), positions=np.asarray([0, 2, 3, 4])
             ),
@@ -117,12 +130,14 @@ class TestAxesLastFill(unittest.TestCase):
             ),
         }
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         self.assertEqual(len(result[0]), len(result[1]))
 
     def test_join_fills_axes_values(self):
-        self.join.measurement.devices = {
+        self.join.measurement.scan_modules["main"].data = {
             "SimChan:01": MockDevice(
                 data=np.random.random(5), positions=np.linspace(0, 4, 5)
             ),
@@ -131,17 +146,19 @@ class TestAxesLastFill(unittest.TestCase):
             ),
         }
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         self.assertEqual(len(result[0]), len(result[1]))
         np.testing.assert_array_equal(
-            self.join.measurement.devices["SimMot:01"].data,
+            self.join.measurement.scan_modules["main"].data["SimMot:01"].data,
             result[1][:-1],
         )
         self.assertEqual(result[1][-2], result[1][-1])
 
     def test_join_masks_axes_values_with_gap_at_beginning(self):
-        self.join.measurement.devices = {
+        self.join.measurement.scan_modules["main"].data = {
             "SimChan:01": MockDevice(
                 data=np.random.random(5), positions=np.linspace(0, 4, 5)
             ),
@@ -150,18 +167,20 @@ class TestAxesLastFill(unittest.TestCase):
             ),
         }
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         self.assertEqual(len(result[0]), len(result[1]))
         np.testing.assert_array_equal(
-            self.join.measurement.devices["SimMot:01"].data,
+            self.join.measurement.scan_modules["main"].data["SimMot:01"].data,
             result[1][2:],
         )
         self.assertIsInstance(result[1], ma.masked_array)
         self.assertTrue(result[1].mask[0])
 
     def test_join_fills_axes_values_with_gaps(self):
-        self.join.measurement.devices = {
+        self.join.measurement.scan_modules["main"].data = {
             "SimChan:01": MockDevice(
                 data=np.random.random(5), positions=np.linspace(0, 4, 5)
             ),
@@ -170,7 +189,9 @@ class TestAxesLastFill(unittest.TestCase):
             ),
         }
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         self.assertEqual(len(result[0]), len(result[1]))
         self.assertEqual(result[1][0], result[1][1])
@@ -178,24 +199,32 @@ class TestAxesLastFill(unittest.TestCase):
 
     def test_join_with_data_attribute_returns_correct_values(self):
         result = self.join.join(
-            data=("SimChan:01", "positions"), axes=(("SimMot:01", None),)
+            data=("SimChan:01", "positions"),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         np.testing.assert_array_equal(
-            self.join.measurement.devices["SimChan:01"].positions,
+            self.join.measurement.scan_modules["main"]
+            .data["SimChan:01"]
+            .positions,
             result[0],
         )
 
     def test_join_with_axes_attribute_returns_correct_values(self):
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", "positions"),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", "positions"),),
+            scan_module="main",
         )
         np.testing.assert_array_equal(
-            self.join.measurement.devices["SimMot:01"].positions,
+            self.join.measurement.scan_modules["main"]
+            .data["SimMot:01"]
+            .positions,
             result[1],
         )
 
     def test_join_fills_axes_values_with_snapshots(self):
-        self.join.measurement.devices = {
+        self.join.measurement.scan_modules["main"].data = {
             "SimChan:01": MockDevice(
                 data=np.random.random(5), positions=np.arange(2, 7)
             ),
@@ -212,7 +241,9 @@ class TestAxesLastFill(unittest.TestCase):
             ),
         }
         result = self.join.join(
-            data=("SimChan:01", None), axes=(("SimMot:01", None),)
+            data=("SimChan:01", None),
+            axes=(("SimMot:01", None),),
+            scan_module="main",
         )
         self.assertEqual(len(result[0]), len(result[1]))
         self.assertEqual(

@@ -2,7 +2,7 @@
 'https://plantuml.com/class-diagram
 
 class Measurement {
-    devices{} : MeasureData
+    scan_modules{} : ScanModule
     machine{} : MeasureData | MonitorData
     beamline{} : MeasureData | MonitorData
     device_snapshots{} : MeasureData

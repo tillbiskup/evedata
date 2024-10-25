@@ -516,7 +516,10 @@ class VersionMapperV9m2(VersionMapper):
         self.destination.scan.repeat_count = int(
             self.source.scan.find("repeatcount").text
         )
-        self.destination.scan.comment = self.source.scan.find("comment").text
+        if self.source.scan.find("comment") is not None:
+            self.destination.scan.comment = self.source.scan.find(
+                "comment"
+            ).text
 
     def _map_scan_modules(self):
         scan_modules = {

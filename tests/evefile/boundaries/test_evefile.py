@@ -205,27 +205,32 @@ class TestEveFile(unittest.TestCase):
 
     def test_get_data_returns_data_by_name(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.evefile.load(filename=self.filename)
         self.assertEqual(
-            self.evefile.data["SimMot:01"], self.evefile.get_data("foo")
+            self.evefile.scan_modules["main"].data["SimMot:01"],
+            self.evefile.get_data("foo"),
         )
 
     def test_get_data_list_returns_data_by_name_as_array(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.evefile.load(filename=self.filename)
         self.assertEqual(
-            self.evefile.data["SimMot:01"],
+            self.evefile.scan_modules["main"].data["SimMot:01"],
             self.evefile.get_data(["foo", "bar"])[0],
         )
 
     def test_data_have_correct_shape(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.evefile.load(filename=self.filename)
-        self.assertEqual(5, len(self.evefile.data["SimChan:01"].data))
-        self.assertEqual(5, len(self.evefile.data["SimMot:01"].data))
+        self.assertEqual(
+            5, len(self.evefile.scan_modules["main"].data["SimChan:01"].data)
+        )
+        self.assertEqual(
+            5, len(self.evefile.scan_modules["main"].data["SimMot:01"].data)
+        )
 
     def test_load_reads_scml(self):
         h5file = DummyHDF5File(filename=self.filename)

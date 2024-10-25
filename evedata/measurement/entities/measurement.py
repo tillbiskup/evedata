@@ -42,10 +42,10 @@ the :mod:`measurement.boundaries.measurement
     <evedata.measurement.entities.measurement>` module. Currently, this
     diagram just reflects first ideas for a more abstract representation of a
     measurement as compared to the data model of the evefile subpackage.
-    Devices are all the detector(channel)s and motor(axe)s used in a scan. 
-    Distinguishing between detector(channel)s/motor(axe)s, beamline, 
-    and machine can (at least partially) happen based on the data type: 
-    detector(channel)s are :class:`ChannelData 
+    Devices in the scan_modules are all the detector(channel)s and motor(axe)s
+    used in a scan. Distinguishing between detector(channel)s/motor(axe)s,
+    beamline, and machine can (at least partially) happen based on the data
+    type: detector(channel)s are :class:`ChannelData
     <evedata.evefile.entities.data.ChannelData>`, motor(axe)s are 
     :class:`AxisData <evedata.evefile.entities.data.AxisData>`. Machine 
     and beamline parameters are more tricky, as they can be 
@@ -96,17 +96,21 @@ class Measurement:
     schema (eveH5). Besides file-level metadata, there are log messages,
     a scan description (originally an XML/SCML file), and the actual data.
 
-    The data are organised in three functionally different sections: devices,
-    machine, and beamline.
+    The data are organised in three functionally different sections:
+    scan_modules, machine, and beamline.
 
 
     Attributes
     ----------
-    devices : :class:`dict`
-        Data recorded from the devices involved in a measurement.
+    scan_modules : :class:`dict`
+        Modules the scan consists of.
 
         Each item is an instance of
-        :class:`evedata.evefile.entities.data.MeasureData`.
+        :class:`evedata.evefile.entities.file.ScanModule` and contains the
+        data recorded within the given scan module.
+
+        In case of no scan description present, a "dummy" scan module will
+        be created containing *all* data.
 
     machine : :class:`dict`
         Data recorded from the machine involved in a measurement.
@@ -154,7 +158,7 @@ class Measurement:
     """
 
     def __init__(self):
-        self.devices = {}
+        self.scan_modules = {}
         self.machine = {}
         self.beamline = {}
         self.device_snapshots = {}

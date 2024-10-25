@@ -438,18 +438,21 @@ class Measurement(entities.Measurement):
     schema (eveH5). Besides file-level metadata, there are log messages,
     a scan description (originally an XML/SCML file), and the actual data.
 
-    The data are organised in three functionally different sections: devices,
-    machine, and beamline.
+    The data are organised in three functionally different sections:
+    scan_modules, machine, and beamline.
 
 
     Attributes
     ----------
-    devices : :class:`dict`
-        Data recorded from the devices involved in a measurement.
+    scan_modules : :class:`dict`
+        Modules the scan consists of.
 
-        Each item is an instance of either
-        :class:`evedata.evefile.entities.data.ChannelData` or
-        :class:`evedata.evefile.entities.data.AxisData`.
+        Each item is an instance of
+        :class:`evedata.evefile.entities.file.ScanModule` and contains the
+        data recorded within the given scan module.
+
+        In case of no scan description present, a "dummy" scan module will
+        be created containing *all* data.
 
     machine : :class:`dict`
         Data recorded from the machine involved in a measurement.
@@ -566,9 +569,9 @@ class Measurement(entities.Measurement):
         super().__init__()
         self.data = entities.Data()
         self.filename = filename
+        self._scan_module = "main"
         self._current_data = ()
         self._current_axes = []
-        self._device_names = {}
         self._evefile = None
         self._join = None
         self._join_type = join_type
@@ -622,33 +625,6 @@ class Measurement(entities.Measurement):
 
         """
         return [axis[0] for axis in self._current_axes]
-
-    @property
-    def device_names(self):
-        """
-        Name of the devices contained in :attr:`devices`.
-
-        The keys used in :attr:`devices` are the XML-IDs and names of the
-        HDF5 datasets. However, usually each device has a more readable
-        and pronounceable name that it is known by.
-
-        Note that device names are not guaranteed to be unique. For all
-        devices in the :attr:`devices` attribute, this should be the case,
-        though.
-
-        For a convenience method to obtain the device name given its
-        unique ID, see :meth:`get_name`.
-
-        Returns
-        -------
-        device_names : :class:`dict`
-            Names of the devices contained in :attr:`devices`.
-
-            The keys are the readable and pronounceable names of the
-            devices, the values are the corresponding XML-IDs.
-
-        """
-        return self._device_names
 
     def get_current_data(self):
         """
@@ -727,9 +703,9 @@ class Measurement(entities.Measurement):
         self._map_metadata()
         self._map_log_messages()
         self._map_devices()
+        self._map_scan_modules()
         self._map_snapshots()
         self._set_data()
-        self._set_device_names()
 
     def _load_evefile(self):
         self._evefile = EveFile(filename=self.metadata.filename)
@@ -758,25 +734,48 @@ class Measurement(entities.Measurement):
         for key, value in self._evefile.data.items():
             self.devices[key] = value
 
+    def _map_scan_modules(self):
+        for key, value in self._evefile.scan_modules.items():
+            self.scan_modules[key] = value
+
     def _map_snapshots(self):
         for key, value in self._evefile.snapshots.items():
             self.device_snapshots[key] = value
 
     def _set_data(self):
         if self.metadata.preferred_axis and self.metadata.preferred_channel:
-            self.set_data(name=self.metadata.preferred_channel)
-            self.set_axes(names=[self.metadata.preferred_axis])
+            for scan_module_name, scan_module in self.scan_modules.items():
+                if (
+                    self.metadata.preferred_channel
+                    in scan_module.device_names.values()
+                ):
+                    self.set_data(
+                        name=self.metadata.preferred_channel,
+                        scan_module=scan_module_name,
+                    )
+                if (
+                    self.metadata.preferred_axis
+                    in scan_module.device_names.values()
+                ):
+                    self.set_axes(
+                        names=[self.metadata.preferred_axis],
+                        scan_module=scan_module_name,
+                    )
 
-    def _set_axis_metadata_from_device(self, axis=None, device=""):
-        axis.quantity = self.devices[device].metadata.name
-        axis.unit = self.devices[device].metadata.unit
+    def _set_axis_metadata_from_device(
+        self, axis=None, device="", scan_module=""
+    ):
+        axis.quantity = (
+            self.scan_modules[scan_module].data[device].metadata.name
+        )
+        axis.unit = self.scan_modules[scan_module].data[device].metadata.unit
 
     def _set_device_names(self):
         self._device_names = {
             value.metadata.name: key for key, value in self.devices.items()
         }
 
-    def set_data(self, name="", field=""):
+    def set_data(self, scan_module="", name="", field=""):
         """
         Set data for the :attr:`data` attribute.
 
@@ -797,28 +796,36 @@ class Measurement(entities.Measurement):
         name : :class:`str`
             Device name whose data should be set as data.
 
+        scan_module : :class:`str`
+            Scan module ID the device belongs to
+
         field : :class:`str`
             Field name of the device whose data should be set as data.
 
         """
-        if name not in self.devices:
-            name = self.device_names[name]
+        if not scan_module:
+            scan_module = self._scan_module
+        if name not in self.scan_modules[scan_module].data:
+            name = self.scan_modules[scan_module].device_names[name]
         if not field:
             field = "data"
         if self._current_axes:
             data, *axes = self._join.join(
+                scan_module=scan_module,
                 data=(name, field),
                 axes=self._current_axes,
             )
             for idx, axis in enumerate(axes):
                 self.data.axes[idx].values = axis
         else:
-            data = getattr(self.devices[name], field)
+            data = getattr(self.scan_modules[scan_module].data[name], field)
         self.data.data = data
         self._current_data = (name, field)
-        self._set_axis_metadata_from_device(self.data.axes[-1], name)
+        self._set_axis_metadata_from_device(
+            self.data.axes[-1], device=name, scan_module=scan_module
+        )
 
-    def set_axes(self, names=None, fields=None):
+    def set_axes(self, scan_module="", names=None, fields=None):
         r"""
         Set axes for the :attr:`data` attribute.
 
@@ -842,6 +849,9 @@ class Measurement(entities.Measurement):
             Device names whose data should be set as axes data.
 
             Note that names is a list, as you can have *n*\D data with *n*>1.
+
+        scan_module : :class:`str`
+            Scan module ID the device belongs to
 
         fields : :class:`list`
             Field names of the devices whose data should be set as axes data.
@@ -867,21 +877,28 @@ class Measurement(entities.Measurement):
         axes = []
         devices = []
         for idx, device in enumerate(names):
-            if device not in self.devices:
-                device = self.device_names[device]
+            if device not in self.scan_modules[scan_module].data:
+                device = self.scan_modules[scan_module].device_names[device]
             current_axes.append((device, fields[idx]))
-            axes.append(getattr(self.devices[device], fields[idx]))
+            axes.append(
+                getattr(
+                    self.scan_modules[scan_module].data[device], fields[idx]
+                )
+            )
             devices.append(device)
         self._current_axes = current_axes
         if self._current_data:
             _, *axes = self._join.join(
                 data=self._current_data,
                 axes=self._current_axes,
+                scan_module=scan_module,
             )
         for idx, axis in enumerate(axes):
             self.data.axes[idx].values = axis
             self._set_axis_metadata_from_device(
-                self.data.axes[idx], devices[idx]
+                axis=self.data.axes[idx],
+                device=devices[idx],
+                scan_module=scan_module,
             )
 
     def get_name(self, device=None):
@@ -910,7 +927,14 @@ class Measurement(entities.Measurement):
 
         """
         if isinstance(device, (list, tuple)):
-            name = [self.devices[name].metadata.name for name in device]
+            name = [self._get_name(name) for name in device]
         else:
-            name = self.devices[device].metadata.name
+            name = self._get_name(device)
+        return name
+
+    def _get_name(self, device=""):
+        name = ""
+        for scan_module in self.scan_modules.values():
+            if device in scan_module.data:
+                name = scan_module.data[device].metadata.name
         return name

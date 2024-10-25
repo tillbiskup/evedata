@@ -14,7 +14,7 @@ class TestMeasurement(unittest.TestCase):
 
     def test_has_attributes(self):
         attributes = [
-            "devices",
+            "scan_modules",
             "machine",
             "beamline",
             "device_snapshots",

@@ -351,8 +351,9 @@ class EveFile(File):
         Retrieve data objects by name.
 
         While generally, you can get the data objects by accessing the
-        :attr:`data` attribute directly, there, they are stored using
-        their HDF5 dataset name as key. Usually, however, data are
+        :attr:`data <evedata.evefile.entities.file.ScanModule>` attribute of
+        the respective :attr:`scan_module` directly, there, they are stored
+        using their HDF5 dataset name as key. Usually, however, data are
         accessed by their "given" name.
 
         Parameters
@@ -369,13 +370,20 @@ class EveFile(File):
             :class:`evedata.evefile.entities.Data`.
 
         """
-        names = {item.metadata.name: key for key, item in self.data.items()}
-        if isinstance(name, (list, tuple)):
-            data = []
-            for item in name:
-                data.append(self.data[names[item]])
-        else:
-            data = self.data[names[name]]
+        data = []
+        for scan_module_name in self.scan_modules:
+            scan_module = self.scan_modules[scan_module_name]
+            names = {
+                item.metadata.name: key
+                for key, item in scan_module.data.items()
+            }
+            if isinstance(name, (list, tuple)):
+                for item in name:
+                    data.append(scan_module.data[names[item]])
+            else:
+                data.append(scan_module.data[names[name]])
+        if len(data) == 1:
+            data = data[0]
         return data
 
     def has_scan(self):

@@ -1775,7 +1775,9 @@ class VersionMapperV5(VersionMapper):
 
     def _map_main_datasets_to_scan_modules(self):
         for key, value in self._data.items():
-            self.destination.data[key] = value
+            if len(self.destination.scan_modules.keys()) == 1:
+                scan_module = list(self.destination.scan_modules.keys())[0]
+                self.destination.scan_modules[scan_module].data[key] = value
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

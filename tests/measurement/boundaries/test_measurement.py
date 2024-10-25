@@ -22,6 +22,50 @@ SCML = """<?xml version="1.0" encoding="UTF-8"?>
         <confirmsave>false</confirmsave>
         <autonumber>true</autonumber>
         <savescandescription>false</savescandescription>
+        <chain id="1">
+            <pauseconditions/>
+            <scanmodules>
+                <scanmodule id="1">
+                    <name>SM 1</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>0</parent>
+                    <appended>2</appended>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Positionlist</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <positionlist>1, 2,3, 4 ,5</positionlist>
+                        </smaxis>
+                    </classic>
+                </scanmodule>
+                <scanmodule id="2">
+                    <name>SM 2</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>1</parent>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                        <smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>Positionlist</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <positionlist>1, 2,3, 4 ,5</positionlist>
+                        </smaxis>
+                    </classic>
+                </scanmodule>
+            </scanmodules>
+        </chain>
     </scan>
     <plugins/>
     <detectors/>
@@ -210,7 +254,7 @@ class TestMeasurement(unittest.TestCase):
 
     def test_has_attributes(self):
         attributes = [
-            "devices",
+            "scan_modules",
             "machine",
             "beamline",
             "device_snapshots",
@@ -265,26 +309,15 @@ class TestMeasurement(unittest.TestCase):
         self.measurement.load(filename=self.filename)
         self.assertTrue(self.measurement.log_messages)
 
-    def test_load_sets_device_data(self):
+    def test_load_sets_scan_modules(self):
         h5file = DummyHDF5File(filename=self.filename)
         h5file.create()
         self.measurement.load(filename=self.filename)
-        self.assertTrue(self.measurement.devices)
-        for item in self.measurement.devices.values():
+        self.assertTrue(self.measurement.scan_modules)
+        for item in self.measurement.scan_modules.values():
             self.assertIsInstance(
-                item, evedata.evefile.entities.data.MeasureData
+                item, evedata.evefile.entities.file.ScanModule
             )
-
-    def test_load_sets_device_names(self):
-        h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
-        self.measurement.load(filename=self.filename)
-        self.assertTrue(self.measurement.device_names)
-        device_names = {
-            value.metadata.name: key
-            for key, value in self.measurement.devices.items()
-        }
-        self.assertDictEqual(device_names, self.measurement.device_names)
 
     def test_load_sets_device_snapshots(self):
         h5file = DummyHDF5File(filename=self.filename)
@@ -298,15 +331,15 @@ class TestMeasurement(unittest.TestCase):
 
     def test_load_sets_data_to_preferred_data(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         np.testing.assert_array_equal(
             self.measurement.data.data,
-            self.measurement.devices["SimChan:01"].data,
+            self.measurement.scan_modules["main"].data["SimChan:01"].data,
         )
         np.testing.assert_array_equal(
             self.measurement.data.axes[0].values,
-            self.measurement.devices["SimMot:01"].data,
+            self.measurement.scan_modules["main"].data["SimMot:01"].data,
         )
 
     def test_load_does_not_set_data_if_no_preferred_data(self):
@@ -318,30 +351,30 @@ class TestMeasurement(unittest.TestCase):
 
     def test_load_with_preferred_data_sets_axis_metadata(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         self.assertEqual(
-            self.measurement.devices[
-                self.measurement.metadata.preferred_axis
-            ].metadata.name,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.metadata.preferred_axis]
+            .metadata.name,
             self.measurement.data.axes[0].quantity,
         )
         self.assertEqual(
-            self.measurement.devices[
-                self.measurement.metadata.preferred_axis
-            ].metadata.unit,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.metadata.preferred_axis]
+            .metadata.unit,
             self.measurement.data.axes[0].unit,
         )
         self.assertEqual(
-            self.measurement.devices[
-                self.measurement.metadata.preferred_channel
-            ].metadata.name,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.metadata.preferred_channel]
+            .metadata.name,
             self.measurement.data.axes[1].quantity,
         )
         self.assertEqual(
-            self.measurement.devices[
-                self.measurement.metadata.preferred_channel
-            ].metadata.unit,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.metadata.preferred_channel]
+            .metadata.unit,
             self.measurement.data.axes[1].unit,
         )
 
@@ -354,30 +387,30 @@ class TestMeasurement(unittest.TestCase):
 
     def test_preferred_data_sets_current_data(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         self.assertEqual("SimChan:01", self.measurement.current_data)
 
     def test_preferred_data_sets_current_axes(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         self.assertListEqual(["SimMot:01"], self.measurement.current_axes)
 
     def test_set_data_sets_data(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimChan:02"
         self.measurement.set_data(name=name)
         np.testing.assert_array_equal(
             self.measurement.data.data,
-            self.measurement.devices[name].data,
+            self.measurement.scan_modules["main"].data[name].data,
         )
 
     def test_set_data_sets_current_data(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimChan:02"
         self.measurement.set_data(name=name)
@@ -389,7 +422,7 @@ class TestMeasurement(unittest.TestCase):
 
     def test_get_current_data_returns_tuple(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         self.assertEqual(
             (self.measurement.current_data, "data"),
@@ -398,7 +431,7 @@ class TestMeasurement(unittest.TestCase):
 
     def test_get_current_axes_returns_list_of_tuples(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         self.assertListEqual(
             [(self.measurement.current_axes[0], "data")],
@@ -407,63 +440,78 @@ class TestMeasurement(unittest.TestCase):
 
     def test_set_data_sets_axis_metadata(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimChan:02"
         self.measurement.set_data(name=name)
         self.assertEqual(
-            self.measurement.devices[name].metadata.name,
+            self.measurement.scan_modules["main"].data[name].metadata.name,
             self.measurement.data.axes[1].quantity,
         )
         self.assertEqual(
-            self.measurement.devices[name].metadata.unit,
+            self.measurement.scan_modules["main"].data[name].metadata.unit,
             self.measurement.data.axes[1].unit,
         )
 
     def test_set_data_with_name_sets_data(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         dataset_id = "SimChan:02"
-        name = self.measurement.devices[dataset_id].metadata.name
+        name = (
+            self.measurement.scan_modules["main"]
+            .data[dataset_id]
+            .metadata.name
+        )
         self.measurement.set_data(name=name)
         np.testing.assert_array_equal(
             self.measurement.data.data,
-            self.measurement.devices[dataset_id].data,
+            self.measurement.scan_modules["main"].data[dataset_id].data,
         )
 
     def test_set_axes_sets_axes(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimMot:02"
-        self.measurement.set_axes(names=[name])
-        common_elements = self.measurement.devices[name].positions[
-            np.isin(
-                self.measurement.devices[name].positions,
-                self.measurement.devices[
-                    self.measurement.current_data
-                ].positions,
-            )
-        ]
+        self.measurement.set_axes(names=[name], scan_module="main")
+        common_elements = (
+            self.measurement.scan_modules["main"]
+            .data[name]
+            .positions[
+                np.isin(
+                    self.measurement.scan_modules["main"]
+                    .data[name]
+                    .positions,
+                    self.measurement.scan_modules["main"]
+                    .data[self.measurement.current_data]
+                    .positions,
+                )
+            ]
+        )
         data_indices = np.searchsorted(
-            self.measurement.devices[self.measurement.current_data].positions,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_data]
+            .positions,
             common_elements,
         )
         axes_indices = np.searchsorted(
-            self.measurement.devices[name].positions, common_elements
+            self.measurement.scan_modules["main"].data[name].positions,
+            common_elements,
         )
         np.testing.assert_array_equal(
             self.measurement.data.axes[0].values[data_indices],
-            self.measurement.devices[name].data[axes_indices],
+            self.measurement.scan_modules["main"]
+            .data[name]
+            .data[axes_indices],
         )
 
     def test_set_axes_sets_current_axes(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimMot:02"
-        self.measurement.set_axes(names=[name])
+        self.measurement.set_axes(names=[name], scan_module="main")
         self.assertListEqual([name], self.measurement.current_axes)
 
     def test_current_axes_is_read_only(self):
@@ -472,74 +520,93 @@ class TestMeasurement(unittest.TestCase):
 
     def test_set_axes_sets_axis_metadata(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimMot:02"
-        self.measurement.set_axes(names=[name])
+        self.measurement.set_axes(names=[name], scan_module="main")
         self.assertEqual(
-            self.measurement.devices[name].metadata.name,
+            self.measurement.scan_modules["main"].data[name].metadata.name,
             self.measurement.data.axes[0].quantity,
         )
         self.assertEqual(
-            self.measurement.devices[name].metadata.unit,
+            self.measurement.scan_modules["main"].data[name].metadata.unit,
             self.measurement.data.axes[0].unit,
         )
 
     def test_set_axes_with_name_sets_axes(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         dataset_id = "SimMot:02"
-        name = self.measurement.devices[dataset_id].metadata.name
-        self.measurement.set_axes(names=[name])
-        common_elements = self.measurement.devices[dataset_id].positions[
-            np.isin(
-                self.measurement.devices[dataset_id].positions,
-                self.measurement.devices[
-                    self.measurement.current_data
-                ].positions,
-            )
-        ]
+        name = (
+            self.measurement.scan_modules["main"]
+            .data[dataset_id]
+            .metadata.name
+        )
+        self.measurement.set_axes(names=[name], scan_module="main")
+        common_elements = (
+            self.measurement.scan_modules["main"]
+            .data[dataset_id]
+            .positions[
+                np.isin(
+                    self.measurement.scan_modules["main"]
+                    .data[dataset_id]
+                    .positions,
+                    self.measurement.scan_modules["main"]
+                    .data[self.measurement.current_data]
+                    .positions,
+                )
+            ]
+        )
         data_indices = np.searchsorted(
-            self.measurement.devices[self.measurement.current_data].positions,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_data]
+            .positions,
             common_elements,
         )
         axes_indices = np.searchsorted(
-            self.measurement.devices[dataset_id].positions, common_elements
+            self.measurement.scan_modules["main"].data[dataset_id].positions,
+            common_elements,
         )
         np.testing.assert_array_equal(
             self.measurement.data.axes[0].values[data_indices],
-            self.measurement.devices[dataset_id].data[axes_indices],
+            self.measurement.scan_modules["main"]
+            .data[dataset_id]
+            .data[axes_indices],
         )
 
     def test_get_name_returns_name(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         dataset_id = "SimMot:02"
-        name = self.measurement.devices[dataset_id].metadata.name
+        name = (
+            self.measurement.scan_modules["main"]
+            .data[dataset_id]
+            .metadata.name
+        )
         self.assertEqual(name, self.measurement.get_name(dataset_id))
 
     def test_get_name_with_list_returns_list_of_names(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         dataset_id = ["SimMot:02", "SimChan:01"]
         names = [
-            self.measurement.devices[device].metadata.name
+            self.measurement.scan_modules["main"].data[device].metadata.name
             for device in dataset_id
         ]
         self.assertListEqual(names, self.measurement.get_name(dataset_id))
 
     def test_set_data_if_no_preferred_data(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create(set_preferred=False)
+        h5file.create(set_preferred=False, scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimChan:01"
         self.measurement.set_data(name=name)
         np.testing.assert_array_equal(
             self.measurement.data.data,
-            self.measurement.devices[name].data,
+            self.measurement.scan_modules["main"].data[name].data,
         )
 
     def test_set_axes_if_no_preferred_data_raises(self):
@@ -552,80 +619,86 @@ class TestMeasurement(unittest.TestCase):
 
     def test_set_data_with_field_name(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimChan:01"
         field = "positions"
         self.measurement.set_data(name=name, field=field)
         np.testing.assert_array_equal(
             self.measurement.data.data,
-            getattr(self.measurement.devices[name], field),
+            getattr(self.measurement.scan_modules["main"].data[name], field),
         )
 
     def test_set_axes_with_field_name(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimMot:01"
         field = "positions"
-        self.measurement.set_axes(names=[name], fields=[field])
+        self.measurement.set_axes(
+            names=[name], fields=[field], scan_module="main"
+        )
         np.testing.assert_array_equal(
             self.measurement.data.axes[0].values,
-            getattr(self.measurement.devices[name], field),
+            getattr(self.measurement.scan_modules["main"].data[name], field),
         )
 
     def test_set_axes_with_different_length_of_names_and_fields_raises(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         names = ["SimMot:01"]
         fields = ["positions", "data"]
         with self.assertRaisesRegex(
             IndexError, "Names and fields need to " "be of same length"
         ):
-            self.measurement.set_axes(names=names, fields=fields)
+            self.measurement.set_axes(
+                names=names, fields=fields, scan_module="main"
+            )
 
     def test_set_data_joins_axes(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimChan:02"
         self.measurement.set_data(name=name)
         common_positions = np.intersect1d(
-            self.measurement.devices[name].positions,
-            self.measurement.devices[
-                self.measurement.current_axes[0]
-            ].positions,
+            self.measurement.scan_modules["main"].data[name].positions,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_axes[0]]
+            .positions,
         ).astype(int)
         axes_positions = np.isin(
-            self.measurement.devices[
-                self.measurement.current_axes[0]
-            ].positions,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_axes[0]]
+            .positions,
             common_positions,
         )
         np.testing.assert_array_equal(
             self.measurement.data.axes[0].values[
                 np.arange(len(axes_positions))[axes_positions] - 1
             ],
-            self.measurement.devices[self.measurement.current_axes[0]].data[
-                np.arange(len(axes_positions))[axes_positions]
-            ],
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_axes[0]]
+            .data[np.arange(len(axes_positions))[axes_positions]],
         )
 
     def test_set_axes_joins_axes(self):
         h5file = DummyHDF5File(filename=self.filename)
-        h5file.create()
+        h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimMot:02"
-        self.measurement.set_axes(names=[name])
+        self.measurement.set_axes(names=[name], scan_module="main")
         common_positions = np.intersect1d(
-            self.measurement.devices[self.measurement.current_data].positions,
-            self.measurement.devices[name].positions,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_data]
+            .positions,
+            self.measurement.scan_modules["main"].data[name].positions,
         ).astype(int)
         axes_positions = np.isin(
-            self.measurement.devices[
-                self.measurement.current_axes[0]
-            ].positions,
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_axes[0]]
+            .positions,
             common_positions,
         )
         self.assertEqual(
@@ -634,9 +707,9 @@ class TestMeasurement(unittest.TestCase):
         )
         np.testing.assert_array_equal(
             self.measurement.data.axes[0].values[common_positions - 1],
-            self.measurement.devices[self.measurement.current_axes[0]].data[
-                axes_positions
-            ],
+            self.measurement.scan_modules["main"]
+            .data[self.measurement.current_axes[0]]
+            .data[axes_positions],
         )
 
     def test_join_type_returns_correct_type(self):

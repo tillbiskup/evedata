@@ -241,7 +241,7 @@ class Join:
     def __init__(self, measurement=None):
         self.measurement = measurement
 
-    def join(self, data=None, axes=None):
+    def join(self, data=None, axes=None, scan_module=""):
         """
         Harmonise data.
 
@@ -268,6 +268,9 @@ class Join:
 
             Each element of the tuple/list is itself a two-element
             tuple/list with name and attribute.
+
+        scan_module : :class:`str`
+            Scan module ID the device belongs to
 
         Returns
         -------
@@ -298,9 +301,9 @@ class Join:
             raise ValueError("Need data to join data.")
         if not axes:
             raise ValueError("Need axes to join data.")
-        return self._join(data=data, axes=axes)
+        return self._join(data=data, axes=axes, scan_module=scan_module)
 
-    def _join(self, data=None, axes=None):  # noqa
+    def _join(self, data=None, axes=None, scan_module=None):  # noqa
         return []
 
 
@@ -363,10 +366,13 @@ class AxesLastFill(Join):
     def __init__(self, measurement=None):
         super().__init__(measurement=measurement)
 
-    def _join(self, data=None, axes=None):
+    def _join(self, data=None, axes=None, scan_module=None):
         result = []
-        data_device = self.measurement.devices[data[0]]
-        axes_devices = [self.measurement.devices[axis[0]] for axis in axes]
+        data_device = self.measurement.scan_modules[scan_module].data[data[0]]
+        axes_devices = [
+            self.measurement.scan_modules[scan_module].data[axis[0]]
+            for axis in axes
+        ]
         if data[1]:
             data_attribute = data[1]
         else:
