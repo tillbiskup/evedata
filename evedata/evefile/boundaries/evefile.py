@@ -371,8 +371,7 @@ class EveFile(File):
 
         """
         data = []
-        for scan_module_name in self.scan_modules:
-            scan_module = self.scan_modules[scan_module_name]
+        for scan_module in self.scan_modules.values():
             names = {
                 item.metadata.name: key
                 for key, item in scan_module.data.items()

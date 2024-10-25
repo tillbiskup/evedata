@@ -397,6 +397,26 @@ class ScanModule(AbstractScanModule):
         ]
         return bool(mpskip_channels)
 
+    def has_device(self, name=""):
+        """
+        Check whether a scan module contains a given device.
+
+        Convenience method to check for a device name (its unique ID) in
+        both, channels and axes.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            Name (unique ID) of the device
+
+        Returns
+        -------
+        has_device : :class:`bool`
+            Whether the scan module contains the given device
+
+        """
+        return name in self.channels or name in self.axes
+
 
 class Channel:
     """

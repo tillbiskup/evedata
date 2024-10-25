@@ -78,6 +78,16 @@ class TestScanModule(unittest.TestCase):
         self.module.channels["MPSKIP:euvr01skipcountchan1"] = scan.Channel()
         self.assertTrue(self.module.has_mpskip())
 
+    def test_has_device_with_channel(self):
+        device_name = "SimChan01"
+        self.module.channels[device_name] = scan.Channel()
+        self.assertTrue(self.module.has_device(device_name))
+
+    def test_has_device_with_axis(self):
+        device_name = "SimMot01"
+        self.module.axes[device_name] = scan.Axis()
+        self.assertTrue(self.module.has_device(device_name))
+
 
 class TestChannel(unittest.TestCase):
     def setUp(self):

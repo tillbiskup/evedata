@@ -454,7 +454,7 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from evedata.evefile import entities
+from evedata.evefile import entities, controllers
 
 logger = logging.getLogger(__name__)
 
@@ -1774,10 +1774,28 @@ class VersionMapperV5(VersionMapper):
         pass
 
     def _map_main_datasets_to_scan_modules(self):
-        for key, value in self._data.items():
+        for dataset_name, dataset in self._data.items():
             if len(self.destination.scan_modules.keys()) == 1:
                 scan_module = list(self.destination.scan_modules.keys())[0]
-                self.destination.scan_modules[scan_module].data[key] = value
+                self.destination.scan_modules[scan_module].data[
+                    dataset_name
+                ] = dataset
+            else:
+                for (
+                    scan_module_name,
+                    scan_module,
+                ) in self.destination.scan_modules.items():
+                    if self.destination.scan.scan.scan_modules[
+                        scan_module_name
+                    ].has_device(dataset_name):
+                        preprocessing = (
+                            controllers.preprocessing.SelectPositions()
+                        )
+                        preprocessing.positions = scan_module.positions
+                        dataset.importer[0].preprocessing.append(
+                            preprocessing
+                        )
+                        scan_module.data[dataset_name] = dataset
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

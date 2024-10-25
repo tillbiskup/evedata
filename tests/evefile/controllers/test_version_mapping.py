@@ -7,7 +7,8 @@ import numpy as np
 import evedata.evefile.boundaries.evefile
 import evedata.evefile.entities.file
 import evedata.evefile.entities.data
-from evedata.evefile.controllers import version_mapping
+from evedata.evefile.controllers import version_mapping, preprocessing
+import evedata.scan.entities.scan
 
 
 class MockHDF5Item:
@@ -2529,6 +2530,56 @@ class TestVersionMapperV5(unittest.TestCase):
                 f"MPSKIP:sx70001{monitor}", self.destination.monitors
             )
         self.assertNotIn("Counter-mot", self.destination.data)
+
+    def test_with_scan_modules_maps_datasets_to_scan_modules(self):
+        self.mapper.source = self.source
+        dataset_names = self.mapper.source.add_singlepoint_detector_data(
+            normalized=False
+        )
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.mapper.map(destination=self.destination)
+        self.assertListEqual(
+            dataset_names, list(self.destination.scan_modules[2].data.keys())
+        )
+
+    def test_with_scan_modules_adds_importer_preprocessing_to_data(self):
+        self.mapper.source = self.source
+        dataset_names = self.mapper.source.add_singlepoint_detector_data(
+            normalized=False
+        )
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        positions = np.linspace(1, 5, 5)
+        self.destination.scan_modules[2].positions = positions
+        self.mapper.map(destination=self.destination)
+        for dataset in self.destination.scan_modules[2].data.values():
+            self.assertTrue(dataset.importer[0].preprocessing)
+            self.assertIsInstance(
+                dataset.importer[0].preprocessing[0],
+                preprocessing.SelectPositions,
+            )
+            np.testing.assert_array_equal(
+                positions, dataset.importer[0].preprocessing[0].positions
+            )
 
 
 class TestVersionMapperV6(unittest.TestCase):

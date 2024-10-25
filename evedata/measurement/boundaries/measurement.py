@@ -702,7 +702,6 @@ class Measurement(entities.Measurement):
         self._map_scan()
         self._map_metadata()
         self._map_log_messages()
-        self._map_devices()
         self._map_scan_modules()
         self._map_snapshots()
         self._set_data()
@@ -729,10 +728,6 @@ class Measurement(entities.Measurement):
 
     def _map_log_messages(self):
         self.log_messages = self._evefile.log_messages
-
-    def _map_devices(self):
-        for key, value in self._evefile.data.items():
-            self.devices[key] = value
 
     def _map_scan_modules(self):
         for key, value in self._evefile.scan_modules.items():
@@ -769,11 +764,6 @@ class Measurement(entities.Measurement):
             self.scan_modules[scan_module].data[device].metadata.name
         )
         axis.unit = self.scan_modules[scan_module].data[device].metadata.unit
-
-    def _set_device_names(self):
-        self._device_names = {
-            value.metadata.name: key for key, value in self.devices.items()
-        }
 
     def set_data(self, scan_module="", name="", field=""):
         """
