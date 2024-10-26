@@ -2581,6 +2581,31 @@ class TestVersionMapperV5(unittest.TestCase):
                 positions, dataset.importer[0].preprocessing[0].positions
             )
 
+    def test_with_scan_modules_deepcopies_datasets_for_scan_modules(self):
+        self.mapper.source = self.source
+        dataset_names = self.mapper.source.add_singlepoint_detector_data(
+            normalized=False
+        )
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[1].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.mapper.map(destination=self.destination)
+        self.assertIsNot(
+            self.destination.scan_modules[1].data[dataset_names[0]],
+            self.destination.scan_modules[2].data[dataset_names[0]],
+        )
+
 
 class TestVersionMapperV6(unittest.TestCase):
     def setUp(self):

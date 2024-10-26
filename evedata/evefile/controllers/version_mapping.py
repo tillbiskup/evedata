@@ -447,6 +447,7 @@ Module documentation
 
 """
 
+import copy
 import datetime
 import logging
 import sys
@@ -1792,6 +1793,7 @@ class VersionMapperV5(VersionMapper):
                             controllers.preprocessing.SelectPositions()
                         )
                         preprocessing.positions = scan_module.positions
+                        dataset = copy.deepcopy(dataset)
                         dataset.importer[0].preprocessing.append(
                             preprocessing
                         )
