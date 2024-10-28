@@ -31,18 +31,19 @@ Overview
 
 A first overview of the classes implemented in this module and their
 hierarchy is given in the UML diagram below, :numref:`Fig. %s
-<fig-uml_evedata-scan.scan_api>`.
+<fig-uml_evedata-scan.scan_current_api>`.
 
 
-.. _fig-uml_evedata-scan.scan_api:
+.. _fig-uml_evedata-scan.scan_current_api:
 
-.. figure:: /uml/evedata.scan.entities.scan.*
+.. figure:: /uml/evedata.scan.entities.scan_current.*
     :align: center
     :width: 750px
 
     Class hierarchy of the :mod:`scan.entities.scan
-    <evedata.scan.entities.scan>` module, closely resembling the schema of
-    the SCML file. As the scan module is already quite complicated,
+    <evedata.scan.entities.scan>` module, somewhat resembling the schema of
+    the SCML file, but modified in light of implementing the classes
+    contained in the module. As the scan module is already quite complicated,
     event and plot-related classes have been separated into their own
     modules. Hint: For a larger view, you may open the image in a separate
     tab. As it is vectorised (SVG), it scales well.
@@ -51,8 +52,28 @@ hierarchy is given in the UML diagram below, :numref:`Fig. %s
 .. important::
 
     Note that for the time being, only a subset of the classes shown in the
-    above UML diagram are implemented, and only the most relevant attributes
+    above UML diagram is implemented, and only the most relevant attributes
     of these classes.
+
+
+As a comparison, shown below in :numref:`Fig. %s
+<fig-uml_evedata-scan.scan_api>` is an UML diagram more closely resembling
+the current state of affairs in the SCML schema (version 9.2).
+
+
+.. _fig-uml_evedata-scan.scan_api:
+
+.. figure:: /uml/evedata.scan.entities.scan.*
+    :align: center
+    :width: 750px
+
+    Class hierarchy closely resembling the schema of the SCML file. As the
+    scan module is already quite complicated, event and plot-related
+    classes have been separated into their own modules. Hint: For a larger
+    view, you may open the image in a separate tab. As it is vectorised
+    (SVG), it scales well.
+
+
 
 
 Module documentation
@@ -62,6 +83,7 @@ Module documentation
 
 import logging
 
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -342,6 +364,20 @@ class ScanModule(AbstractScanModule):
 
         Each element in the list is a :obj:`Positioning` object.
 
+    pre_scan_settings : :class:`dict`
+        Settings of individual devices before triggering axes or channels.
+
+        The keys are the unique IDs (UID) of the devices, while the values
+        are :obj:`PreScan` objects. This allows for easy access of a given
+        device given its UID.
+
+    post_scan_settings : :class:`dict`
+        Settings of individual devices after triggering axes or channels.
+
+        The keys are the unique IDs (UID) of the devices, while the values
+        are :obj:`PostScan` objects. This allows for easy access of a given
+        device given its UID.
+
     number_of_measurements : :class:`int`
         Number of measurements performed per axes position.
 
@@ -365,6 +401,8 @@ class ScanModule(AbstractScanModule):
         self.axes = {}
         self.channels = {}
         self.positionings = []
+        self.pre_scan_settings = {}
+        self.post_scan_settings = {}
         self.number_of_measurements = 1
 
     def has_mpskip(self):
@@ -510,13 +548,6 @@ class Axis:
         If :attr:`step_function` is set to "file", no positions can be
         inferred from the SCML file, as they are simply not contained.
 
-    is_main_axis : :class:`bool`
-        Whether the axis is set as main axis.
-
-        Only for axes with :attr:`step_function` in ["add", "multiply"]
-        setting one of these axes as main axis defines the number of
-        positions of the other axes in this group.
-
 
     Examples
     --------
@@ -533,17 +564,17 @@ class Axis:
         self.step_function = ""
         self.position_mode = "absolute"
         self.positions = None
-        self.is_main_axis = False
 
 
-class SnapshotModule(AbstractScanModule):
+class StaticSnapshotModule(AbstractScanModule):
     """
-    Representation of snapshot scan modules.
+    Representation of static snapshot scan modules.
 
     Snapshot scan modules are used to record the state of devices at a given
     point in time (an individual position count). Historically, there are
     four different types of such snapshot scan modules: motor axes and
-    detector channels, and static and dynamic each.
+    detector channels, and static and dynamic each. This class is meant
+    to represent static axes and channels snapshots.
 
 
     Attributes
@@ -644,7 +675,7 @@ class SnapshotModule(AbstractScanModule):
 
     Examples
     --------
-    The :class:`SnapshotModule` class is not meant to be used directly,
+    The :class:`StaticSnapshotModule` class is not meant to be used directly,
     as any entities, but rather indirectly by means of the respective
     facades in the boundaries technical layer of the :mod:`evedata.scan`
     subpackage. Hence, for the time being, there are no dedicated examples
@@ -741,3 +772,562 @@ class Positioning:
         self.type = ""
         self.parameters = {}
         self.position = None
+
+
+class DynamicSnapshotModule(AbstractScanModule):
+    """
+    Representation of dynamic snapshot scan modules.
+
+    Snapshot scan modules are used to record the state of devices at a given
+    point in time (an individual position count). Historically, there are
+    four different types of such snapshot scan modules: motor axes and
+    detector channels, and static and dynamic each. This class is meant
+    to represent dynamic axes and channels snapshots.
+
+
+    Attributes
+    ----------
+    id : :class:`int`
+        Unique ID of the scan module.
+
+        The IDs are numeric and start with 1, as the root node is always 0.
+        Hence, the first scan module defined will have 0 as its parent.
+
+        Default: 1
+
+    name : :class:`str`
+        Name of the scan module.
+
+        The scan module appears in the graphical representation eve GUI with
+        this name. Hence, providing good names can be very valuable.
+
+    parent : :class:`id`
+        Unique ID of the parent scan module.
+
+        In case of the first scan module, this is 0.
+
+        Default: 0
+
+    appended : :class:`int`
+        Unique ID of the appended scan module.
+
+        A scan module can have 0..1 appended and 0..1 nested scan modules.
+
+        Default: None
+
+    nested : :class:`int`
+        Unique ID of the nested scan module.
+
+        A scan module can have 0..1 appended and 0..1 nested scan modules.
+
+        Default: None
+
+    is_nested : :class:`bool`
+        Whether the scan module itself is nested.
+
+        A scan module can either be appended or nested. Given that the
+        scan modules are unaware of the other scan modules and (currently)
+        only contain IDs as references to their parent and appended or
+        nested scan module, this information needs to be set from outside,
+        *e.g.* during mapping by the :class:`VersionMapper
+        <evedata.scan.controllers.version_mapping.VersionMapper>` class.
+
+        Default: False
+
+    number_of_positions : :class:`int`
+        Number of positions created during the scan module.
+
+        Positions are the fundamental quantisation of the data in eveH5
+        files. Each position axes are moved to is assigned a "position
+        count", *i.e.* a unique integer value. Furthermore, positionings
+        of axes at the end of the scan module (in the "positioning phase")
+        get their own position number.
+
+        For snapshot modules, things are quite simple: Each snapshot
+        module creates its own position, one per module.
+
+        Default: 1
+
+    number_of_positions_per_pass : :class:`int`
+        Number of positions created during *one pass* of the scan module.
+
+        Scan modules can be nested, and even though a given scan module
+        is not nested itself, it can be in a chain of scan modules that
+        are nested. Hence, the total number of positions created during a
+        scan for a given scan module can be different from the number of
+        positions during a single pass.
+
+        Default: 1
+
+    positions : :class:`list` | :class:`numpy.array`
+        Actual positions created during the scan module.
+
+        These positions cannot necessarily be inferred from the definition
+        of the scan module itself, but sometimes only be obtained from the
+        actual measurement.
+
+
+    Examples
+    --------
+    The :class:`DynamicSnapshotModule` class is not meant to be used
+    directly, as any entities, but rather indirectly by means of the
+    respective facades in the boundaries technical layer of the
+    :mod:`evedata.scan` subpackage. Hence, for the time being, there are
+    no dedicated examples how to use this class. Of course, you can
+    instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.number_of_positions = 1
+        self.number_of_positions_per_pass = 1
+
+
+class AverageChannel(Channel):
+    """
+    Representation of an average channel used in a scan module.
+
+    Scan modules use detector channels and motor axes in their main phase.
+    All relevant information regarding a channel with respect to its use in
+    a scan module is contained in this class and classes inheriting from it.
+
+    To get further information on the channel in general, its :attr:`id` can
+    be used to look up this information in the ``setup`` part of the SCML
+    file.
+
+
+    Attributes
+    ----------
+    id : :class:`str`
+        Unique ID of the channel.
+
+        Each channel has a unique ID that is used internally to refer to it.
+        The names displayed in the GUI are "given" names different from this
+        ID, though. The HDF5 datasets in an eveH5 file use these UIDs as name.
+
+    normalize_id : :class:`str`
+        Unique ID of the channel used for normalization.
+
+        Channels can be normalized by other channels, *i.e.* the values
+        divided by the values obtained from the normalizing channel.
+
+    n_averages : :class:`int`
+        Number of averages
+
+    low_limit : :class:`float`
+        Minimum value for first reading of the channel
+
+        If set, the value of the channel is read and needs to be larger
+        than this minimum value to start the comparison phase.
+
+    max_attempts : :class:`float`
+        Maximum number of attempts for reading the channel data.
+
+    max_deviation : :class:`float`
+        Maximum deviation allowed between two values in the comparison phase.
+
+        If the :attr:`low_limit` is set, as soon as the value of the
+        channel is larger than the low limit, the comparison phase starts.
+        Here, two subsequent channel readouts need to be within the
+        boundary set by :attr:`max_deviation`.
+
+        However, no more than :attr:`max_attempts` channel readouts are done.
+
+
+    Examples
+    --------
+    The :class:`AverageChannel` class is not meant to be used directly,
+    as any entities, but rather indirectly by means of the respective
+    facades in the boundaries technical layer of the :mod:`evedata.scan`
+    subpackage. Hence, for the time being, there are no dedicated examples
+    how to use this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.n_averages = 0
+        self.low_limit = 0.0
+        self.max_attempts = 0
+        self.max_deviation = 0.0
+
+
+class IntervalChannel(Channel):
+    """
+    Representation of an interval channel used in a scan module.
+
+    Scan modules use detector channels and motor axes in their main phase.
+    All relevant information regarding a channel with respect to its use in
+    a scan module is contained in this class and classes inheriting from it.
+
+    To get further information on the channel in general, its :attr:`id` can
+    be used to look up this information in the ``setup`` part of the SCML
+    file.
+
+
+    Attributes
+    ----------
+    id : :class:`str`
+        Unique ID of the channel.
+
+        Each channel has a unique ID that is used internally to refer to it.
+        The names displayed in the GUI are "given" names different from this
+        ID, though. The HDF5 datasets in an eveH5 file use these UIDs as name.
+
+    normalize_id : :class:`str`
+        Unique ID of the channel used for normalization.
+
+        Channels can be normalized by other channels, *i.e.* the values
+        divided by the values obtained from the normalizing channel.
+
+    trigger_interval : :class:`float`
+        The interval/rate measurements are taken in seconds
+
+    stopped_by : :class:`str`
+        The channel which when finished stops the mean calculation.
+
+        The attribute contains the unique ID of the corresponding channel.
+
+        Note: This information is *not* included in the eveH5 files on the
+        HDF5 layer up to eveH5 schema version 7.
+
+
+    Examples
+    --------
+    The :class:`IntervalChannel` class is not meant to be used directly,
+    as any entities, but rather indirectly by means of the respective
+    facades in the boundaries technical layer of the :mod:`evedata.scan`
+    subpackage. Hence, for the time being, there are no dedicated examples
+    how to use this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.trigger_interval = 0.0
+        self.stopped_by = ""
+
+
+class PreScan:
+    """
+    Parameters for an option set in the pre-scan phase of a scan module.
+
+    Before actually triggering axes and channels in a scan module, options
+    of these devices can be set in the pre-scan phase, and afterwards in
+    the post-scan phase. For the latter, see the :class:`PostScan` class.
+
+
+    Attributes
+    ----------
+    id : :class:`str`
+        Unique ID of the device.
+
+        Each axis and channel has a unique ID that is used internally to
+        refer to it. The names displayed in the GUI are "given" names
+        different from this ID, though. The HDF5 datasets in an eveH5 file
+        use these UIDs as name.
+
+    value : any (scalar)
+        Value to set the device option to.
+
+        Can be of any type, as long as it is a scalar.
+
+
+    Examples
+    --------
+    The :class:`PreScan` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        self.id = ""
+        self.value = None
+
+
+class PostScan:
+    """
+    Parameters for an option set in the post-scan phase of a scan module.
+
+    Before actually triggering axes and channels in a scan module, options
+    of these devices can be set in the pre-scan phase, and afterwards in
+    the post-scan phase. For the former, see the :class:`PreScan` class.
+
+
+    Attributes
+    ----------
+    id : :class:`str`
+        Unique ID of the device.
+
+        Each axis and channel has a unique ID that is used internally to
+        refer to it. The names displayed in the GUI are "given" names
+        different from this ID, though. The HDF5 datasets in an eveH5 file
+        use these UIDs as name.
+
+    value : any (scalar)
+        Value to set the device option to.
+
+        Can be of any type, as long as it is a scalar.
+
+    reset_original_value : :class:`bool`
+        Whether to reset the value to its original value.
+
+        Default: False
+
+
+    Examples
+    --------
+    The :class:`PostScan` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        self.id = ""
+        self.value = None
+        self.reset_original_value = False
+
+
+class StepFunction:
+    """
+    Base class for step functions defining the steps of a motor axis.
+
+    The eve measurement program allows for different ways of setting motor
+    axis positions/steps. This class provides the generic interface.
+
+
+    Examples
+    --------
+    The :class:`StepFunction` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        self._positions = None
+
+    @property
+    def positions(self):
+        """
+        Set values the axis should have been moved to.
+
+        In case the internal attribute containing the positions has not
+        been set, the :meth:`calculate_positions` method is called (once).
+
+        Returns
+        -------
+        positions : :class:`numpy.array`
+            Set values the axis should have been moved to.
+
+        """
+        if self._positions is None:
+            self.calculate_positions()
+        return self._positions
+
+    @positions.setter
+    def positions(self, positions=None):
+        self._positions = positions
+
+    def calculate_positions(self):
+        """
+        Calculate the positions the axis should have been moved to.
+
+        Positions can be obtained using the :attr:`positions` attribute.
+        In case the attribute internally storing the positions has not yet
+        been set, this method is called (once).
+
+        All classes inheriting from :class:`StepFunction` implement the
+        necessary functionality to obtain the set positions from the
+        parameters given in the scan description.
+
+        """
+        pass
+
+
+class StepRange(StepFunction):
+    """
+    Steps defined by start, stop, and step width.
+
+    In contrast to :class:`StepRanges`, this class allows only one range.
+
+
+    Attributes
+    ----------
+    mode : :class:`str`
+        How to interpret the positions.
+
+        Possible values are ``add`` and ``multiply``.
+
+        In case of ``add``, positions are used as absolute positions or
+        summand for the initial position at the start of the scan module,
+        depending on how :attr:`Axis.position_mode` is set.
+
+        Default: ``add``
+
+    start : :class:`float`
+        First value of the range.
+
+    stop : :class:`float`
+        Last value of the range.
+
+    step_width : :class:`float`
+        Width of the individual steps.
+
+    is_main_axis : :class:`bool`
+        Whether the axis is set as main axis.
+
+        Only for axes with :class:`StepRange` step function,
+        setting one of these axes as main axis defines the number of
+        positions of the other axes in this group.
+
+    Examples
+    --------
+    The :class:`StepRange` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.mode = "add"
+        self.start = 0.0
+        self.stop = 0.0
+        self.step_width = 1
+        self.is_main_axis = False
+
+    def calculate_positions(self):
+        self._positions = np.arange(
+            self.start,
+            self.stop + self.step_width,
+            self.step_width,
+            dtype=float,
+        )
+
+
+class StepRanges(StepFunction):
+    """
+    Steps defined by one or multiple ranges.
+
+    In contrast to :class:`StepRange`, this class allows more than one
+    range to be set. The positions of all ranges are added together.
+
+
+    Attributes
+    ----------
+    expression : :class:`str`
+        Definition understood by the eve GUI to define ranges
+
+        The actual positions are taken from the positions list contained
+        in the SCML as well. Hence, no (re)calculation using the
+        expression is performed.
+
+
+    Examples
+    --------
+    The :class:`StepRanges` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.expression = ""
+
+
+class StepReference(StepFunction):
+    """
+    Steps defined by reference to another axis.
+
+    Allows to set the actual
+
+
+    Attributes
+    ----------
+    mode : :class:`str`
+        How to interpret the positions.
+
+        Possible values are ``add`` and ``multiply``.
+
+        In case of ``add``, positions are used as absolute positions or
+        summand for the initial position at the start of the scan module,
+        depending on how :attr:`Axis.position_mode` is set.
+
+        Default: ``add``
+
+    parameter : :class:`float`
+        Summand or factor used to calculate the position given the reference.
+
+    axis_id : :class:`str`
+        Unique ID of the axis used as reference.
+
+
+    Examples
+    --------
+    The :class:`StepReference` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.mode = "add"
+        self.parameter = {}
+        self.axis_id = ""
+
+
+class StepFile(StepFunction):
+    """
+    One sentence (on one line) describing the class.
+
+    More description comes here...
+
+
+    Attributes
+    ----------
+    attr : :class:`None`
+        Short description
+
+    Raises
+    ------
+    exception
+        Short description when and why raised
+
+
+    Examples
+    --------
+    The :class:`StepFile` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.filename = ""
+
+    def calculate_positions(self):
+        logger.warning(
+            "Step function 'file' does not allow to obtain positions."
+        )
+        self._positions = np.asarray([])

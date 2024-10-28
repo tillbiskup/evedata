@@ -420,7 +420,7 @@ class IntervalChannelMetadata(ChannelMetadata):
     Attributes
     ----------
     trigger_interval : :class:`float`
-        Short description
+        The interval/rate measurements are taken in seconds
 
 
     Examples

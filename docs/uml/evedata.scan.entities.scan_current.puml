@@ -1,0 +1,144 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class Scan {
+    repeat_count : integer
+    description : string
+    comment : string
+    scan_modules : AbstractScanModule[]
+}
+Scan *-- "n" AbstractScanModule
+'Scan *-- "n" PauseCondition
+'Scan *-- "n" Event
+
+'note bottom of PauseCondition: See separate\nevent module.
+
+File *- Scan
+note left of File: See separate\nfile module.
+
+class AbstractScanModule {
+    id : integer
+    name : string
+    parent : integer
+    appended : integer
+    nested : integer
+    is_nested : boolean
+    number_of_positions : integer
+    number_of_positions_per_pass : integer
+    positions : numpy.array
+}
+
+class ScanModule extends AbstractScanModule {
+    number_of_measurements : integer
+    axes : Axis{}
+    channels : Channel{}
+    pre_scan_settings : PreScan{}
+    post_scan_settings : PostScan{}
+    positionings : Positioning[]
+    'plots : Plot[]
+}
+ScanModule *-- "n" Event
+ScanModule *-- "n" Axis
+ScanModule *-- "n" Channel
+ScanModule *-- "n" Positioning
+ScanModule *-- "n" PreScan
+ScanModule *-- "n" PostScan
+ScanModule *-- "n" Plot
+
+note bottom of Plot: See separate\nplot module.
+note bottom of Event: See separate\nevent module.
+
+class DynamicSnapshotModule extends AbstractScanModule
+
+class StaticSnapshotModule extends AbstractScanModule {
+    axes : Axis{}
+    channels : Channel{}
+}
+
+StaticSnapshotModule *-- "n" Axis
+StaticSnapshotModule *-- "n" Channel
+
+Channel -[hidden]> Axis
+
+DynamicSnapshotModule -[hidden]> StaticSnapshotModule
+
+class StaticSnapshotModule {
+}
+
+class Axis {
+    id : string
+    step_function : StepFunction
+    position_mode : "absolute"|"relative"
+    positions : numpy.array
+}
+Axis *-- StepFunction
+
+class Channel {
+    id : string
+    normalize_id : string
+    'redo_events : Event[]
+    deferred_trigger : boolean
+}
+'Channel *-- "n" Event
+
+class IntervalChannel extends Channel {
+    trigger_interval : float
+    stopped_by : string
+}
+
+class AverageChannel extends Channel {
+    n_averages : integer
+    low_limit : float
+    max_attempts : integer
+    max_deviation : float
+}
+
+class Positioning {
+    axis_id : string
+    channel_id : string
+    normalize_channel_id : string
+    type : string
+    parameters : dict
+    position : integer
+}
+'Positioning *-- Controller
+
+class PreScan {
+    id : string
+    value : typevalue
+}
+
+class PostScan {
+    id : string
+    value : typevalue
+    reset_original_value : boolean
+}
+
+class StepFunction {
+    positions : numpy.array
+    calculate_positions()
+}
+
+class StepFile extends StepFunction {
+    filename : string
+}
+
+class StepRange extends StepFunction {
+    mode : "add"|"multiply"
+    start : float
+    stop : float
+    step_width : float
+    is_main_axis : boolean
+}
+
+class StepRanges extends StepFunction {
+    expression : string
+    positions :  numpy.array
+}
+
+class StepReference extends StepFunction {
+    mode : "add"|"multiply"
+    parameter : float
+    axis_id : string
+}
+@enduml

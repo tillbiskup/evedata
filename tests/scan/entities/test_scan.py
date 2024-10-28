@@ -1,4 +1,7 @@
+import logging
 import unittest
+
+import numpy as np
 
 from evedata.scan.entities import scan
 
@@ -63,6 +66,8 @@ class TestScanModule(unittest.TestCase):
             "axes",
             "channels",
             "positionings",
+            "pre_scan_settings",
+            "post_scan_settings",
             "number_of_measurements",
         ]
         for attribute in attributes:
@@ -119,7 +124,6 @@ class TestAxis(unittest.TestCase):
             "step_function",
             "position_mode",
             "positions",
-            "is_main_axis",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -128,7 +132,7 @@ class TestAxis(unittest.TestCase):
 
 class TestSnapshotModule(unittest.TestCase):
     def setUp(self):
-        self.module = scan.SnapshotModule()
+        self.module = scan.StaticSnapshotModule()
 
     def test_instantiate_class(self):
         pass
@@ -171,3 +175,228 @@ class TestPositioning(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.positioning, attribute))
+
+
+class TestDynamicSnapshotModule(unittest.TestCase):
+    def setUp(self):
+        self.module = scan.DynamicSnapshotModule()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "id",
+            "name",
+            "parent",
+            "appended",
+            "nested",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.module, attribute))
+
+    def test_default_setting_of_some_attributes(self):
+        self.assertEqual(1, self.module.number_of_positions)
+        self.assertEqual(1, self.module.number_of_positions_per_pass)
+
+
+class TestAverageChannel(unittest.TestCase):
+    def setUp(self):
+        self.channel = scan.AverageChannel()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "id",
+            "normalize_id",
+            "n_averages",
+            "low_limit",
+            "max_attempts",
+            "max_deviation",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.channel, attribute))
+
+
+class TestIntervalChannel(unittest.TestCase):
+    def setUp(self):
+        self.channel = scan.IntervalChannel()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "id",
+            "normalize_id",
+            "trigger_interval",
+            "stopped_by",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.channel, attribute))
+
+
+class TestPreScan(unittest.TestCase):
+    def setUp(self):
+        self.pre_scan = scan.PreScan()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "id",
+            "value",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.pre_scan, attribute))
+
+
+class TestPostScan(unittest.TestCase):
+    def setUp(self):
+        self.post_scan = scan.PostScan()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = ["id", "value", "reset_original_value"]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.post_scan, attribute))
+
+
+class TestStepFunction(unittest.TestCase):
+    def setUp(self):
+        self.step_function = scan.StepFunction()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "positions",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.step_function, attribute))
+
+    def test_has_calculate_positions_method(self):
+        self.step_function.calculate_positions()
+
+
+class TestStepRange(unittest.TestCase):
+    def setUp(self):
+        self.step_function = scan.StepRange()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "positions",
+            "mode",
+            "start",
+            "stop",
+            "step_width",
+            "is_main_axis",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.step_function, attribute))
+
+    def test_calculate_positions_sets_positions(self):
+        self.step_function.start = 1
+        self.step_function.stop = 5
+        self.step_function.step_width = 2
+        self.step_function.calculate_positions()
+        np.testing.assert_array_equal(
+            np.asarray([1.0, 3.0, 5.0]),
+            self.step_function.positions,
+        )
+        self.assertEqual("float64", self.step_function.positions.dtype.name)
+
+
+class TestStepRanges(unittest.TestCase):
+    def setUp(self):
+        self.step_function = scan.StepRanges()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "positions",
+            "expression",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.step_function, attribute))
+
+    def test_set_positions(self):
+        self.step_function.positions = np.asarray([1.0, 3.0, 5.0])
+
+    def test_calculate_positions(self):
+        self.step_function.calculate_positions()
+
+
+class TestStepReference(unittest.TestCase):
+    def setUp(self):
+        self.step_function = scan.StepReference()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "positions",
+            "mode",
+            "parameter",
+            "axis_id",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.step_function, attribute))
+
+
+class TestStepFile(unittest.TestCase):
+    def setUp(self):
+        self.step_function = scan.StepFile()
+        self.logger = logging.getLogger(name="evedata")
+        self.logger.setLevel(logging.ERROR)
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "positions",
+            "filename",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.step_function, attribute))
+
+    def test_calculate_positions_sets_empty_array(self):
+        self.logger.setLevel(logging.ERROR)
+        self.step_function.calculate_positions()
+        self.assertIsInstance(self.step_function.positions, np.ndarray)
+        np.testing.assert_array_equal(
+            np.asarray([]), self.step_function.positions
+        )
+
+    def test_calculate_positions_logs_warning(self):
+        self.logger.setLevel(logging.WARN)
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.step_function.calculate_positions()
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "Step function 'file' does not allow to obtain positions.",
+        )

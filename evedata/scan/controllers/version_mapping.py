@@ -571,7 +571,7 @@ class VersionMapperV9m2(VersionMapper):
                 element.find("classic").find("valuecount").text
             )
         else:
-            scan_module = scan.SnapshotModule()
+            scan_module = scan.StaticSnapshotModule()
         scan_module.name = element.find("name").text
         scan_module.parent = int(element.find("parent").text)
         try:

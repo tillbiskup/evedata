@@ -533,7 +533,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         for sm_id in snapshot_ids:
             self.assertIsInstance(
                 self.mapper.destination.scan.scan_modules[sm_id],
-                scan.SnapshotModule,
+                scan.StaticSnapshotModule,
             )
 
     def test_map_adds_channels_to_classic_scan_module(self):
