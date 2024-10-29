@@ -565,13 +565,7 @@ class VersionMapperV9m2(VersionMapper):
             self.destination.scan.scan_modules[scan_module].is_nested = True
 
     def _map_scan_module(self, element=None):
-        if element.find("classic"):
-            scan_module = scan.ScanModule()
-            scan_module.number_of_measurements = int(
-                element.find("classic").find("valuecount").text
-            )
-        else:
-            scan_module = scan.StaticSnapshotModule()
+        scan_module = self._get_scan_module_instance(element)
         scan_module.name = element.find("name").text
         scan_module.parent = int(element.find("parent").text)
         try:
@@ -592,10 +586,36 @@ class VersionMapperV9m2(VersionMapper):
                     element=axis, scan_module=scan_module
                 )
             )
+        for pre_scan in element.iter("prescan"):
+            scan_module.pre_scan_settings[pre_scan.find("id").text] = (
+                self._map_scan_module_pre_scan(element=pre_scan)
+            )
+        for post_scan in element.iter("postscan"):
+            scan_module.post_scan_settings[post_scan.find("id").text] = (
+                self._map_scan_module_post_scan(
+                    element=post_scan, scan_module=scan_module
+                )
+            )
         for positioning in element.iter("positioning"):
             scan_module.positionings.append(
                 self._map_scan_module_positioning(positioning)
             )
+        return scan_module
+
+    @staticmethod
+    def _get_scan_module_instance(element):
+        if element.find("classic") is not None:
+            scan_module = scan.ScanModule()
+            scan_module.number_of_measurements = int(
+                element.find("classic").find("valuecount").text
+            )
+        elif (
+            element.find("dynamic_axis_positions") is not None
+            or element.find("dynamic_channel_values") is not None
+        ):
+            scan_module = scan.DynamicSnapshotModule()
+        else:
+            scan_module = scan.StaticSnapshotModule()
         return scan_module
 
     @staticmethod
@@ -722,6 +742,38 @@ class VersionMapperV9m2(VersionMapper):
                     {parameter.attrib["name"]: parameter.text}
                 )
         return positioning
+
+    def _map_scan_module_pre_scan(self, element=None):
+        pre_scan = scan.PreScan()
+        pre_scan.id = element.find("id").text
+        pre_scan.value = self._cast_value(element.find("value"))
+        return pre_scan
+
+    def _map_scan_module_post_scan(self, element=None, scan_module=None):
+        post_scan = scan.PostScan()
+        post_scan.id = element.find("id").text
+        value = element.find("value")
+        if value is not None:
+            post_scan.value = self._cast_value(element.find("value"))
+        reset_original_value = element.find("reset_originalvalue")
+        if (
+            reset_original_value is not None
+            and reset_original_value.text == "true"
+        ):
+            post_scan.reset_original_value = True
+            post_scan.value = scan_module.pre_scan_settings[
+                post_scan.id
+            ].value
+        return post_scan
+
+    @staticmethod
+    def _cast_value(element):
+        element_type = element.attrib["type"]
+        types = {
+            "double": float,
+            "string": str,
+        }
+        return types[element_type](element.text)
 
     def _calculate_positions(self):
         for scan_module in self.destination.scan.scan_modules.values():

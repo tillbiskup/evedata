@@ -33,8 +33,16 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
                     <xpos>90</xpos>
                     <ypos>83</ypos>
                     <parent>0</parent>
-                    <appended>1</appended>
+                    <appended>16</appended>
                     <dynamic_axis_positions/>
+                </scanmodule>
+                <scanmodule id="16">
+                    <name>Dynamic Channel Snapshot</name>
+                    <xpos>179</xpos>
+                    <ypos>128</ypos>
+                    <parent>2</parent>
+                    <appended>1</appended>
+                    <dynamic_channel_values/>
                 </scanmodule>
                 <scanmodule id="1">
                     <name>SM 1</name>
@@ -525,16 +533,22 @@ class TestVersionMapperV9m2(unittest.TestCase):
         destination = Scan()
         self.mapper.map(destination=destination)
         classic_ids = [1, 2]
-        snapshot_ids = [15, 3, 4]
+        static_snapshot_ids = [3, 4]
+        dynamic_snapshot_ids = [15, 16]
         for sm_id in classic_ids:
             self.assertIsInstance(
                 self.mapper.destination.scan.scan_modules[sm_id],
                 scan.ScanModule,
             )
-        for sm_id in snapshot_ids:
+        for sm_id in static_snapshot_ids:
             self.assertIsInstance(
                 self.mapper.destination.scan.scan_modules[sm_id],
                 scan.StaticSnapshotModule,
+            )
+        for sm_id in dynamic_snapshot_ids:
+            self.assertIsInstance(
+                self.mapper.destination.scan.scan_modules[sm_id],
+                scan.DynamicSnapshotModule,
             )
 
     def test_map_adds_channels_to_classic_scan_module(self):
@@ -1660,4 +1674,96 @@ class TestVersionMapperV9m2(unittest.TestCase):
             self.mapper.destination.scan.scan_modules[1]
             .channels["mlsCurrent:Mnt1lifeTimechan1"]
             .max_attempts,
+        )
+
+    def test_map_prescan(self):
+        smchannel = """<prescan>
+                            <id>SimMt:testrack01000.LLM</id>
+                            <value type="double">30</value>
+                        </prescan>
+                        <prescan>
+                            <id>K0617:gw24126.SCAN</id>
+                            <value type="string">Passive</value>
+                        </prescan>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        pre_scan_settings = self.mapper.destination.scan.scan_modules[
+            1
+        ].pre_scan_settings
+        self.assertTrue(pre_scan_settings)
+        for item in pre_scan_settings.values():
+            self.assertIsInstance(item, scan.PreScan)
+            self.assertTrue(item.id)
+            self.assertTrue(item.value)
+        self.assertIsInstance(
+            pre_scan_settings["SimMt:testrack01000.LLM"].value, float
+        )
+        self.assertIsInstance(
+            pre_scan_settings["K0617:gw24126.SCAN"].value, str
+        )
+
+    def test_map_postscan(self):
+        smchannel = """<prescan>
+                            <id>SimMt:testrack01000.LLM</id>
+                            <value type="double">30</value>
+                        </prescan>
+                        <postscan>
+                            <id>SimMt:testrack01000.LLM</id>
+                            <reset_originalvalue>true</reset_originalvalue>
+                        </postscan>
+                        <postscan>
+                            <id>K0617:gw24126.SCAN</id>
+                            <value type="string">.5 second</value>
+                        </postscan>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        post_scan_settings = self.mapper.destination.scan.scan_modules[
+            1
+        ].post_scan_settings
+        self.assertTrue(post_scan_settings)
+        for item in post_scan_settings.values():
+            self.assertIsInstance(item, scan.PostScan)
+            self.assertTrue(item.id)
+        self.assertTrue(
+            post_scan_settings["SimMt:testrack01000.LLM"].reset_original_value
+        )
+        self.assertIsInstance(
+            post_scan_settings["K0617:gw24126.SCAN"].value, str
+        )
+
+    def test_map_postscan_sets_original_value(self):
+        smchannel = """<prescan>
+                            <id>SimMt:testrack01000.LLM</id>
+                            <value type="double">30</value>
+                        </prescan>
+                        <postscan>
+                            <id>SimMt:testrack01000.LLM</id>
+                            <reset_originalvalue>true</reset_originalvalue>
+                        </postscan>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        pre_scan_settings = self.mapper.destination.scan.scan_modules[
+            1
+        ].pre_scan_settings
+        post_scan_settings = self.mapper.destination.scan.scan_modules[
+            1
+        ].post_scan_settings
+        self.assertEqual(
+            pre_scan_settings["SimMt:testrack01000.LLM"].value,
+            post_scan_settings["SimMt:testrack01000.LLM"].value,
         )
