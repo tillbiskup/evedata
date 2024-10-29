@@ -600,8 +600,37 @@ class VersionMapperV9m2(VersionMapper):
 
     @staticmethod
     def _map_scan_module_channel(element):
-        channel = scan.Channel()
+        if element.find("interval"):
+            channel = scan.IntervalChannel()
+            channel.trigger_interval = float(
+                element.find("interval").find("triggerinterval").text
+            )
+            channel.stopped_by = (
+                element.find("interval").find("stoppedby").text
+            )
+        else:
+            if element.find("standard").find("averagecount") is not None:
+                channel = scan.AverageChannel()
+                parameters = {
+                    "averagecount": {"n_averages": int},
+                    "maxdeviation": {"max_deviation": float},
+                    "minimum": {"low_limit": float},
+                    "maxattempts": {"max_attempts": int},
+                }
+                for key, value in parameters.items():
+                    parameter = element.find("standard").find(key)
+                    if parameter is not None:
+                        attribute, cast = list(value.items())[0]
+                        setattr(channel, attribute, cast(parameter.text))
+            else:
+                channel = scan.Channel()
+            deferred = element.find("standard").find("deferredtrigger")
+            if deferred is not None and deferred.text.lower() == "true":
+                channel.deferred_trigger = True
         channel.id = element.find("channelid").text
+        normalize_id = element.find("normalize_id")
+        if normalize_id is not None:
+            channel.normalize_id = normalize_id.text
         return channel
 
     def _map_scan_module_axis(self, element=None, scan_module=None):

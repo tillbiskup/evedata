@@ -336,6 +336,7 @@ MINIMAL_SCML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
                         <triggerconfirmaxis>false</triggerconfirmaxis>
                         <triggerconfirmchannel>false</triggerconfirmchannel>
                         $smaxis
+                        $smchannel
                     </classic>
                 </scanmodule>
             </scanmodules>
@@ -593,7 +594,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_add)
+            xml=template.substitute(smaxis=smaxis_add, smchannel="")
         )
         destination = Scan()
         self.logger.setLevel(logging.WARN)
@@ -620,7 +621,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_add)
+            xml=template.substitute(smaxis=smaxis_add, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -646,7 +647,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_add)
+            xml=template.substitute(smaxis=smaxis_add, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -672,7 +673,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_add)
+            xml=template.substitute(smaxis=smaxis_add, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -697,7 +698,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_add)
+            xml=template.substitute(smaxis=smaxis_add, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -722,7 +723,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_add)
+            xml=template.substitute(smaxis=smaxis_add, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -745,7 +746,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_positionlist)
+            xml=template.substitute(smaxis=smaxis_positionlist, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -769,7 +770,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_range)
+            xml=template.substitute(smaxis=smaxis_range, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -790,7 +791,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_range)
+            xml=template.substitute(smaxis=smaxis_range, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -811,7 +812,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_range)
+            xml=template.substitute(smaxis=smaxis_range, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -832,7 +833,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_range)
+            xml=template.substitute(smaxis=smaxis_range, smchannel="")
         )
         destination = Scan()
         self.logger.setLevel(logging.WARN)
@@ -858,7 +859,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_plugin)
+            xml=template.substitute(smaxis=smaxis_plugin, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -908,7 +909,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_multiply)
+            xml=template.substitute(smaxis=smaxis_multiply, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -936,7 +937,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_multiply)
+            xml=template.substitute(smaxis=smaxis_multiply, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -979,7 +980,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_positionings)
+            xml=template.substitute(smaxis=smaxis_positionings, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -1030,7 +1031,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_positionings)
+            xml=template.substitute(smaxis=smaxis_positionings, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -1119,7 +1120,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis_multiply)
+            xml=template.substitute(smaxis=smaxis_multiply, smchannel="")
         )
         destination = Scan()
         self.mapper.map(destination=destination)
@@ -1143,7 +1144,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis).replace(
+            xml=template.substitute(smaxis=smaxis, smchannel="").replace(
                 "<valuecount>1", "<valuecount>2"
             )
         )
@@ -1171,7 +1172,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
         self.mapper.source.from_string(
-            xml=template.substitute(smaxis=smaxis).replace(
+            xml=template.substitute(smaxis=smaxis, smchannel="").replace(
                 "<valuecount>1", "<valuecount>2"
             )
         )
@@ -1494,4 +1495,169 @@ class TestVersionMapperV9m2(unittest.TestCase):
             self.mapper.destination.scan.scan_modules[1]
             .positionings[0]
             .position,
+        )
+
+    def test_map_channel_sets_deferred_trigger(self):
+        smchannel = """<smchannel>
+                            <channelid>mlsCurrent:Mnt1chan1</channelid>
+                            <standard>
+                                <deferredtrigger>true</deferredtrigger>
+                            </standard>
+                        </smchannel>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertTrue(
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt1chan1"]
+            .deferred_trigger,
+        )
+
+    def test_map_channel_sets_interval_channel(self):
+        smchannel = """<smchannel>
+                            <channelid>mlsCurrent:Mnt2chan1</channelid>
+                            <standard>
+                                <sendreadyevent>true</sendreadyevent>
+                            </standard>
+                        </smchannel>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1lifeTimechan1</channelid>
+                            <interval>
+                                <triggerinterval>0.1</triggerinterval>
+                                <stoppedby>mlsCurrent:Mnt2chan1</stoppedby>
+                            </interval>
+                        </smchannel>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertIsInstance(
+            self.mapper.destination.scan.scan_modules[1].channels[
+                "mlsCurrent:Mnt1lifeTimechan1"
+            ],
+            scan.IntervalChannel,
+        )
+        self.assertEqual(
+            0.1,
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt1lifeTimechan1"]
+            .trigger_interval,
+        )
+        self.assertEqual(
+            "mlsCurrent:Mnt2chan1",
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt1lifeTimechan1"]
+            .stopped_by,
+        )
+
+    def test_channel_sets_normalise_id(self):
+        smchannel = """<smchannel>
+                            <channelid>mlsCurrent:Mnt2chan1</channelid>
+                            <normalize_id>mlsCurrent:Mnt1lifeTimechan1</normalize_id>
+                            <standard/>
+                        </smchannel>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1lifeTimechan1</channelid>
+                            <standard/>
+                        </smchannel>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            "mlsCurrent:Mnt1lifeTimechan1",
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt2chan1"]
+            .normalize_id,
+        )
+
+    def test_interval_channel_sets_normalise_id(self):
+        smchannel = """<smchannel>
+                            <channelid>mlsCurrent:Mnt2chan1</channelid>
+                            <normalize_id>mlsCurrent:Mnt1lifeTimechan1</normalize_id>
+                            <interval>
+                                <triggerinterval>1.0</triggerinterval>
+                                <stoppedby>mlsCurrent:Mnt1chan1</stoppedby>
+                            </interval>
+                        </smchannel>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1lifeTimechan1</channelid>
+                            <standard/>
+                        </smchannel>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1chan1</channelid>
+                            <standard>
+                                <sendreadyevent>true</sendreadyevent>
+                            </standard>
+                        </smchannel>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            "mlsCurrent:Mnt1lifeTimechan1",
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt2chan1"]
+            .normalize_id,
+        )
+
+    def test_map_channel_sets_average_channel(self):
+        smchannel = """<smchannel>
+                            <channelid>mlsCurrent:Mnt1lifeTimechan1</channelid>
+                            <standard>
+                                <averagecount>5</averagecount>
+                                <maxdeviation>5.0</maxdeviation>
+                                <minimum>1.0E-5</minimum>
+                                <maxattempts>10</maxattempts>
+                            </standard>
+                        </smchannel>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis="", smchannel=smchannel)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertIsInstance(
+            self.mapper.destination.scan.scan_modules[1].channels[
+                "mlsCurrent:Mnt1lifeTimechan1"
+            ],
+            scan.AverageChannel,
+        )
+        self.assertEqual(
+            5,
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt1lifeTimechan1"]
+            .n_averages,
+        )
+        self.assertEqual(
+            5.0,
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt1lifeTimechan1"]
+            .max_deviation,
+        )
+        self.assertEqual(
+            1e-5,
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt1lifeTimechan1"]
+            .low_limit,
+        )
+        self.assertEqual(
+            10,
+            self.mapper.destination.scan.scan_modules[1]
+            .channels["mlsCurrent:Mnt1lifeTimechan1"]
+            .max_attempts,
         )
