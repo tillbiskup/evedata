@@ -522,11 +522,11 @@ class Axis:
         The names displayed in the GUI are "given" names different from this
         ID, though. The HDF5 datasets in an eveH5 file use these UIDs as name.
 
-    step_function : :class:`str`
-        Name of the function used to determine the axis positions.
+    step_function : :class:`StepFunction`
+        Function used to determine the axis positions.
 
-        Possible values are: "add", "multiply", "file", "plugin",
-        "positionlist", "range"
+        Instance of a subclass of :class:`StepFunction`, depending on how
+        the step function was defined in the SCML.
 
     position_mode : :class:`str`
         Mode used for positioning the axis.
@@ -561,7 +561,7 @@ class Axis:
 
     def __init__(self, sm_id=""):
         self.id = sm_id  # noqa
-        self.step_function = ""
+        self.step_function = StepFunction()
         self.position_mode = "absolute"
         self.positions = None
 
@@ -1160,6 +1160,11 @@ class StepRange(StepFunction):
 
     In contrast to :class:`StepRanges`, this class allows only one range.
 
+    Another difference to the :class:`StepRanges` class: For all axes
+    using :class:`StepRange`, you can define one axis to be the main axis,
+    and this sets the number of steps for all other axes in this group.
+    See :attr:`is_main_axis` for details.
+
 
     Attributes
     ----------
@@ -1205,16 +1210,19 @@ class StepRange(StepFunction):
         self.mode = "add"
         self.start = 0.0
         self.stop = 0.0
-        self.step_width = 1
+        self.step_width = 0
         self.is_main_axis = False
 
     def calculate_positions(self):
-        self._positions = np.arange(
-            self.start,
-            self.stop + self.step_width,
-            self.step_width,
-            dtype=float,
-        )
+        if self.step_width == 0:
+            self._positions = np.asarray(self.start, dtype=float)
+        else:
+            self._positions = np.arange(
+                self.start,
+                self.stop + self.step_width,
+                self.step_width,
+                dtype=float,
+            )
 
 
 class StepRanges(StepFunction):
@@ -1254,7 +1262,19 @@ class StepReference(StepFunction):
     """
     Steps defined by reference to another axis.
 
-    Allows to set the actual
+    Allows to set the actual axis position by reference to another axis.
+
+    .. note::
+
+        Currently (version 2.1), the eve engine accepts only to reference
+        axes from the same scan module, meaning that the axis has the same
+        number of positions as the reference axis.
+
+        The intended behaviour for referencing axes *outside* the current
+        scan module is currently ill-defined. Despite the error displayed,
+        the engine saves "0" as position(s) to the respective axis,
+        with as many positions as total positions in the respective scan
+        module.
 
 
     Attributes
@@ -1296,20 +1316,21 @@ class StepReference(StepFunction):
 
 class StepFile(StepFunction):
     """
-    One sentence (on one line) describing the class.
+    Steps defined using an external file.
 
-    More description comes here...
+    The general problem with defining steps using an external file: Only
+    the filename is provided in the scan description, and the actual file
+    read at some point between loading and executing the scan by the
+    engine. The time between defining the scan and actually loading the
+    contents of the external file referenced by its filename can be
+    everything between seconds and years. Hence, there is currently no way
+    to get *any* information on the positions from the scan description.
 
 
     Attributes
     ----------
-    attr : :class:`None`
+    filename : :class:`str`
         Short description
-
-    Raises
-    ------
-    exception
-        Short description when and why raised
 
 
     Examples
