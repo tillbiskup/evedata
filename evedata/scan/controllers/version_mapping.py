@@ -735,6 +735,9 @@ class VersionMapperV9m2(VersionMapper):
         positioning = scan.Positioning()
         positioning.axis_id = element.find("axis_id").text
         positioning.channel_id = element.find("channel_id").text
+        normalize_channel = element.find("normalize_id")
+        if normalize_channel is not None:
+            positioning.normalize_channel_id = normalize_channel.text
         positioning.type = element.find("plugin").attrib["name"].lower()
         for parameter in element.find("plugin").iter("parameter"):
             if parameter.attrib["name"] != "location":

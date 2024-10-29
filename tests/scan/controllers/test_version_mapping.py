@@ -514,7 +514,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
             self.mapper.destination.scan.scan_modules[15].appended,
         )
         self.assertEqual(
-            int(self.mapper.source.scan_modules[1].find("nested").text),
+            int(self.mapper.source.scan_modules[2].find("nested").text),
             self.mapper.destination.scan.scan_modules[1].nested,
         )
 
@@ -1053,6 +1053,51 @@ class TestVersionMapperV9m2(unittest.TestCase):
             1
         ].positionings:
             self.assertTrue(positioning.parameters)
+
+    def test_map_positionings_normalize(self):
+        smaxis_positionings = """<smaxis>
+                            <axisid>SimMt:testrack01000</axisid>
+                            <stepfunction>Range</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <range>
+                                <expression>1:20</expression>
+                                <positionlist>1, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0</positionlist>
+                            </range>
+                        </smaxis>
+                        <smchannel>
+                            <channelid>mlsCurrent:Mnt1chan1</channelid>
+                            <standard/>
+                        </smchannel>
+                        <positioning>
+                            <axis_id>SimMt:testrack01000</axis_id>
+                            <channel_id>mlsCurrent:Mnt1chan1</channel_id>
+                            <normalize_id>mlsCurrent:Mnt1chan1</normalize_id>
+                            <plugin name="CENTER">
+                                <parameter name="location">/path/to/plugin3</parameter>
+                                <parameter name="threshold">50</parameter>
+                            </plugin>
+                        </positioning>
+                        <positioning>
+                            <axis_id>Counter-mot</axis_id>
+                            <channel_id>mlsCurrent:Mnt1chan1</channel_id>
+                            <plugin name="EDGE">
+                                <parameter name="location">/path/to/plugin3</parameter>
+                                <parameter name="number from left">1</parameter>
+                            </plugin>
+                        </positioning>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=smaxis_positionings, smchannel="")
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            "mlsCurrent:Mnt1chan1",
+            self.mapper.destination.scan.scan_modules[1]
+            .positionings[0]
+            .normalize_channel_id,
+        )
 
     def test_number_of_positions_per_pass(self):
         self.mapper.source = SCML()
