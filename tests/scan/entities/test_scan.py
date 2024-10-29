@@ -105,6 +105,7 @@ class TestChannel(unittest.TestCase):
         attributes = [
             "id",
             "normalize_id",
+            "deferred_trigger",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -344,6 +345,7 @@ class TestStepRanges(unittest.TestCase):
     def test_has_attributes(self):
         attributes = [
             "positions",
+            "position_list",
             "expression",
         ]
         for attribute in attributes:
@@ -354,7 +356,16 @@ class TestStepRanges(unittest.TestCase):
         self.step_function.positions = np.asarray([1.0, 3.0, 5.0])
 
     def test_calculate_positions(self):
-        self.step_function.calculate_positions()
+        self.step_function.position_list = "1, 2, 3, 5, 6, 7"
+        np.testing.assert_array_equal(
+            np.asarray(
+                [
+                    float(item)
+                    for item in self.step_function.position_list.split(",")
+                ]
+            ),
+            self.step_function.positions,
+        )
 
 
 class TestStepReference(unittest.TestCase):
@@ -370,10 +381,63 @@ class TestStepReference(unittest.TestCase):
             "mode",
             "parameter",
             "axis_id",
+            "scan_module",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.step_function, attribute))
+
+    def test_calculate_positions_with_axis_in_same_scan_module_add(self):
+        scan_module = scan.ScanModule()
+        axis = scan.Axis()
+        axis.step_function = scan.StepRange()
+        axis.step_function.positions = np.asarray([2.0, 3.0, 4.0])
+        scan_module.axes["foo"] = axis
+        self.step_function.scan_module = scan_module
+        self.step_function.parameter = 2.0
+        self.step_function.mode = "add"
+        self.step_function.axis_id = "foo"
+        np.testing.assert_array_equal(
+            axis.step_function.positions + self.step_function.parameter,
+            self.step_function.positions,
+        )
+
+    def test_calculate_positions_with_axis_in_same_scan_module_multiply(self):
+        scan_module = scan.ScanModule()
+        axis = scan.Axis()
+        axis.step_function = scan.StepRange()
+        axis.step_function.positions = np.asarray([2.0, 3.0, 4.0])
+        scan_module.axes["foo"] = axis
+        self.step_function.scan_module = scan_module
+        self.step_function.parameter = 2.0
+        self.step_function.mode = "multiply"
+        self.step_function.axis_id = "foo"
+        np.testing.assert_array_equal(
+            axis.step_function.positions * self.step_function.parameter,
+            self.step_function.positions,
+        )
+
+    def test_calculate_positions_without_scan_module(self):
+        self.step_function.parameter = 2.0
+        self.step_function.mode = "add"
+        self.step_function.axis_id = "foo"
+        np.testing.assert_array_equal(
+            np.asarray([0.0]), self.step_function.positions
+        )
+
+    def test_calculate_positions_with_axis_not_in_same_scan_module(self):
+        scan_module = scan.ScanModule()
+        axis = scan.Axis()
+        axis.step_function = scan.StepRange()
+        axis.step_function.positions = np.asarray([2.0, 3.0, 4.0])
+        scan_module.axes["foo"] = axis
+        self.step_function.scan_module = scan_module
+        self.step_function.parameter = 2.0
+        self.step_function.mode = "add"
+        self.step_function.axis_id = "bar"
+        np.testing.assert_array_equal(
+            np.asarray([0.0]), self.step_function.positions
+        )
 
 
 class TestStepFile(unittest.TestCase):
@@ -410,4 +474,33 @@ class TestStepFile(unittest.TestCase):
         self.assertEqual(
             captured.records[0].getMessage(),
             "Step function 'file' does not allow to obtain positions.",
+        )
+
+
+class TestStepList(unittest.TestCase):
+    def setUp(self):
+        self.step_function = scan.StepList()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_has_attributes(self):
+        attributes = [
+            "positions",
+            "position_list",
+        ]
+        for attribute in attributes:
+            with self.subTest(attribute=attribute):
+                self.assertTrue(hasattr(self.step_function, attribute))
+
+    def test_calculate_positions(self):
+        self.step_function.position_list = "1, 2, 3,4, 5"
+        np.testing.assert_array_equal(
+            np.asarray(
+                [
+                    float(item)
+                    for item in self.step_function.position_list.split(",")
+                ]
+            ),
+            self.step_function.positions,
         )

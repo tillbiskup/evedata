@@ -366,6 +366,7 @@ class AxesLastFill(Join):
     def __init__(self, measurement=None):
         super().__init__(measurement=measurement)
 
+    # pylint: disable-next=too-many-locals
     def _join(self, data=None, axes=None, scan_module=None):
         result = []
         data_device = self.measurement.scan_modules[scan_module].data[data[0]]

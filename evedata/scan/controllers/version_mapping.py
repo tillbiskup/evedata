@@ -588,7 +588,9 @@ class VersionMapperV9m2(VersionMapper):
             )
         for axis in element.iter("smaxis"):
             scan_module.axes[axis.find("axisid").text] = (
-                self._map_scan_module_axis(axis)
+                self._map_scan_module_axis(
+                    element=axis, scan_module=scan_module
+                )
             )
         for positioning in element.iter("positioning"):
             scan_module.positionings.append(
@@ -602,84 +604,82 @@ class VersionMapperV9m2(VersionMapper):
         channel.id = element.find("channelid").text
         return channel
 
-    def _map_scan_module_axis(self, element):
+    def _map_scan_module_axis(self, element=None, scan_module=None):
         axis = scan.Axis()
         axis.id = element.find("axisid").text
-        axis.step_function = element.find("stepfunction").text.lower()
-        if axis.step_function in ["add", "multiply"]:
-            is_main_axis = (
-                element.find("startstopstep").find("ismainaxis").text
-            )
-            if is_main_axis == "true":
-                axis.is_main_axis = True
-            else:
-                axis.is_main_axis = False
-        if axis.step_function in ["multiply"]:
+        step_function = element.find("stepfunction").text.lower()
+        if step_function in ["multiply"]:
             axis.position_mode = "relative"
         else:
             axis.position_mode = element.find("positionmode").text
         try:
-            axis.positions = getattr(
-                self, f"_map_axis_stepfunction_{axis.step_function}"
-            )(element)
+            if step_function == "plugin":
+                axis.step_function = getattr(
+                    self, f"_map_axis_stepfunction_{step_function}"
+                )(element, scan_module)
+            else:
+                axis.step_function = getattr(
+                    self, f"_map_axis_stepfunction_{step_function}"
+                )(element)
         except AttributeError:
             logger.warning(
-                "Step function '%s' not understood.", axis.step_function
+                "Step function '%s' not understood.", step_function
             )
         return axis
 
     @staticmethod
     def _map_axis_stepfunction_add(element):
-        start = float(element.find("startstopstep").find("start").text)
-        stop = float(element.find("startstopstep").find("stop").text)
-        step_width = float(
+        step_function = scan.StepRange()
+        step_function.start = float(
+            element.find("startstopstep").find("start").text
+        )
+        step_function.stop = float(
+            element.find("startstopstep").find("stop").text
+        )
+        step_function.step_width = float(
             element.find("startstopstep").find("stepwidth").text
         )
-        return np.arange(start, stop + step_width, step_width)
+        step_function.is_main_axis = (
+            element.find("startstopstep").find("ismainaxis").text.lower()
+            == "true"
+        )
+        return step_function
 
-    @staticmethod
-    def _map_axis_stepfunction_multiply(element):
-        start = float(element.find("startstopstep").find("start").text)
-        stop = float(element.find("startstopstep").find("stop").text)
-        step_width = float(
-            element.find("startstopstep").find("stepwidth").text
-        )
-        return np.arange(start, stop + step_width, step_width)
+    def _map_axis_stepfunction_multiply(self, element):
+        return self._map_axis_stepfunction_add(element)
 
     @staticmethod
     def _map_axis_stepfunction_positionlist(element):
-        positions = [
-            float(item)
-            for item in element.find("positionlist").text.split(",")
-        ]
-        return np.asarray(positions)
+        step_function = scan.StepList()
+        step_function.position_list = element.find("positionlist").text
+        return step_function
 
     @staticmethod
     def _map_axis_stepfunction_range(element):
-        positions = [
-            float(item)
-            for item in element.find("range")
-            .find("positionlist")
-            .text.split(",")
-        ]
-        return np.asarray(positions)
+        step_function = scan.StepRanges()
+        step_function.position_list = (
+            element.find("range").find("positionlist").text
+        )
+        return step_function
 
     @staticmethod
-    def _map_axis_stepfunction_file(element):  # noqa
-        # No chance to get any positions.
-        logger.warning(
-            "Step function 'file' does not allow to obtain positions."
-        )
-        return np.asarray([])
+    def _map_axis_stepfunction_file(element):
+        step_function = scan.StepFile()
+        step_function.filename = element.find("stepfilename").text
+        return step_function
 
     @staticmethod
-    def _map_axis_stepfunction_plugin(element):  # noqa
-        # TODO: Implement positions somewhere, probably in later code
-        logger.warning(
-            "Step function 'plugin' currently does not allow to obtain "
-            "positions."
-        )
-        return np.asarray([])
+    def _map_axis_stepfunction_plugin(element, scan_module):  # noqa
+        step_function = scan.StepReference()
+        step_function.scan_module = scan_module
+        if element.find("plugin").attrib["name"].endswith("Multiply"):
+            step_function.mode = "multiply"
+        for parameter in element.find("plugin").findall("parameter"):
+            if parameter.attrib["name"] in ["summand", "factor"]:
+                step_function.parameter = float(parameter.text)
+            if parameter.attrib["name"] == "referenceaxis":
+                step_function.axis_id = parameter.text
+        return step_function
 
     @staticmethod
     def _map_scan_module_positioning(element):

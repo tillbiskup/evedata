@@ -624,11 +624,11 @@ class TestVersionMapperV9m2(unittest.TestCase):
         )
         destination = Scan()
         self.mapper.map(destination=destination)
-        self.assertEqual(
-            "add",
+        self.assertIsInstance(
             self.mapper.destination.scan.scan_modules[1]
             .axes["Timer1-mot-double"]
             .step_function,
+            scan.StepRange,
         )
 
     def test_map_axis_add_sets_position_mode(self):
@@ -679,7 +679,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         self.assertTrue(
             self.mapper.destination.scan.scan_modules[1]
             .axes["Timer1-mot-double"]
-            .is_main_axis,
+            .step_function.is_main_axis,
         )
 
     def test_map_axis_add_sets_main_axis_false(self):
@@ -704,7 +704,7 @@ class TestVersionMapperV9m2(unittest.TestCase):
         self.assertFalse(
             self.mapper.destination.scan.scan_modules[1]
             .axes["Timer1-mot-double"]
-            .is_main_axis,
+            .step_function.is_main_axis,
         )
 
     def test_map_axis_add_sets_positions(self):
@@ -780,6 +780,27 @@ class TestVersionMapperV9m2(unittest.TestCase):
             .positions,
         )
 
+    def test_map_axis_file_sets_filename(self):
+        smaxis_range = """<smaxis>
+                            <axisid>Counter-mot</axisid>
+                            <stepfunction>File</stepfunction>
+                            <positionmode>absolute</positionmode>
+                            <stepfilename>/dev/null</stepfilename>
+                        </smaxis>"""
+        template = Template(MINIMAL_SCML_TEMPLATE)
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=template.substitute(smaxis=smaxis_range)
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            "/dev/null",
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .step_function.filename,
+        )
+
     def test_map_axis_file_sets_positions_to_empty_array(self):
         smaxis_range = """<smaxis>
                             <axisid>Counter-mot</axisid>
@@ -823,14 +844,14 @@ class TestVersionMapperV9m2(unittest.TestCase):
             "Step function 'file' does not allow to obtain positions.",
         )
 
-    def test_map_axis_plugin_logs_warning(self):
+    def test_map_axis_plugin_sets_step_function(self):
         smaxis_plugin = """<smaxis>
                             <axisid>Counter-mot</axisid>
                             <stepfunction>Plugin</stepfunction>
                             <positionmode>absolute</positionmode>
-                            <plugin name="ReferenceAdd">
+                            <plugin name="ReferenceMultiply">
                                 <parameter name="location">/path/to/referenceadd</parameter>
-                                <parameter name="summand">0.0</parameter>
+                                <parameter name="summand">5.0</parameter>
                                 <parameter name="referenceaxis">Timer1-mot-double</parameter>
                             </plugin>
                         </smaxis>"""
@@ -840,14 +861,36 @@ class TestVersionMapperV9m2(unittest.TestCase):
             xml=template.substitute(smaxis=smaxis_plugin)
         )
         destination = Scan()
-        self.logger.setLevel(logging.WARN)
-        with self.assertLogs(level=logging.WARN) as captured:
-            self.mapper.map(destination=destination)
-        self.assertEqual(len(captured.records), 1)
+        self.mapper.map(destination=destination)
+        self.assertIsInstance(
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .step_function,
+            scan.StepReference,
+        )
         self.assertEqual(
-            captured.records[0].getMessage(),
-            "Step function 'plugin' currently does not allow to obtain "
-            "positions.",
+            "multiply",
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .step_function.mode,
+        )
+        self.assertEqual(
+            5.0,
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .step_function.parameter,
+        )
+        self.assertEqual(
+            "Timer1-mot-double",
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .step_function.axis_id,
+        )
+        self.assertEqual(
+            self.mapper.destination.scan.scan_modules[1],
+            self.mapper.destination.scan.scan_modules[1]
+            .axes["Counter-mot"]
+            .step_function.scan_module,
         )
 
     def test_map_axis_multiply_sets_positions(self):

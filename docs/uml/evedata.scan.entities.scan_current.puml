@@ -133,6 +133,7 @@ class StepRange extends StepFunction {
 
 class StepRanges extends StepFunction {
     expression : string
+    positionlist : string
     positions :  numpy.array
 }
 
@@ -140,5 +141,9 @@ class StepReference extends StepFunction {
     mode : "add"|"multiply"
     parameter : float
     axis_id : string
+}
+
+class StepList extends StepFunction {
+    positionlist : string
 }
 @enduml

@@ -484,6 +484,17 @@ class Channel:
         Channels can be normalized by other channels, *i.e.* the values
         divided by the values obtained from the normalizing channel.
 
+    deferred_trigger : :class:`bool`
+        Whether the channel is triggered after all others in the scan module.
+
+        For some channels, their value depends on other channels to be
+        triggered. Hence, there are two times within a scan module when
+        channels are triggered: the first is after triggering all axes and
+        reading back their positions, the second is after triggering all
+        (non-deferred) channels.
+
+        Default: False
+
 
     Examples
     --------
@@ -498,6 +509,7 @@ class Channel:
     def __init__(self):
         self.id = ""  # noqa
         self.normalize_id = ""
+        self.deferred_trigger = False
 
 
 class Axis:
@@ -538,16 +550,6 @@ class Axis:
 
         Default: "absolute"
 
-    positions : :class:`numpy.array`
-        Set values the axis should have been moved to.
-
-        Whether the axis ever reached these positions is an entirely
-        different matter that can be resolved by comparing these set
-        values with the values recorded by the engine.
-
-        If :attr:`step_function` is set to "file", no positions can be
-        inferred from the SCML file, as they are simply not contained.
-
 
     Examples
     --------
@@ -563,7 +565,34 @@ class Axis:
         self.id = sm_id  # noqa
         self.step_function = StepFunction()
         self.position_mode = "absolute"
-        self.positions = None
+        self._positions = None
+
+    @property
+    def positions(self):
+        """
+        Set values the axis should have been moved to.
+
+        Whether the axis ever reached these positions is an entirely
+        different matter that can be resolved by comparing these set
+        values with the values recorded by the engine.
+
+        If :attr:`step_function` is an instance of :class:`StepFile`,
+        no positions can be inferred from the SCML file, as they are
+        simply not contained.
+
+        Returns
+        -------
+        positions : :class:`numpy.array`
+            Set values the axis should have been moved to.
+
+        """
+        if self._positions is None:
+            self._positions = self.step_function.positions
+        return self._positions
+
+    @positions.setter
+    def positions(self, positions=None):
+        self._positions = positions
 
 
 class StaticSnapshotModule(AbstractScanModule):
@@ -1045,7 +1074,7 @@ class PreScan:
     """
 
     def __init__(self):
-        self.id = ""
+        self.id = ""  # noqa
         self.value = None
 
 
@@ -1090,7 +1119,7 @@ class PostScan:
     """
 
     def __init__(self):
-        self.id = ""
+        self.id = ""  # noqa
         self.value = None
         self.reset_original_value = False
 
@@ -1151,7 +1180,6 @@ class StepFunction:
         parameters given in the scan description.
 
         """
-        pass
 
 
 class StepRange(StepFunction):
@@ -1214,6 +1242,17 @@ class StepRange(StepFunction):
         self.is_main_axis = False
 
     def calculate_positions(self):
+        """
+        Calculate the positions the axis should have been moved to.
+
+        Positions can be obtained using the :attr:`positions` attribute.
+        In case the attribute internally storing the positions has not yet
+        been set, this method is called (once).
+
+        If :attr:`step_width` is zero, the value of :attr:`start` is
+        set (as numpy array).
+
+        """
         if self.step_width == 0:
             self._positions = np.asarray(self.start, dtype=float)
         else:
@@ -1242,6 +1281,9 @@ class StepRanges(StepFunction):
         in the SCML as well. Hence, no (re)calculation using the
         expression is performed.
 
+    position_list : :class:`str`
+        Comma-separated list of positions as text.
+
 
     Examples
     --------
@@ -1256,6 +1298,25 @@ class StepRanges(StepFunction):
     def __init__(self):
         super().__init__()
         self.expression = ""
+        self.position_list = ""
+
+    def calculate_positions(self):
+        """
+        Calculate the positions the axis should have been moved to.
+
+        Positions can be obtained using the :attr:`positions` attribute.
+        In case the attribute internally storing the positions has not yet
+        been set, this method is called (once).
+
+        Positions are calculated by simply splitting the string contained
+        in :attr:`position_list` at the comma and convert the numbers to
+        floats.
+
+        """
+        if self.position_list:
+            self._positions = np.asarray(
+                [float(item) for item in self.position_list.split(",")]
+            )
 
 
 class StepReference(StepFunction):
@@ -1296,6 +1357,12 @@ class StepReference(StepFunction):
     axis_id : :class:`str`
         Unique ID of the axis used as reference.
 
+    scan_module : :class:`ScanModule`
+        Reference to the scan module the axis is defined in.
+
+        To calculate the positions, we need to check whether the reference
+        axis given by :attr:`axis_id` is in the current scan module.
+
 
     Examples
     --------
@@ -1310,8 +1377,41 @@ class StepReference(StepFunction):
     def __init__(self):
         super().__init__()
         self.mode = "add"
-        self.parameter = {}
+        self.parameter = 0.0
         self.axis_id = ""
+        self.scan_module = None
+
+    def calculate_positions(self):
+        """
+        Calculate the positions the axis should have been moved to.
+
+        Positions can be obtained using the :attr:`positions` attribute.
+        In case the attribute internally storing the positions has not yet
+        been set, this method is called (once).
+
+        If :attr:`scan_module` is not set or the reference axis defined in
+        :attr:`axis_id` not found in the scan module, a numpy array with
+        "0.0" as element is set, in line with the current behaviour
+        of the eve engine.
+
+        """
+        if not self.scan_module:
+            self._positions = np.asarray([0.0])
+        else:
+            try:
+                reference_axis_positions = self.scan_module.axes[
+                    self.axis_id
+                ].step_function.positions
+                if self.mode == "add":
+                    self._positions = (
+                        reference_axis_positions + self.parameter
+                    )
+                else:
+                    self._positions = (
+                        reference_axis_positions * self.parameter
+                    )
+            except KeyError:
+                self._positions = np.asarray([0.0])
 
 
 class StepFile(StepFunction):
@@ -1348,7 +1448,65 @@ class StepFile(StepFunction):
         self.filename = ""
 
     def calculate_positions(self):
+        """
+        Calculate the positions the axis should have been moved to.
+
+        Positions can be obtained using the :attr:`positions` attribute.
+        In case the attribute internally storing the positions has not yet
+        been set, this method is called (once).
+
+        As no positions can be calculated, a warning is logged and an
+        empty numpy array set as positions.
+
+        """
         logger.warning(
             "Step function 'file' does not allow to obtain positions."
         )
         self._positions = np.asarray([])
+
+
+class StepList(StepFunction):
+    """
+    Steps defined using list of positions.
+
+    Probably the most generic way of defining positions for an axis:
+    provide a comma-separated list of values.
+
+
+    Attributes
+    ----------
+    position_list : :class:`str`
+        Comma-separated list of positions
+
+
+    Examples
+    --------
+    The :class:`StepList` class is not meant to be used directly, as any
+    entities, but rather indirectly by means of the respective facades in
+    the boundaries technical layer of the :mod:`evedata.scan` subpackage.
+    Hence, for the time being, there are no dedicated examples how to use
+    this class. Of course, you can instantiate an object as usual.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.position_list = ""
+
+    def calculate_positions(self):
+        """
+        Calculate the positions the axis should have been moved to.
+
+        Positions can be obtained using the :attr:`positions` attribute.
+        In case the attribute internally storing the positions has not yet
+        been set, this method is called (once).
+
+        Positions are calculated by simply splitting the string contained
+        in :attr:`position_list` at the comma and convert the numbers to
+        floats.
+
+        """
+        if self.position_list:
+            self._positions = np.asarray(
+                [float(item) for item in self.position_list.split(",")]
+            )
