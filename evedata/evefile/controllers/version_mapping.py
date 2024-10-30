@@ -1787,7 +1787,7 @@ class VersionMapperV5(VersionMapper):
             self.destination.scan_modules = {scan_module.name: scan_module}
             logger.warning(
                 "Calculated positions don't match actual positions: "
-                "reset scan modules."
+                "reset scan modules, losing the entire scan structure."
             )
 
     def _map_main_datasets_to_scan_modules(self):

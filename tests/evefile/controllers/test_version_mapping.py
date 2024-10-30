@@ -2675,10 +2675,10 @@ class TestVersionMapperV5(unittest.TestCase):
         with self.assertLogs(level=logging.WARN) as captured:
             self.mapper.map(destination=self.destination)
         self.assertEqual(len(captured.records), 1)
-        self.assertEqual(
-            captured.records[0].getMessage(),
+        self.assertIn(
             "Calculated positions don't match actual positions: "
-            "reset scan modules.",
+            "reset scan modules",
+            captured.records[0].getMessage(),
         )
 
     def test_consistency_check_with_mpskip_logs_info(self):
