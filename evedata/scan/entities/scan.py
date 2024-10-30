@@ -131,6 +131,75 @@ class Scan:
         self.description = ""
         self.scan_modules = {}
 
+    @property
+    def mpskip_scan_module(self):
+        """
+        ID of the scan module containing the EPICS MPSKIP device.
+
+        Convenience way to obtain the scan module ID (used as key in
+        :attr:`scan_modules`) of the scan module containing the EPICS
+        MPSKIP device. In case no matching module is available, it will
+        be :obj:`None`, making tests quite simple.
+
+        Returns
+        -------
+        mpskip_module_id : :class:`int` | :obj:`None`
+            ID of the scan module or :obj:`None` in case of no match.
+
+        """
+        try:
+            mpskip_module_id = [
+                item.id
+                for item in self.scan_modules.values()
+                if item.has_mpskip()
+            ][0]
+        except IndexError:
+            mpskip_module_id = None
+        return mpskip_module_id
+
+    @property
+    def number_of_positions(self):
+        """
+        Number of positions created during the entire scan.
+
+        To check for consistency whether the calculated number of
+        positions for each of the scan modules is identical to the actual
+        number of positions recorded, it is necessary to sum over the
+        number of positions of each individual scan module.
+
+        The following cases are known to be problematic or make this test
+        impossible to pass:
+
+        * Scans using the EPICS MPSKIP feature.
+
+          In this case, the actually recorded number of positions for the
+          MPSKIP scan module cannot be calculated, and the real scan will
+          in (almost) all cases consist of less positions than
+          theoretically possible.
+
+        * Scans containing skip events.
+
+          Similarly to the situation above, external events during the
+          scan that cannot be foreseen impact the actual number of
+          positions recorded for a scan. In contrast to the MPSKIP
+          scenario, these events are (currently) not visible from the
+          resulting measurement file.
+
+        Returns
+        -------
+        number_of_positions : :class:`int`
+            Number of positions created during the entire scan.
+
+        """
+        return int(
+            np.sum(
+                [
+                    scan_module.number_of_positions
+                    for scan_module in self.scan_modules.values()
+                ]
+            )
+        )
+
 
 class AbstractScanModule:
     r"""
@@ -570,7 +639,7 @@ class Axis:
     @property
     def positions(self):
         """
-        Set values the axis should have been moved to.
+        Values the axis should have been moved to ("set values").
 
         Whether the axis ever reached these positions is an entirely
         different matter that can be resolved by comparing these set

@@ -24,6 +24,37 @@ class TestScan(unittest.TestCase):
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.scan, attribute))
 
+    def test_mpskip_scan_module_wo_scan_modules_is_none(self):
+        self.assertIsNone(self.scan.mpskip_scan_module)
+
+    def test_mpskip_scan_module_wo_mpskip_scan_module_is_none(self):
+        for scan_module in [1, 2, 5, 7, 42]:
+            self.scan.scan_modules[scan_module] = scan.ScanModule()
+        self.assertIsNone(self.scan.mpskip_scan_module)
+
+    def test_mpskip_scan_module_w_mpskip_scan_module_returns_id(self):
+        for scan_module_id in [1, 2, 5, 7, 42]:
+            scan_module = scan.ScanModule()
+            scan_module.id = scan_module_id
+            self.scan.scan_modules[scan_module_id] = scan_module
+        mpskip_module_id = 7
+        self.scan.scan_modules[mpskip_module_id].channels = {"MPSKIP": None}
+        self.assertEqual(mpskip_module_id, self.scan.mpskip_scan_module)
+
+    def test_number_of_positions_without_scan_modules_returns_zero(self):
+        self.assertEqual(0, self.scan.number_of_positions)
+        self.assertIsInstance(self.scan.number_of_positions, int)
+
+    def test_number_of_positions_sums_over_scan_modules(self):
+        scan_module_ids = [1, 2, 5, 7, 42]
+        for scan_module_id in scan_module_ids:
+            scan_module = scan.ScanModule()
+            scan_module.number_of_positions = scan_module_id
+            self.scan.scan_modules[scan_module_id] = scan_module
+        self.assertEqual(
+            np.sum(scan_module_ids), self.scan.number_of_positions
+        )
+
 
 class TestAbstractScanModule(unittest.TestCase):
     def setUp(self):
