@@ -42,6 +42,7 @@ class ScanModule {
     appended : int
     nested : int
     data : Data{}
+    positions : numpy.array
 }
 
 ScanModule *-- "n" Data

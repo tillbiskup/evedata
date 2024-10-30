@@ -1772,7 +1772,23 @@ class VersionMapperV5(VersionMapper):
             ] = dataset
 
     def _check_scan_modules_for_consistency(self):
-        pass
+        if len(self.destination.scan_modules) == 1:
+            return
+        if self.destination.scan.scan.mpskip_scan_module:
+            logger.info(
+                "Cannot perform consistency check due to MPSKIP module."
+            )
+            return
+        calculated_positions = self.destination.scan.scan.number_of_positions
+        actual_positions = self.source.c1.meta.PosCountTimer.shape[0]
+        if calculated_positions != actual_positions:
+            scan_module = entities.file.ScanModule()
+            scan_module.positions = np.arange(actual_positions) + 1
+            self.destination.scan_modules = {scan_module.name: scan_module}
+            logger.warning(
+                "Calculated positions don't match actual positions: "
+                "reset scan modules."
+            )
 
     def _map_main_datasets_to_scan_modules(self):
         for dataset_name, dataset in self._data.items():

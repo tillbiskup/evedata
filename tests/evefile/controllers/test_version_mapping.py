@@ -27,6 +27,14 @@ class MockHDF5Dataset(MockHDF5Item):
             [("PosCounter", "<i4"), (name.split("/")[-1], "<f8")]
         )
 
+    @property
+    def shape(self):
+        if self.data is not None:
+            shape = self.data.shape
+        else:
+            shape = (0,)
+        return shape
+
     def get_data(self):
         self.get_data_called = True
 
@@ -2604,6 +2612,95 @@ class TestVersionMapperV5(unittest.TestCase):
         self.assertIsNot(
             self.destination.scan_modules[1].data[dataset_names[0]],
             self.destination.scan_modules[2].data[dataset_names[0]],
+        )
+
+    def test_failing_consistency_check_resets_scan_modules(self):
+        self.mapper.source = self.source
+        data_ = np.ndarray([5], dtype=self.source.c1.meta.PosCountTimer.dtype)
+        data_["PosCounter"] = np.arange(1, 6)
+        data_["PosCountTimer"] = np.arange(10, 60, 10)
+        self.mapper.source.c1.meta.PosCountTimer.data = data_
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.scan.entities.scan.ScanModule()
+            scan_module.number_of_positions = scan_module_id
+            self.destination.scan.scan.scan_modules[scan_module_id] = (
+                scan_module
+            )
+        self.mapper.map(destination=self.destination)
+        self.assertEqual(1, len(self.mapper.destination.scan_modules))
+
+    def test_failing_consistency_check_sets_scan_module_positions(self):
+        self.mapper.source = self.source
+        data_ = np.ndarray([5], dtype=self.source.c1.meta.PosCountTimer.dtype)
+        data_["PosCounter"] = np.arange(1, 6)
+        data_["PosCountTimer"] = np.arange(10, 60, 10)
+        self.mapper.source.c1.meta.PosCountTimer.data = data_
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.scan.entities.scan.ScanModule()
+            scan_module.number_of_positions = scan_module_id
+            self.destination.scan.scan.scan_modules[scan_module_id] = (
+                scan_module
+            )
+        self.mapper.map(destination=self.destination)
+        np.testing.assert_array_equal(
+            np.arange(len(data_)) + 1,
+            self.mapper.destination.scan_modules["main"].positions,
+        )
+
+    def test_failing_consistency_check_logs_warning(self):
+        self.mapper.source = self.source
+        data_ = np.ndarray([5], dtype=self.source.c1.meta.PosCountTimer.dtype)
+        data_["PosCounter"] = np.arange(1, 6)
+        data_["PosCountTimer"] = np.arange(10, 60, 10)
+        self.mapper.source.c1.meta.PosCountTimer.data = data_
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.scan.entities.scan.ScanModule()
+            scan_module.number_of_positions = scan_module_id
+            self.destination.scan.scan.scan_modules[scan_module_id] = (
+                scan_module
+            )
+        self.logger.setLevel(logging.WARN)
+        with self.assertLogs(level=logging.WARN) as captured:
+            self.mapper.map(destination=self.destination)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "Calculated positions don't match actual positions: "
+            "reset scan modules.",
+        )
+
+    def test_consistency_check_with_mpskip_logs_info(self):
+        self.mapper.source = self.source
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        for scan_module_id in [4, 5]:
+            scan_module = evedata.scan.entities.scan.ScanModule()
+            scan_module.number_of_positions = scan_module_id
+            self.destination.scan.scan.scan_modules[scan_module_id] = (
+                scan_module
+            )
+        self.destination.scan.scan.scan_modules[5].channels = {"MPSKIP": None}
+        self.logger.setLevel(logging.INFO)
+        with self.assertLogs(level=logging.INFO) as captured:
+            self.mapper.map(destination=self.destination)
+        self.assertEqual(len(captured.records), 1)
+        self.assertEqual(
+            captured.records[0].getMessage(),
+            "Cannot perform consistency check due to MPSKIP module.",
         )
 
 
