@@ -154,11 +154,6 @@ above. Mapping MPSKIP scans consists of the following steps:
   * Axes RBVs (present as pseudo-detector channels) need to be mapped to
     :class:`AxisData <evedata.evefile.entities.data.AxisData>` objects
     with the individual axis values stored as ragged array.
-
-  * For the time being, these datasets may be suffixed with the scan
-    module ID of the next-outer scan module.
-  * Later, this may change, if datasets are separated according to scan
-    modules.
   * Add metadata as far as available from the :class:`SkipData
     <evedata.evefile.entities.data.SkipData>` dataset.
 

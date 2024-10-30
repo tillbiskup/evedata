@@ -2000,6 +2000,32 @@ class SkipData(ChannelData):
         super().__init__()
         self.metadata = metadata.SkipMetadata()
 
+    def get_parent_positions(self):
+        """
+        Obtain positions of the parent scan module.
+
+        The scan module containing the MPSKIP detector is easy to
+        determine. However, given the unpredictable number of positions of
+        this scan module, the position (count)s for the parent scan module
+        need to be determined from the actual positions created during
+        executing the MPSKIP scan module.
+
+        Given the direct relationship between MPSKIP scan module and
+        parent, with the MPSKIP scan module nested, the positions of the
+        parent are simply those missing in the position list, and in
+        addition the first position being ``SkipCount.positions[0] - 1``.
+
+        Returns
+        -------
+        parent_positions : :class:`numpy.ndarray`
+            Positions of the parent scan module.
+
+        """
+        return np.append(
+            self.positions[0] - 1,
+            self.positions[np.where(np.diff(self.positions) > 1)[0]] + 1,
+        )
+
 
 class ImporterPreprocessingStep:
     """

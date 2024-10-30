@@ -433,6 +433,7 @@ class HDF5Dataset(HDF5Item):
         super().__init__(filename=filename, name=name)
         self._data = np.ndarray([0])
         self._dtype = None
+        self._shape = None
 
     @property
     def data(self):
@@ -485,6 +486,31 @@ class HDF5Dataset(HDF5Item):
             with self._hdf5_file() as file:
                 self._dtype = file[self.name].dtype
         return self._dtype
+
+    @property
+    def shape(self):
+        """
+        Shape of the dataset.
+
+        The shape of a given dataset can be read without reading the data,
+        should hence be a cheap operation. Knowing the shape, however,
+        is sometimes important to know how to further process the given
+        HDF5 dataset.
+
+        Returns
+        -------
+        shape : :class:`tuple`
+            Shape of the dataset
+
+        """
+        if not self._shape:
+            if not self.filename:
+                raise ValueError("Missing attribute filename")
+            if not self.name:
+                raise ValueError("Missing attribute name")
+            with self._hdf5_file() as file:
+                self._shape = file[self.name].shape
+        return self._shape
 
     def get_data(self):
         """

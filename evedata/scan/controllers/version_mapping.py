@@ -99,7 +99,7 @@ described here will definitely change and evolve over time.
     * Map parent, appended, nested, is_nested |check|
     * Distinguish types of scan modules: "classic" *vs.* snapshot |check|
     * Extract list of detector channels and motor axes |check|
-    * Map pre- and post-scans |cross|
+    * Map pre- and post-scans |check|
     * Map positionings |check|
     * Calculate number of positions per pass/total and actual positions
       |check|

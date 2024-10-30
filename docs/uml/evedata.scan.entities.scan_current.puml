@@ -5,7 +5,7 @@ class Scan {
     repeat_count : integer
     description : string
     comment : string
-    scan_modules : AbstractScanModule[]
+    scan_modules : AbstractScanModule{}
 }
 Scan *-- "n" AbstractScanModule
 'Scan *-- "n" PauseCondition

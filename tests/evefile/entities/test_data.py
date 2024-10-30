@@ -993,6 +993,15 @@ class TestSkipData(unittest.TestCase):
     def test_metadata_are_of_corresponding_type(self):
         self.assertIsInstance(self.data.metadata, metadata.SkipMetadata)
 
+    def test_get_parent_positions(self):
+        self.data.positions = np.asarray(
+            [2, 3, 4, 6, 7, 8, 9, 11, 12, 14, 15, 16], dtype=int
+        )
+        parent_positions = np.asarray([1, 5, 10, 13], dtype=int)
+        np.testing.assert_array_equal(
+            parent_positions, self.data.get_parent_positions()
+        )
+
 
 class TestImporterPreprocessingStep(unittest.TestCase):
     def setUp(self):

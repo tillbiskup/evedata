@@ -5,7 +5,7 @@ class File {
     log_messages : LogMessage[]
     scan : Scan
     station : Station
-    scan_modules : ScanModules{}
+    scan_modules : ScanModule{}
     snapshots : Data{}
     monitors : Data{}
     position_timestamps : TimestampData

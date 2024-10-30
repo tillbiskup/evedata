@@ -158,12 +158,12 @@ class TestHDF5Dataset(unittest.TestCase):
 
     def test_dtype_without_filename_raises(self):
         with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
-            self.hdf5_dataset.dtype
+            _ = self.hdf5_dataset.dtype
 
     def test_dtype_without_name_raises(self):
         self.hdf5_dataset.filename = "foo"
         with self.assertRaisesRegex(ValueError, "Missing attribute name"):
-            self.hdf5_dataset.dtype
+            _ = self.hdf5_dataset.dtype
 
     def test_dtype_returns_dtype(self):
         DummyHDF5File(filename=self.filename).create()
@@ -177,6 +177,27 @@ class TestHDF5Dataset(unittest.TestCase):
         self.hdf5_dataset.filename = self.filename
         self.hdf5_dataset.name = "/c1/main/test"
         self.assertEqual(self.hdf5_dataset.dtype, "foo")
+
+    def test_shape_without_filename_raises(self):
+        with self.assertRaisesRegex(ValueError, "Missing attribute filename"):
+            _ = self.hdf5_dataset.shape
+
+    def test_shape_without_name_raises(self):
+        self.hdf5_dataset.filename = "foo"
+        with self.assertRaisesRegex(ValueError, "Missing attribute name"):
+            _ = self.hdf5_dataset.shape
+
+    def test_shape_returns_shape(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_dataset.filename = self.filename
+        self.hdf5_dataset.name = "/c1/main/test"
+        self.assertIsInstance(self.hdf5_dataset.shape, tuple)
+
+    def test_shape_does_not_load_data(self):
+        DummyHDF5File(filename=self.filename).create()
+        self.hdf5_dataset.filename = self.filename
+        self.hdf5_dataset.name = "/c1/main/test"
+        self.assertTupleEqual((0,), self.hdf5_dataset._data.shape)
 
 
 class TestHDF5Group(unittest.TestCase):
