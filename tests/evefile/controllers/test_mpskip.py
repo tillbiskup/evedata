@@ -1,3 +1,4 @@
+import copy
 import logging
 import unittest
 
@@ -12,6 +13,12 @@ class MockSkipData:
     def __init__(self):
         self.data = np.array([])
         self.positions = np.array([])
+
+    def get_parent_positions(self):
+        return np.append(
+            self.positions[0] - 1,
+            self.positions[np.where(np.diff(self.positions) > 1)[0]] + 1,
+        )
 
 
 class TestRearrangeRawValues(unittest.TestCase):
@@ -63,6 +70,7 @@ class MockEveFile:
 
     def __init__(self):
         self.scan = MockScanBoundary()
+        self.scan_modules = {}
 
     def has_scan(self):
         return bool(self.scan)
@@ -139,6 +147,9 @@ class TestMpskip(unittest.TestCase):
         self.logger.setLevel(logging.WARNING)
         self.source = MockEveFile()
         self.source.scan.scan.add_scan_modules()
+        self.source.scan_modules = copy.deepcopy(
+            self.source.scan.scan.scan_modules
+        )
 
     def test_instantiate_class(self):
         pass
@@ -170,4 +181,25 @@ class TestMpskip(unittest.TestCase):
         self.assertEqual(
             captured.records[0].getMessage(),
             "No scan, hence no mpskip mapping.",
+        )
+
+    def test_map_removes_mpskip_module_from_scan_modules(self):
+        self.mapper.map(source=self.source)
+        self.assertNotIn(
+            "Skip",
+            [sm.name for sm in self.mapper.source.scan_modules.values()],
+        )
+
+    def test_map_adds_channels_to_parent_scan_module(self):
+        self.mapper.map(source=self.source)
+        self.assertTrue(self.mapper.source.scan_modules[1].channels)
+
+    def test_map_does_not_add_mpskip_channels_to_parent_scan_module(self):
+        self.mapper.map(source=self.source)
+        self.assertFalse(
+            [
+                name
+                for name in self.mapper.source.scan_modules[1].channels
+                if name.startswith("MPSKIP")
+            ]
         )

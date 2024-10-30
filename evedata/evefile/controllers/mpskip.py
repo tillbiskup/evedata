@@ -125,6 +125,27 @@ The basic assumptions underlying the handling of datasets with MPSKIP are:
 * The MPSKIP module is always the last and innermost scan module.
 
 
+Prerequisites
+=============
+
+Successfully applying the :class:`Mpskip` mapper class to an :obj:`EveFile
+<evedata.evefile.boundaries.evefile.EveFile>` object comes with a number
+of prerequisites that should usually be checked for by the code, but are
+interesting to know from a developer's perspective:
+
+* The scan description is present in the eveH5 file and has been loaded.
+* The datasets in the :obj:`EveFile
+  <evedata.evefile.boundaries.evefile.EveFile>` object  are already
+  organised into scan modules.
+* The :obj:`SkipData <evedata.evefile.entities.data.SkipData>`
+  dataset containing the relevant information to map the positions of the
+  MPSKIP module has been mapped and is present.
+
+For all practical purposes, the first prerequisite should be fulfilled.
+This makes it obsolete to come up with more complex ways to map the MPSKIP
+datasets if no scan description is available.
+
+
 What happens when mapping MPSKIP scans?
 =======================================
 
@@ -143,8 +164,11 @@ above. Mapping MPSKIP scans consists of the following steps:
 
   * We need not be concerned with axes here, as only channels are sensible.
     The only axis present should be the counter that has been taken care of.
+  * Should not be necessary any more, as we can directly access the
+    datasets in the scan module on the :class:`EveFile
+    <evedata.evefile.boundaries.evefile.EveFile>` level?
 
-* Create additional/new datasets for averaged channels and axes.
+* Create new datasets for averaged channels and axes.
 
   * Actual detectors (not RBVs as pseudo-detector channels) need to be mapped
     to either :class:`AverageChannelData
@@ -296,7 +320,7 @@ class RearrangeRawValues(ImporterPreprocessingStep):
 
     def _process(self, data=None):
         cut_at = np.where(np.diff(self.skip_data.data) < 0)[0] + 1
-        new_positions = self.skip_data.positions[np.hstack([0, cut_at])] - 1
+        new_positions = self.skip_data.get_parent_positions()
         np.dtype(data.dtype.fields)
         new_dtype = dict(data.dtype.fields)
         new_dtype[data.dtype.names[1]] = (
@@ -385,4 +409,9 @@ class Mpskip:
             for scan_module in self.source.scan.scan.scan_modules.values()
             if scan_module.has_mpskip()
         ][0]
-        print(mpskip_module.axes, mpskip_module.channels)
+        # print(mpskip_module.axes, mpskip_module.channels)
+        parent_module = self.source.scan_modules[mpskip_module.parent]
+        for name, channel in mpskip_module.channels.items():
+            if not name.startswith("MPSKIP"):
+                parent_module.channels[name] = channel
+        self.source.scan_modules.pop(mpskip_module.id)
