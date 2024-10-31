@@ -117,7 +117,7 @@ class DummyHDF5File:
             simchan.attrs["DeviceType"] = np.bytes_(["Channel"])
             simchan.attrs["Detectortype"] = np.bytes_(["Standard"])
             data = np.ndarray(
-                [],
+                [10],
                 dtype=np.dtype(
                     [("PosCounter", "<i4"), ("PosCountTimer", "<i4")]
                 ),
