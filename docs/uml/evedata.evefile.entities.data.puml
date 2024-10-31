@@ -99,12 +99,12 @@ class SkipData extends ChannelData {}
 
 class SinglePointChannelData extends ChannelData {}
 
-interface NormalizedData {
+interface NormalizedChannelData {
     normalized_data : np.ndarray
     normalizing_data : np.ndarray
 }
 
-class SinglePointNormalizedChannelData extends SinglePointChannelData implements NormalizedData {
+class SinglePointNormalizedChannelData extends SinglePointChannelData implements NormalizedChannelData {
 }
 
 class AverageChannelData extends ChannelData {
@@ -126,7 +126,7 @@ note top of AverageChannelData
     averaged data - <i>i.e.</i>, mean().
 end note
 
-class AverageNormalizedChannelData extends AverageChannelData implements NormalizedData {
+class AverageNormalizedChannelData extends AverageChannelData implements NormalizedChannelData {
 }
 
 
@@ -140,7 +140,7 @@ class IntervalChannelData extends ChannelData {
     has_raw_data()
 }
 
-class IntervalNormalizedChannelData extends IntervalChannelData implements NormalizedData {
+class IntervalNormalizedChannelData extends IntervalChannelData implements NormalizedChannelData {
 }
 
 class ArrayChannelData extends ChannelData {

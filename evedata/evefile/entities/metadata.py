@@ -178,7 +178,14 @@ class Metadata:
             if not (item.startswith("_") or item == "metadata")
         ]
         for attribute in public_attributes:
-            setattr(self, attribute, copy.copy(getattr(source, attribute)))
+            try:
+                setattr(
+                    self, attribute, copy.copy(getattr(source, attribute))
+                )
+            except AttributeError:
+                logger.debug(
+                    "Cannot set non-existing attribute %s", attribute
+                )
 
 
 class AbstractDeviceMetadata:

@@ -1,3 +1,4 @@
+import logging
 import unittest
 
 import numpy
@@ -9,6 +10,8 @@ from evedata.evefile.entities import metadata
 class TestMetadata(unittest.TestCase):
     def setUp(self):
         self.metadata = metadata.Metadata()
+        self.logger = logging.getLogger(name="evedata")
+        self.logger.setLevel(logging.WARNING)
 
     def test_instantiate_class(self):
         pass
@@ -28,11 +31,23 @@ class TestMetadata(unittest.TestCase):
         new_metadata.copy_attributes_from(self.metadata)
         self.assertDictEqual(self.metadata.options, new_metadata.options)
 
-    def test_copy_attributes_from_copies_only_existing_attributes(self):
+    def test_copy_attributes_from_copies_only_attr_existing_in_target(self):
         new_metadata = metadata.Metadata()
         self.metadata.non_existing_attribute = None
         new_metadata.copy_attributes_from(self.metadata)
         self.assertFalse(hasattr(new_metadata, "non_existing_attribute"))
+
+    def test_copy_attributes_from_copies_only_attr_existing_in_source(self):
+        new_metadata = metadata.Metadata()
+        new_metadata.non_existing_attribute = None
+        self.logger.setLevel(logging.DEBUG)
+        with self.assertLogs(level=logging.DEBUG) as captured:
+            new_metadata.copy_attributes_from(self.metadata)
+        self.assertEqual(len(captured.records), 1)
+        self.assertIn(
+            "Cannot set non-existing attribute",
+            captured.records[0].getMessage(),
+        )
 
     def test_copied_attribute_is_copy(self):
         new_metadata = metadata.Metadata()

@@ -449,8 +449,7 @@ class Data:
 
         Sometimes, it is useful to obtain the (public) attributes from
         another :obj:`Data` object. Note that only public attributes are
-        copied, and the :attr:`metadata` are excluded by purpose from
-        copying. Furthermore, a (true) copy of the attributes is obtained,
+        copied. Furthermore, a (true) copy of the attributes is obtained,
         hence the properties of source and target are actually different
         objects.
 
@@ -475,7 +474,14 @@ class Data:
             if not (item.startswith("_") or item == "metadata")
         ]
         for attribute in public_attributes:
-            setattr(self, attribute, copy.copy(getattr(source, attribute)))
+            try:
+                setattr(
+                    self, attribute, copy.copy(getattr(source, attribute))
+                )
+            except AttributeError:
+                logger.debug(
+                    "Cannot set non-existing attribute %s", attribute
+                )
         self.metadata.copy_attributes_from(source.metadata)
 
 

@@ -1,3 +1,4 @@
+import logging
 import os
 import unittest
 
@@ -61,6 +62,8 @@ class DummyHDF5File:
 class TestData(unittest.TestCase):
     def setUp(self):
         self.data = data.Data()
+        self.logger = logging.getLogger(name="evedata")
+        self.logger.setLevel(logging.WARNING)
 
         class MockData(data.Data):
 
@@ -130,6 +133,18 @@ class TestData(unittest.TestCase):
         self.data.non_existing_attribute = None
         new_data.copy_attributes_from(self.data)
         self.assertFalse(hasattr(new_data, "non_existing_attribute"))
+
+    def test_copy_attributes_from_copies_only_attr_existing_in_source(self):
+        new_data = data.Data()
+        new_data.non_existing_attribute = None
+        self.logger.setLevel(logging.DEBUG)
+        with self.assertLogs(level=logging.DEBUG) as captured:
+            new_data.copy_attributes_from(self.data)
+        self.assertEqual(len(captured.records), 1)
+        self.assertIn(
+            "Cannot set non-existing attribute",
+            captured.records[0].getMessage(),
+        )
 
     def test_copied_attribute_is_copy(self):
         new_data = data.Data()
