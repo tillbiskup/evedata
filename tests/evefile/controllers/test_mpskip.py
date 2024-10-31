@@ -4,21 +4,8 @@ import unittest
 
 import numpy as np
 
-from evedata.evefile.controllers import mpskip
-from evedata.evefile.entities.data import ImporterPreprocessingStep
-
-
-class MockSkipData:
-
-    def __init__(self):
-        self.data = np.array([])
-        self.positions = np.array([])
-
-    def get_parent_positions(self):
-        return np.append(
-            self.positions[0] - 1,
-            self.positions[np.where(np.diff(self.positions) > 1)[0]] + 1,
-        )
+from evedata.evefile.controllers import mpskip, preprocessing
+from evedata.evefile.entities import data
 
 
 class TestRearrangeRawValues(unittest.TestCase):
@@ -37,7 +24,7 @@ class TestRearrangeRawValues(unittest.TestCase):
             [5, 6, 8, 9, 10, 12, 13, 14, 15, 17, 18, 19]
         )
         self.data["foo"] = np.arange(12)
-        self.skip_data = MockSkipData()
+        self.skip_data = data.SkipData()
         self.skip_data.positions = self.data["PosCounter"]
         self.skip_data.data = np.array([1, 2, 1, 2, 3, 1, 2, 3, 4, 1, 2, 3])
 
@@ -45,7 +32,7 @@ class TestRearrangeRawValues(unittest.TestCase):
         pass
 
     def test_is_preprocessing_step(self):
-        self.assertIsInstance(self.processing, ImporterPreprocessingStep)
+        self.assertIsInstance(self.processing, data.ImporterPreprocessingStep)
 
     def test_has_attributes(self):
         attributes = [
@@ -75,6 +62,21 @@ class MockEveFile:
     def has_scan(self):
         return bool(self.scan)
 
+    def add_scan_modules(self):
+        for name, scan_scan_module in self.scan.scan.scan_modules.items():
+            file_scan_module = MockFileScanModule()
+            for attribute in ["id", "name", "parent"]:
+                setattr(
+                    file_scan_module,
+                    attribute,
+                    getattr(scan_scan_module, attribute),
+                )
+            for device_name, device in scan_scan_module.channels.items():
+                file_scan_module.data[device_name] = copy.deepcopy(device)
+            for device_name, device in scan_scan_module.axes.items():
+                file_scan_module.data[device_name] = copy.deepcopy(device)
+            self.scan_modules[name] = file_scan_module
+
 
 class MockScanBoundary:
 
@@ -88,14 +90,14 @@ class MockScan:
         self.scan_modules = {}
 
     def add_scan_modules(self):
-        outer_module = MockScanModule()
+        outer_module = MockScanScanModule()
         outer_module.id = 1
         outer_module.name = "WL"
         outer_module.parent = 0
         outer_module.add_axis("nmEnerg:io2600wl2e.A")
         self.scan_modules.update({outer_module.id: outer_module})
 
-        inner_module = MockScanModule()
+        inner_module = MockScanScanModule()
         inner_module.id = 2
         inner_module.name = "Skip"
         inner_module.parent = 1
@@ -113,7 +115,7 @@ class MockScan:
         self.scan_modules.update({inner_module.id: inner_module})
 
 
-class MockScanModule:
+class MockScanScanModule:
 
     def __init__(self):
         self.id = -1
@@ -128,16 +130,38 @@ class MockScanModule:
         )
 
     def add_axis(self, id=""):
-        self.axes.update({id: MockAxisChannel(id=id)})
+        axis = MockAxisChannel(id=id)
+        axis.importer.append(MockDatasetImporter())
+        self.axes.update({id: axis})
 
     def add_channel(self, id=""):
-        self.channels.update({id: MockAxisChannel(id=id)})
+        channel = MockAxisChannel(id=id)
+        channel.importer.append(MockDatasetImporter())
+        self.channels.update({id: channel})
 
 
 class MockAxisChannel:
 
     def __init__(self, id=""):
         self.id = id
+        self.importer = []
+        self.metadata = {"id": id}
+
+
+class MockDatasetImporter:
+
+    def __init__(self):
+        self.source = ""
+        self.preprocessing = []
+
+
+class MockFileScanModule:
+
+    def __init__(self):
+        self.id = -1
+        self.name = ""
+        self.parent = -1
+        self.data = {}
 
 
 class TestMpskip(unittest.TestCase):
@@ -147,9 +171,9 @@ class TestMpskip(unittest.TestCase):
         self.logger.setLevel(logging.WARNING)
         self.source = MockEveFile()
         self.source.scan.scan.add_scan_modules()
-        self.source.scan_modules = copy.deepcopy(
-            self.source.scan.scan.scan_modules
-        )
+        self.source.add_scan_modules()
+        skipdata = data.SkipData()
+        self.source.scan_modules[2].data["skipdata"] = skipdata
 
     def test_instantiate_class(self):
         pass
@@ -192,14 +216,126 @@ class TestMpskip(unittest.TestCase):
 
     def test_map_adds_channels_to_parent_scan_module(self):
         self.mapper.map(source=self.source)
-        self.assertTrue(self.mapper.source.scan_modules[1].channels)
+        self.assertTrue(self.mapper.source.scan_modules[1].data)
 
     def test_map_does_not_add_mpskip_channels_to_parent_scan_module(self):
         self.mapper.map(source=self.source)
         self.assertFalse(
             [
                 name
-                for name in self.mapper.source.scan_modules[1].channels
+                for name in self.mapper.source.scan_modules[1].data
                 if name.startswith("MPSKIP")
             ]
+        )
+
+    def test_map_does_not_add_counter_axis_to_parent_scan_module(self):
+        self.mapper.map(source=self.source)
+        self.assertFalse(
+            [
+                name
+                for name in self.mapper.source.scan_modules[1].data
+                if name.startswith("Counter-mot")
+            ]
+        )
+
+    def test_map_creates_axis_objects_for_rbv_devices(self):
+        self.mapper.map(source=self.source)
+        rbv_devices = [
+            device
+            for name, device in self.mapper.source.scan_modules[
+                1
+            ].data.items()
+            if "RBV" in name
+        ]
+        for device in rbv_devices:
+            self.assertIsInstance(device, data.AxisData)
+
+    def test_map_copies_attributes_from_rbv_devices(self):
+        self.mapper.map(source=self.source)
+        rbv_devices = [
+            device
+            for name, device in self.mapper.source.scan_modules[
+                1
+            ].data.items()
+            if "RBV" in name
+        ]
+        for device in rbv_devices:
+            self.assertTrue(device.importer)
+
+    def test_map_adds_preprocessing_steps_to_devices(self):
+        self.mapper.map(source=self.source)
+        for name, device in self.mapper.source.scan_modules[1].data.items():
+            self.assertIsInstance(
+                device.importer[0].preprocessing[0],
+                preprocessing.SelectPositions,
+            )
+            if name.startswith("nmEnerg"):  # dirty fix to skip existing axis
+                continue
+            self.assertIsInstance(
+                device.importer[0].preprocessing[1],
+                mpskip.RearrangeRawValues,
+            )
+
+    def test_map_creates_average_channel_objects_for_non_rbv_devices(self):
+        self.mapper.map(source=self.source)
+        non_rbv_devices = [
+            device
+            for name, device in self.mapper.source.scan_modules[
+                1
+            ].data.items()
+            if "RBV" not in name and not name.startswith("nmEnerg")
+        ]
+        for device in non_rbv_devices:
+            self.assertIsInstance(device, data.AverageChannelData)
+
+    def test_map_copies_attributes_from_non_rbv_devices(self):
+        self.mapper.map(source=self.source)
+        non_rbv_devices = [
+            device
+            for name, device in self.mapper.source.scan_modules[
+                1
+            ].data.items()
+            if "RBV" not in name and not name.startswith("nmEnerg")
+        ]
+        for device in non_rbv_devices:
+            self.assertTrue(device.importer)
+
+    def test_map_creates_normalized_average_channel_objects(self):
+        channel_name = "K0617:gw24126chan1"
+        normalized_channel = data.SinglePointNormalizedChannelData()
+        normalized_channel.importer.append(MockDatasetImporter())
+        self.source.scan_modules[2].data[channel_name] = normalized_channel
+        self.mapper.map(source=self.source)
+        self.assertIsInstance(
+            self.mapper.source.scan_modules[1].data[channel_name],
+            data.AverageNormalizedChannelData,
+        )
+
+    def test_map_maps_skipdata_metadata_for_average_channels(self):
+        n_averages = 42
+        self.source.scan_modules[2].data[
+            "skipdata"
+        ].metadata.n_averages = n_averages
+        self.mapper.map(source=self.source)
+        non_rbv_devices = [
+            device
+            for name, device in self.mapper.source.scan_modules[
+                1
+            ].data.items()
+            if "RBV" not in name and not name.startswith("nmEnerg")
+        ]
+        for device in non_rbv_devices:
+            self.assertEqual(device.metadata.n_averages, n_averages)
+
+    def test_mapping_skipdata_metadata_does_not_change_pv(self):
+        self.source.scan_modules[2].data["skipdata"].metadata.pv = "foo"
+        channel_name = "K0617:gw24126chan1"
+        normalized_channel = data.SinglePointNormalizedChannelData()
+        normalized_channel.metadata.pv = channel_name
+        normalized_channel.importer.append(MockDatasetImporter())
+        self.source.scan_modules[2].data[channel_name] = normalized_channel
+        self.mapper.map(source=self.source)
+        self.assertEqual(
+            channel_name,
+            self.mapper.source.scan_modules[1].data[channel_name].metadata.pv,
         )

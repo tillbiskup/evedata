@@ -1,4 +1,6 @@
 """
+.. include:: <isopub.txt>
+
 *Converting MPSKIP scans into average detector channels.*
 
 .. sidebar:: Contents
@@ -152,37 +154,28 @@ What happens when mapping MPSKIP scans?
 The assumptions underlying the mapping are laid out in the separate section
 above. Mapping MPSKIP scans consists of the following steps:
 
-* Find inner scan module with MPSKIP detector, using the
-  :meth:`ScanModule.has_mpskip()
+* Find inner scan module with MPSKIP detector. |check|
+
+  Using the :meth:`ScanModule.has_mpskip()
   <evedata.scan.entities.scan.ScanModule.has_mpskip>` method and looping
   over all scan modules in :attr:`scan_modules
   <evedata.scan.entities.scan.Scan.scan_modules>`.
-* Get all channels belonging to this scan module,
-  using :attr:`channels <evedata.scan.entities.scan.ScanModule.channels>`,
-  and check whether the corresponding datasets still exist (some may
-  have been removed/not mapped during mapping, and for good reasons).
 
-  * We need not be concerned with axes here, as only channels are sensible.
-    The only axis present should be the counter that has been taken care of.
-  * Should not be necessary any more, as we can directly access the
-    datasets in the scan module on the :class:`EveFile
-    <evedata.evefile.boundaries.evefile.EveFile>` level?
+* Create new datasets for averaged channels and axes of inner (skip) module.
+  |check|
 
-* Create new datasets for averaged channels and axes.
-
-  * Actual detectors (not RBVs as pseudo-detector channels) need to be mapped
+  * Actual channels (not RBVs as pseudo-detector channels) are mapped
     to either :class:`AverageChannelData
     <evedata.evefile.entities.data.AverageChannelData>` or
     :class:`AverageNormalizedChannelData
     <evedata.evefile.entities.data.AverageNormalizedChannelData>`.
-  * Axes RBVs (present as pseudo-detector channels) need to be mapped to
-    :class:`AxisData <evedata.evefile.entities.data.AxisData>` objects
-    with the individual axis values stored as ragged array.
-  * Add metadata as far as available from the :class:`SkipData
-    <evedata.evefile.entities.data.SkipData>` dataset.
+  * Axes RBVs (represented as pseudo-detector channels) are mapped to
+    :class:`AxisData <evedata.evefile.entities.data.AxisData>` objects.
+  * Metadata are added to channels as far as they are available from the
+    :class:`SkipData <evedata.evefile.entities.data.SkipData>` dataset.
 
 * Add preprocessing steps to the importers of each of the channel and axis
-  datasets newly created above:
+  datasets newly created above. |check|
 
   * Use only positions from :class:`SkipData
     <evedata.evefile.entities.data.SkipData>` dataset: :class:`SelectPositions
@@ -190,29 +183,20 @@ above. Mapping MPSKIP scans consists of the following steps:
   * Rearrange raw values for each average loop and map to position
     (count) of outer axis: :class:`RearrangeRawValues`.
 
-* Merge scan modules: inner skip and next outer module.
+* Add preprocessing step to the importer of the datasets in the parent scan
+  module. |check|
 
-  * How to name this merged module? Identical to the outer module?
+  * Use only positions from :class:`SkipData
+    <evedata.evefile.entities.data.SkipData>` dataset: :class:`SelectPositions
+    <evedata.evefile.controllers.preprocessing.SelectPositions>`.
 
-* Remove the :class:`SkipData <evedata.evefile.entities.data.SkipData>`
-  dataset?
+* Add all newly created datasets to the outer scan module. |check|
 
-  * Should no longer be necessary, and removing it would make the
-    :class:`Mpskip` class potentially (more) idempotent.
+* Remove the inner (skip) scan module. |check|
 
 
 Next steps
 ==========
-
-* Decide on class name for mpskip mapper: :class:`Mpskip`
-
-  * Operates on an :obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>`
-    object.
-
-* Implement mapping as described above.
-
-
-Independent of the items above:
 
 * Implement an additional class creating missing values using the average
   of the available values.
@@ -231,13 +215,14 @@ import logging
 
 import numpy as np
 
-from evedata.evefile.entities.data import ImporterPreprocessingStep
+from evedata.evefile.entities import data as datatypes
+from evedata.evefile.controllers import preprocessing
 
 
 logger = logging.getLogger(__name__)
 
 
-class RearrangeRawValues(ImporterPreprocessingStep):
+class RearrangeRawValues(datatypes.ImporterPreprocessingStep):
     """
     Rearrange raw values from MPSKIP scan: ragged array with new positions.
 
@@ -403,15 +388,51 @@ class Mpskip:
             logger.debug("No scan, hence no mpskip mapping.")
             return
 
-        # So far untested code ;-)
-        mpskip_module = [
-            scan_module
+        mpskip_module_id = [
+            scan_module.id
             for scan_module in self.source.scan.scan.scan_modules.values()
             if scan_module.has_mpskip()
         ][0]
-        # print(mpskip_module.axes, mpskip_module.channels)
+        mpskip_module = self.source.scan_modules[mpskip_module_id]
         parent_module = self.source.scan_modules[mpskip_module.parent]
-        for name, channel in mpskip_module.channels.items():
-            if not name.startswith("MPSKIP"):
-                parent_module.channels[name] = channel
+        channel_names_to_copy = [
+            name
+            for name in self.source.scan.scan.scan_modules[
+                mpskip_module_id
+            ].channels
+            if not name.startswith("MPSKIP")
+        ]
+        skipdata = [
+            device
+            for device in mpskip_module.data.values()
+            if isinstance(device, datatypes.SkipData)
+        ][0]
+        select_positions = preprocessing.SelectPositions()
+        select_positions.positions = skipdata.positions
+        for device in parent_module.data.values():
+            device.importer[0].preprocessing.append(select_positions)
+        for name, device in mpskip_module.data.items():
+            if name in channel_names_to_copy:
+                if "RBV" in name:
+                    new_axis = datatypes.AxisData()
+                    new_axis.copy_attributes_from(device)
+                    parent_module.data[name] = new_axis
+                else:
+                    if isinstance(device, datatypes.NormalizedChannelData):
+                        new_channel = datatypes.AverageNormalizedChannelData()
+                    else:
+                        new_channel = datatypes.AverageChannelData()
+                    new_channel.metadata.copy_attributes_from(
+                        skipdata.metadata
+                    )
+                    new_channel.copy_attributes_from(device)
+                    parent_module.data[name] = new_channel
+                parent_module.data[name].importer[0].preprocessing.append(
+                    select_positions
+                )
+                rearrange_raw_values = RearrangeRawValues()
+                rearrange_raw_values.skip_data = skipdata
+                parent_module.data[name].importer[0].preprocessing.append(
+                    rearrange_raw_values
+                )
         self.source.scan_modules.pop(mpskip_module.id)
