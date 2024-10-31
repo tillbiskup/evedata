@@ -311,6 +311,7 @@ Module documentation
 
 """
 
+import copy
 import logging
 
 import h5py
@@ -441,6 +442,41 @@ class Data:
         importer.load()
         for column_name, attribute in importer.mapping.items():
             setattr(self, attribute, importer.data[column_name])
+
+    def copy_attributes_from(self, source=None):
+        """
+        Obtain attributes from another :obj:`Data` object.
+
+        Sometimes, it is useful to obtain the (public) attributes from
+        another :obj:`Data` object. Note that only public attributes are
+        copied, and the :attr:`metadata` are excluded by purpose from
+        copying. Furthermore, a (true) copy of the attributes is obtained,
+        hence the properties of source and target are actually different
+        objects.
+
+        Parameters
+        ----------
+        source : :class:`Data`
+            Object to copy attributes from.
+
+            Should typically be of the same (super)type.
+
+        Raises
+        ------
+        ValueError
+            Raised if no source is provided to copy attributes from.
+
+        """
+        if not source:
+            raise ValueError("No source provided to copy attributes from.")
+        public_attributes = [
+            item
+            for item in self.__dict__.keys()
+            if not (item.startswith("_") or item == "metadata")
+        ]
+        for attribute in public_attributes:
+            setattr(self, attribute, copy.copy(getattr(source, attribute)))
+        self.metadata.copy_attributes_from(source.metadata)
 
 
 class MonitorData(Data):

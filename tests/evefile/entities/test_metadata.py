@@ -22,6 +22,31 @@ class TestMetadata(unittest.TestCase):
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.metadata, attribute))
 
+    def test_copy_attributes_from_copies_attributes(self):
+        new_metadata = metadata.Metadata()
+        self.metadata.options = {"foo": "bar", "bla": "blub"}
+        new_metadata.copy_attributes_from(self.metadata)
+        self.assertDictEqual(self.metadata.options, new_metadata.options)
+
+    def test_copy_attributes_from_copies_only_existing_attributes(self):
+        new_metadata = metadata.Metadata()
+        self.metadata.non_existing_attribute = None
+        new_metadata.copy_attributes_from(self.metadata)
+        self.assertFalse(hasattr(new_metadata, "non_existing_attribute"))
+
+    def test_copied_attribute_is_copy(self):
+        new_metadata = metadata.Metadata()
+        self.metadata.options = {"foo": "bar", "bla": "blub"}
+        new_metadata.copy_attributes_from(self.metadata)
+        self.metadata.options.update({"baz": "foobar"})
+        self.assertNotIn("baz", new_metadata.options)
+
+    def test_copy_attributes_from_without_source_raises(self):
+        with self.assertRaisesRegex(
+            ValueError, "No source provided to copy attributes from."
+        ):
+            self.metadata.copy_attributes_from()
+
 
 class TestAbstractDeviceMetadata(unittest.TestCase):
     def setUp(self):

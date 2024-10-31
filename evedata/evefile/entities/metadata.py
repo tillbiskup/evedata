@@ -93,6 +93,7 @@ Module documentation
 
 """
 
+import copy
 import logging
 
 import numpy as np
@@ -145,6 +146,39 @@ class Metadata:
         super().__init__()
         self.name = ""
         self.options = {}
+
+    def copy_attributes_from(self, source=None):
+        """
+        Obtain attributes from another :obj:`Metadata` object.
+
+        Sometimes, it is useful to obtain the (public) attributes from
+        another :obj:`Metadata` object. Note that only public attributes are
+        copied. Furthermore, a (true) copy of the attributes is obtained,
+        hence the properties of source and target are actually different
+        objects.
+
+        Parameters
+        ----------
+        source : :class:`Metadata`
+            Object to copy attributes from.
+
+            Should typically be of the same (super)type.
+
+        Raises
+        ------
+        ValueError
+            Raised if no source is provided to copy attributes from.
+
+        """
+        if not source:
+            raise ValueError("No source provided to copy attributes from.")
+        public_attributes = [
+            item
+            for item in self.__dict__.keys()
+            if not (item.startswith("_") or item == "metadata")
+        ]
+        for attribute in public_attributes:
+            setattr(self, attribute, copy.copy(getattr(source, attribute)))
 
 
 class AbstractDeviceMetadata:

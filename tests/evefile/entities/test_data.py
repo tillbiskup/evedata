@@ -119,6 +119,43 @@ class TestData(unittest.TestCase):
         self.data.get_data()
         self.assertTrue(self.data.data.any())
 
+    def test_copy_attributes_from_copies_attributes(self):
+        new_data = data.Data()
+        self.data.options = {"foo": "bar", "bla": "blub"}
+        new_data.copy_attributes_from(self.data)
+        self.assertDictEqual(self.data.options, new_data.options)
+
+    def test_copy_attributes_from_copies_only_existing_attributes(self):
+        new_data = data.Data()
+        self.data.non_existing_attribute = None
+        new_data.copy_attributes_from(self.data)
+        self.assertFalse(hasattr(new_data, "non_existing_attribute"))
+
+    def test_copied_attribute_is_copy(self):
+        new_data = data.Data()
+        self.data.options = {"foo": "bar", "bla": "blub"}
+        new_data.copy_attributes_from(self.data)
+        self.data.options.update({"baz": "foobar"})
+        self.assertNotIn("baz", new_data.options)
+
+    def test_copy_attributes_from_copies_metadata(self):
+        new_data = data.Data()
+        self.data.metadata.name = "foo"
+        new_data.copy_attributes_from(self.data)
+        self.assertEqual(self.data.metadata.name, new_data.metadata.name)
+
+    def test_copy_attributes_from_copies_only_existing_metadata(self):
+        new_data = data.Data()
+        self.data.metadata.nonexisting_attribute = "foo"
+        new_data.copy_attributes_from(self.data)
+        self.assertFalse(hasattr(new_data.metadata, "nonexisting_attribute"))
+
+    def test_copy_attributes_from_without_source_raises(self):
+        with self.assertRaisesRegex(
+            ValueError, "No source provided to copy attributes from."
+        ):
+            self.data.copy_attributes_from()
+
 
 class TestMonitorData(unittest.TestCase):
     def setUp(self):

@@ -296,6 +296,16 @@ class ScanModule:
     scan modules they are recorded in is not only sensible, but sometimes
     necessary to properly deal with the data.
 
+    How does this class differ from
+    :class:`evedata.scan.entities.scan.ScanModule` having the same name?
+    Both represent scan modules as building blocks of a scan/measurement,
+    but serve different purposes on different abstraction layers. While
+    :class:`evedata.scan.entities.scan.ScanModule` represents the scan
+    modules as defined in a scan (in an SCML file) quite closely,
+    the present class provides the organisation layer for the representation
+    of the actual data, be it in the :class:`EveFile
+    <evedata.evefile.boundaries.evefile.EveFile>` or :class:`Measurement
+    <evedata.measurement.boundaries.measurement.Measurement>` interfaces.
 
     Attributes
     ----------
