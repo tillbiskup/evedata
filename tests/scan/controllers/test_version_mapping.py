@@ -512,6 +512,10 @@ class TestVersionMapperV9m0(unittest.TestCase):
             self.mapper.destination.scan.scan_modules[15].name,
         )
         self.assertEqual(
+            int(self.mapper.source.scan_modules[0].attrib["id"]),
+            self.mapper.destination.scan.scan_modules[15].id,
+        )
+        self.assertEqual(
             int(self.mapper.source.scan_modules[0].find("parent").text),
             self.mapper.destination.scan.scan_modules[15].parent,
         )

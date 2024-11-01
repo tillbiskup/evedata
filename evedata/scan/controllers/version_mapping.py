@@ -566,6 +566,7 @@ class VersionMapperV9m0(VersionMapper):
 
     def _map_scan_module(self, element=None):
         scan_module = self._get_scan_module_instance(element)
+        scan_module.id = int(element.attrib["id"])
         scan_module.name = element.find("name").text
         scan_module.parent = int(element.find("parent").text)
         try:
