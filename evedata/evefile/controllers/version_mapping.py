@@ -1817,6 +1817,12 @@ class VersionMapperV5(VersionMapper):
                             preprocessing
                         )
                         scan_module.data[dataset_name] = dataset
+                    if self.destination.scan.scan.scan_modules[
+                        scan_module_name
+                    ].has_mpskip() and isinstance(
+                        dataset, entities.data.SkipData
+                    ):
+                        scan_module.data[dataset_name] = dataset
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):

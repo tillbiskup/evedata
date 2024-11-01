@@ -327,7 +327,7 @@ class EveFile(File):
         new_scan_module = ScanModule()
         public_attributes = [
             attribute
-            for attribute in dir(scan_module)
+            for attribute in scan_module.__dict__.keys()
             if not attribute.startswith("_")
         ]
         for attribute in public_attributes:

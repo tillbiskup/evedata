@@ -2630,6 +2630,24 @@ class TestVersionMapperV5(unittest.TestCase):
             self.destination.scan_modules[2].data[dataset_names[0]],
         )
 
+    def test_with_mpskip_adds_skipdata_to_correct_scan_module(self):
+        self.mapper.source = self.source
+        dataset_names, _ = self.mapper.source.add_mpskip()
+        mpskip_name = "MPSKIP:sx70001"
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.mapper.map(destination=self.destination)
+        self.assertIn(mpskip_name, self.destination.scan_modules[2].data)
+
     def test_failing_consistency_check_resets_scan_modules(self):
         self.mapper.source = self.source
         data_ = np.ndarray([5], dtype=self.source.c1.meta.PosCountTimer.dtype)
