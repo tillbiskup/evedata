@@ -1113,6 +1113,9 @@ class VersionMapperV5(VersionMapper):
         # Remove datasets from snapshot, even if not in main
         for item in mpskip_in_snapshot:
             self.datasets2map_in_snapshot.remove(item)
+        # Return if no MPSKIP dataset in main
+        if not mpskip_in_main:
+            return
         mpskip_in_monitor = [
             item
             for item in self.datasets2map_in_monitor
