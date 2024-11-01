@@ -25,9 +25,13 @@ class TestSelectPositions(unittest.TestCase):
                 self.assertTrue(hasattr(self.processing, attribute))
 
     def test_extracts_matching_rows(self):
-        data = np.arange(12).reshape(2, -1).T
+        raw_data = np.arange(12).reshape(2, -1).T
+        dtype = np.dtype([("PosCounter", "<i4"), ("A2980:23303chan1", "<f8")])
+        data = np.ndarray(raw_data.shape[0], dtype=dtype)
+        for idx, name in enumerate(dtype.names):
+            data[name] = raw_data[:, idx]
         positions = np.array([2, 3, 5])
         self.processing.positions = positions
         result = self.processing.process(data)
-        self.assertListEqual(list(positions), list(result[:, 0]))
+        np.testing.assert_array_equal(positions, result[dtype.names[0]])
         self.assertEqual(data.ndim, result.ndim)

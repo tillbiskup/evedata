@@ -47,6 +47,12 @@ class TestRearrangeRawValues(unittest.TestCase):
         result = self.processing.process(self.data)
         self.assertEqual(4, len(result))
 
+    def test_with_weird_data_splits_raw_values(self):
+        self.skip_data.data = np.array([1, 2, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3])
+        self.processing.skip_data = self.skip_data
+        result = self.processing.process(self.data)
+        self.assertEqual(4, len(result))
+
     def test_sets_correct_positions(self):
         self.processing.skip_data = self.skip_data
         result = self.processing.process(self.data)
