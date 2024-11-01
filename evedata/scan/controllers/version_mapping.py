@@ -458,9 +458,9 @@ class VersionMapper:
         pass
 
 
-class VersionMapperV9m2(VersionMapper):
+class VersionMapperV9m0(VersionMapper):
     """
-    Mapper for mapping SCML v9.2 file contents to data structures.
+    Mapper for mapping SCML v9.0 file contents to data structures.
 
     .. note::
 
@@ -492,7 +492,7 @@ class VersionMapperV9m2(VersionMapper):
 
     .. code-block::
 
-        mapper = VersionMapperV9m2()
+        mapper = VersionMapperV9m0()
         mapper.map(source=scml, destination=scan)
 
     Usually, you will obtain the correct mapper from the
@@ -840,3 +840,87 @@ class VersionMapperV9m2(VersionMapper):
                 scan_module.appended, startpos
             )
         return startpos
+
+
+class VersionMapperV9m1(VersionMapperV9m0):
+    """
+    Mapper for mapping SCML v9.1 file contents to data structures.
+
+    .. note::
+
+        SCML schema versions 9.0 and 9.1 differ only in their version
+        number. Hence, this is an empty class delegating everything to its
+        parent.
+
+    Attributes
+    ----------
+    source : :class:`evedata.scan.boundaries.scml.SCML`
+        Python object representation of an SCML file
+
+    destination : :class:`evedata.scan.boundaries.scan.Scan`
+        High(er)-level data structure representing an SCML file
+
+
+    Examples
+    --------
+    Mapping a given SCML file to the evedata structures is the same for
+    each of the mappers:
+
+    .. code-block::
+
+        mapper = VersionMapperV9m1()
+        mapper.map(source=scml, destination=scan)
+
+    Usually, you will obtain the correct mapper from the
+    :class:`VersionMapperFactory`. In this case, the returned mapper has
+    its :attr:`source` attribute already set for convenience:
+
+    .. code-block::
+
+        factory = VersionMapperFactory()
+        mapper = factory.get_mapper(scml=scml)
+        mapper.map(destination=scan)
+
+    """
+
+
+class VersionMapperV9m2(VersionMapperV9m0):
+    """
+    Mapper for mapping SCML v9.2 file contents to data structures.
+
+    .. note::
+
+        SCML schema versions 9.0 and 9.2 differ only in their version
+        number. Hence, this is an empty class delegating everything to its
+        parent.
+
+    Attributes
+    ----------
+    source : :class:`evedata.scan.boundaries.scml.SCML`
+        Python object representation of an SCML file
+
+    destination : :class:`evedata.scan.boundaries.scan.Scan`
+        High(er)-level data structure representing an SCML file
+
+
+    Examples
+    --------
+    Mapping a given SCML file to the evedata structures is the same for
+    each of the mappers:
+
+    .. code-block::
+
+        mapper = VersionMapperV9m2()
+        mapper.map(source=scml, destination=scan)
+
+    Usually, you will obtain the correct mapper from the
+    :class:`VersionMapperFactory`. In this case, the returned mapper has
+    its :attr:`source` attribute already set for convenience:
+
+    .. code-block::
+
+        factory = VersionMapperFactory()
+        mapper = factory.get_mapper(scml=scml)
+        mapper.map(destination=scan)
+
+    """

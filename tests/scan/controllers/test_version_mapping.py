@@ -17,7 +17,7 @@ SCML_STRING = """<?xml version="1.0" encoding="UTF-8"?>
 <tns:scml xsi:schemaLocation="http://www.ptb.de/epics/SCML scml.xsd"
     xmlns:tns="http://www.ptb.de/epics/SCML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <location>TEST</location>
-    <version>9.2</version>
+    <version>9.0</version>
     <scan>
         <repeatcount>0</repeatcount>
         <comment>test ccd time</comment>
@@ -321,7 +321,7 @@ MINIMAL_SCML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <tns:scml xsi:schemaLocation="http://www.ptb.de/epics/SCML scml.xsd"
     xmlns:tns="http://www.ptb.de/epics/SCML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <location>TEST</location>
-    <version>9.2</version>
+    <version>9.0</version>
     <scan>
         <repeatcount>0</repeatcount>
         <comment>test</comment>
@@ -403,6 +403,12 @@ class TestVersionMapperFactory(unittest.TestCase):
     def test_get_mapper_returns_correct_mapper(self):
         self.factory.scml = self.scml
         mapper = self.factory.get_mapper()
+        self.assertIsInstance(mapper, version_mapping.VersionMapperV9m0)
+        self.factory.scml.version = "9.1"
+        mapper = self.factory.get_mapper()
+        self.assertIsInstance(mapper, version_mapping.VersionMapperV9m1)
+        self.factory.scml.version = "9.2"
+        mapper = self.factory.get_mapper()
         self.assertIsInstance(mapper, version_mapping.VersionMapperV9m2)
 
     def test_get_mapper_with_unknown_version_raises(self):
@@ -456,9 +462,9 @@ class TestVersionMapper(unittest.TestCase):
         )
 
 
-class TestVersionMapperV9m2(unittest.TestCase):
+class TestVersionMapperV9m0(unittest.TestCase):
     def setUp(self):
-        self.mapper = version_mapping.VersionMapperV9m2()
+        self.mapper = version_mapping.VersionMapperV9m0()
         self.logger = logging.getLogger(name="evedata")
         self.logger.setLevel(logging.ERROR)
 
@@ -1811,4 +1817,52 @@ class TestVersionMapperV9m2(unittest.TestCase):
         self.assertEqual(
             pre_scan_settings["SimMt:testrack01000.LLM"].value,
             post_scan_settings["SimMt:testrack01000.LLM"].value,
+        )
+
+
+class TestVersionMapperV9m1(unittest.TestCase):
+    def setUp(self):
+        self.mapper = version_mapping.VersionMapperV9m1()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_map_sets_scan_metadata(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=SCML_STRING.replace("<version>9.0", "<version>9.1")
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            int(self.mapper.source.scan.find("repeatcount").text),
+            self.mapper.destination.scan.repeat_count,
+        )
+        self.assertEqual(
+            self.mapper.source.scan.find("comment").text,
+            self.mapper.destination.scan.comment,
+        )
+
+
+class TestVersionMapperV9m2(unittest.TestCase):
+    def setUp(self):
+        self.mapper = version_mapping.VersionMapperV9m2()
+
+    def test_instantiate_class(self):
+        pass
+
+    def test_map_sets_scan_metadata(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(
+            xml=SCML_STRING.replace("<version>9.0", "<version>9.2")
+        )
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        self.assertEqual(
+            int(self.mapper.source.scan.find("repeatcount").text),
+            self.mapper.destination.scan.repeat_count,
+        )
+        self.assertEqual(
+            self.mapper.source.scan.find("comment").text,
+            self.mapper.destination.scan.comment,
         )
