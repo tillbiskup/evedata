@@ -317,6 +317,56 @@ class AbstractScanModule:
         self.number_of_positions_per_pass = 0
         self.positions = None
 
+    def has_mpskip(self):
+        """
+        Check whether a scan module uses the EPICS MPSKIP feature.
+
+        The MPSKIP detector is a special EPICS workaround to, *i.a.*, store
+        individual data points for an average channel. For details,
+        see the :mod:`mpskip <evedata.evefile.controllers.mpskip>` module.
+
+        To properly convert the datasets of the devices in a scan using
+        the MPSKIP feature, we need to know which devices were part of the
+        scan module containing the MPSKIP detector.
+
+        This convenience method allows for easily checking whether the
+        scan module contains the MPSKIP detector and allows the
+        controllers handling the dataset conversion to do their work.
+
+        The actual checking needs to be implemented in the subclasses,
+        as otherwise, by default ``False`` will be returned.
+
+        Returns
+        -------
+        has_mpskip : :class:`bool`
+            Whether the scan module uses the EPICS MPSKIP feature
+
+        """
+        return False
+
+    def has_device(self, name=""):
+        """
+        Check whether a scan module contains a given device.
+
+        Convenience method to check for a device name (its unique ID) in
+        both, channels and axes.
+
+        The actual checking needs to be implemented in the subclasses,
+        as otherwise, by default ``False`` will be returned.
+
+        Parameters
+        ----------
+        name : :class:`str`
+            Name (unique ID) of the device
+
+        Returns
+        -------
+        has_device : :class:`bool`
+            Whether the scan module contains the given device
+
+        """
+        return False
+
 
 class ScanModule(AbstractScanModule):
     """

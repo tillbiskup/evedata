@@ -41,6 +41,13 @@ class TestScan(unittest.TestCase):
         self.scan.scan_modules[mpskip_module_id].channels = {"MPSKIP": None}
         self.assertEqual(mpskip_module_id, self.scan.mpskip_scan_module)
 
+    def test_mpskip_scan_module_with_snapshot_modules(self):
+        for scan_module in [1, 2, 5, 7, 42]:
+            self.scan.scan_modules[scan_module] = scan.ScanModule()
+        self.scan.scan_modules[3] = scan.StaticSnapshotModule()
+        self.scan.scan_modules[4] = scan.DynamicSnapshotModule()
+        self.assertIsNone(self.scan.mpskip_scan_module)
+
     def test_number_of_positions_without_scan_modules_returns_zero(self):
         self.assertEqual(0, self.scan.number_of_positions)
         self.assertIsInstance(self.scan.number_of_positions, int)
@@ -78,6 +85,14 @@ class TestAbstractScanModule(unittest.TestCase):
         for attribute in attributes:
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.module, attribute))
+
+    def test_has_mpskip_returns_false(self):
+        self.assertIsInstance(self.module.has_mpskip(), bool)
+        self.assertFalse(self.module.has_mpskip())
+
+    def test_has_device_returns_false(self):
+        self.assertIsInstance(self.module.has_device(), bool)
+        self.assertFalse(self.module.has_device())
 
 
 class TestScanModule(unittest.TestCase):

@@ -2539,6 +2539,22 @@ class TestVersionMapperV5(unittest.TestCase):
             )
         self.assertNotIn("Counter-mot", self.destination.data)
 
+    def test_map_with_counter_mot_without_mpskip(self):
+        self.mapper.source = self.source
+        name = "Counter-mot"
+        dataset = MockHDF5Dataset(
+            name=f"/c1/main/{name}", filename=self.source.filename
+        )
+        dataset.attributes = {
+            "DeviceType": "Channel",
+            "Access": f"ca:{name}",
+            "Name": name,
+            "Unit": "mA",
+            "Detectortype": "Standard",
+        }
+        self.mapper.source.c1.main.add_item(dataset)
+        self.mapper.map(destination=self.destination)
+
     def test_with_scan_modules_maps_datasets_to_scan_modules(self):
         self.mapper.source = self.source
         dataset_names = self.mapper.source.add_singlepoint_detector_data(
