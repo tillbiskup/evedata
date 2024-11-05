@@ -345,6 +345,19 @@ class TestAxisData(unittest.TestCase):
         self.data.get_data()
         self.assertEqual(h5file.shape, len(self.data.data))
 
+    def test_get_data_with_gaps_in_position_counts_returns_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(gaps=True)
+        importer = data.HDF5DataImporter(source=self.filename)
+        importer.item = "/c1/meta/PosCountTimer"
+        importer.mapping = {
+            "PosCounter": "positions",
+            "PosCountTimer": "data",
+        }
+        self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertEqual(h5file.shape, len(self.data.data))
+
 
 class TestChannelData(unittest.TestCase):
     def setUp(self):
