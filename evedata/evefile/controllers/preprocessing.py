@@ -83,6 +83,10 @@ class SelectPositions(ImporterPreprocessingStep):
         self.positions = []
 
     def _process(self, data=None):
-        return data[
-            np.nonzero(np.isin(data[data.dtype.names[0]], self.positions))[0]
-        ]
+        if self.positions is not None:
+            data = data[
+                np.nonzero(
+                    np.isin(data[data.dtype.names[0]], self.positions)
+                )[0]
+            ]
+        return data

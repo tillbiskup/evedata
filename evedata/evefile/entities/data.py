@@ -539,13 +539,6 @@ class MeasureData(Data):
     metadata : :class:`evedata.evefile.entities.metadata.MeasureMetadata`
         Relevant metadata for the individual device.
 
-    positions : :class:`numpy.ndarray`
-        Position values data are recorded for.
-
-        Each data "point" corresponds to an overall position of all
-        actuators (motor axes) of the setup and is assigned an individual
-        "position count".
-
 
     Examples
     --------
@@ -560,7 +553,38 @@ class MeasureData(Data):
     def __init__(self):
         super().__init__()
         self.metadata = metadata.MeasureMetadata()
-        self.positions = np.ndarray(shape=[], dtype=int)
+        self._positions = None
+
+    @property
+    def positions(self):
+        """
+        Position values data are recorded for.
+
+        Each data "point" corresponds to an overall position of all
+        actuators (motor axes) of the setup and is assigned an individual
+        "position count".
+
+        Actual data recorded from the device.
+
+        Data are loaded only on demand. Hence, upon the first access of the
+        :attr:`positions` property, the :meth:`get_data` method will be
+        called, calling out to the respective importers.
+
+        Returns
+        -------
+        positions : :class:`numpy.ndarray`
+            Position values data are recorded for.
+
+            The actual data type (:class:`numpy.dtype`) is usually int.
+
+        """
+        if self._positions is None:
+            self.get_data()
+        return self._positions
+
+    @positions.setter
+    def positions(self, positions=None):
+        self._positions = positions
 
     def _import_from_hdf5dataimporter(self, importer=None):
         """
@@ -728,7 +752,8 @@ class ChannelData(MeasureData):
         """
         super()._import_from_hdf5dataimporter(importer=importer)
         indices = (
-            np.where((self.positions[:-1] - self.positions[1:]) + 1)[0] + 1
+            np.where(((self.positions[:-1] - self.positions[1:]) + 1) > 0)[0]
+            + 1
         )
         for attribute in importer.mapping.values():
             setattr(
@@ -1987,7 +2012,8 @@ class HDF5DataImporter(DataImporter):
             self.item = item
         if not self.item:
             raise ValueError("No item to load data from.")
-        return super().load(source=source)
+        self.data = super().load(source=source)
+        return self.data
 
     def _load(self):
         with h5py.File(self.source, "r") as file:

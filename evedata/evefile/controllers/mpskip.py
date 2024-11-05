@@ -304,7 +304,6 @@ class RearrangeRawValues(datatypes.ImporterPreprocessingStep):
         self.skip_data = None
 
     def _process(self, data=None):
-        self.skip_data.get_data()
         cut_at = np.where(np.diff(self.skip_data.positions) > 1)[0] + 1
         new_positions = self.skip_data.get_parent_positions()
         np.dtype(data.dtype.fields)

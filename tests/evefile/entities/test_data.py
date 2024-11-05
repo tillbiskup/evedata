@@ -13,7 +13,7 @@ class DummyHDF5File:
         self.filename = filename
         self.shape = 10
 
-    def create(self, random=False, double=False):
+    def create(self, random=False, double=False, gaps=False):
         with h5py.File(self.filename, "w") as file:
             c1 = file.create_group("c1")
             c1.create_group("main")
@@ -33,6 +33,14 @@ class DummyHDF5File:
             elif double:
                 data_["PosCounter"] = np.asarray(
                     [1, 1, 2, 3, 4, 4, 4, 5, 6, 6]
+                )
+                self.shape = len(np.unique(data_["PosCounter"]))
+                data_["PosCountTimer"] = np.asarray(
+                    [2, 3, 4, 6, 8, 9, 9, 10, 12, 13]
+                )
+            elif gaps:
+                data_["PosCounter"] = np.asarray(
+                    [1, 2, 4, 5, 6, 8, 9, 10, 12, 13]
                 )
                 self.shape = len(np.unique(data_["PosCounter"]))
                 data_["PosCountTimer"] = np.asarray(
@@ -199,6 +207,18 @@ class TestMeasureData(unittest.TestCase):
         self.data = data.MeasureData()
         self.filename = "test.h5"
 
+        class MockData(data.MeasureData):
+
+            def __init__(self):
+                super().__init__()
+                self.get_data_called = False
+
+            def get_data(self):
+                super().get_data()
+                self.get_data_called = True
+
+        self.mock_data = MockData()
+
     def tearDown(self):
         if os.path.exists(self.filename):
             os.remove(self.filename)
@@ -233,6 +253,19 @@ class TestMeasureData(unittest.TestCase):
         self.data.get_data()
         self.assertTrue(np.all(np.diff(self.data.positions) >= 0))
         self.assertFalse(np.all(np.diff(self.data.data) >= 0))
+
+    def test_setting_positions_sets_positions(self):
+        self.data.positions = np.random.random(5)
+        self.assertGreater(len(self.data.positions), 0)
+
+    def test_accessing_positions_calls_get_data_if_not_loaded(self):
+        _ = self.mock_data.positions
+        self.assertTrue(self.mock_data.get_data_called)
+
+    def test_accessing_positions_with_positions_does_not_call_get_data(self):
+        self.mock_data.positions = np.random.random(5)
+        _ = self.mock_data.positions
+        self.assertFalse(self.mock_data.get_data_called)
 
 
 class TestDeviceData(unittest.TestCase):
@@ -352,6 +385,19 @@ class TestChannelData(unittest.TestCase):
         self.data.get_data()
         self.assertTrue(np.all(np.diff(self.data.positions) > 0))
         self.assertFalse(np.any(self.data.data % 2))
+
+    def test_get_data_with_gaps_in_position_counts_returns_data(self):
+        h5file = DummyHDF5File(filename=self.filename)
+        h5file.create(gaps=True)
+        importer = data.HDF5DataImporter(source=self.filename)
+        importer.item = "/c1/meta/PosCountTimer"
+        importer.mapping = {
+            "PosCounter": "positions",
+            "PosCountTimer": "data",
+        }
+        self.data.importer.append(importer)
+        self.data.get_data()
+        self.assertEqual(h5file.shape, len(self.data.data))
 
 
 class TestTimestampData(unittest.TestCase):
@@ -1022,6 +1068,19 @@ class TestHDF5DataImporter(unittest.TestCase):
         self.importer.item = self.item
         self.importer.load()
         np.testing.assert_array_equal(np.ones([5, 2]), self.importer.data)
+
+    def test_load_performs_preprocessing_data(self):
+        self.create_hdf5_file()
+
+        class MockImporterPreprocessingStep(data.ImporterPreprocessingStep):
+            def _process(self, data=None):
+                return data * 2
+
+        self.importer.preprocessing = [MockImporterPreprocessingStep()]
+        self.importer.source = self.filename
+        self.importer.item = self.item
+        self.importer.load()
+        np.testing.assert_array_equal(self.importer.data, np.ones([5, 2]) * 2)
 
 
 class TestSkipData(unittest.TestCase):
