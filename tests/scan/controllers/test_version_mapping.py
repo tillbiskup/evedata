@@ -1548,6 +1548,69 @@ class TestVersionMapperV9m0(unittest.TestCase):
             self.mapper.destination.scan.scan_modules[2].positions,
         )
 
+    def test_positions_with_nested_scan_modules_with_positioning(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        scan_module.appended = 3
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        scan_module.positionings.append(scan.Positioning())
+        destination.scan.scan_modules[2] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        scan_module.positionings.append(scan.Positioning())
+        destination.scan.scan_modules[3] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertIsNotNone(scan_module.positions)
+        np.testing.assert_array_equal(
+            np.array([1]),
+            self.mapper.destination.scan.scan_modules[1].positions,
+        )
+        np.testing.assert_array_equal(
+            np.linspace(2, 7, 6),
+            self.mapper.destination.scan.scan_modules[2].positions,
+        )
+        self.assertEqual(
+            6,
+            self.mapper.destination.scan.scan_modules[
+                2
+            ].number_of_positions_per_pass,
+        )
+        self.assertEqual(
+            7,
+            self.mapper.destination.scan.scan_modules[2]
+            .positionings[0]
+            .position,
+        )
+        np.testing.assert_array_equal(
+            np.linspace(8, 13, 6),
+            self.mapper.destination.scan.scan_modules[3].positions,
+        )
+        self.assertEqual(
+            6,
+            self.mapper.destination.scan.scan_modules[
+                3
+            ].number_of_positions_per_pass,
+        )
+        self.assertEqual(
+            13,
+            self.mapper.destination.scan.scan_modules[3]
+            .positionings[0]
+            .position,
+        )
+
     def test_positions_with_positioning_sets_positioning_position(self):
         self.mapper.source = SCML()
         destination = Scan()
@@ -1564,6 +1627,61 @@ class TestVersionMapperV9m0(unittest.TestCase):
             self.mapper.destination.scan.scan_modules[1]
             .positionings[0]
             .position,
+        )
+
+    def test_positions_with_dynamic_snapshot_scan_module(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.DynamicSnapshotModule()
+        scan_module.appended = 2
+        destination.scan.scan_modules[1] = scan_module
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertIsNotNone(scan_module.positions)
+        np.testing.assert_array_equal(
+            np.linspace(2, 6, 5),
+            self.mapper.destination.scan.scan_modules[2].positions,
+        )
+
+    def test_positions_with_nested_scan_module_and_different_order(self):
+        self.mapper.source = SCML()
+        destination = Scan()
+        scan_module = scan.ScanModule()
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[2] = scan_module
+        scan_module = scan.ScanModule()
+        scan_module.nested = 2
+        axis = scan.Axis(sm_id="1")
+        axis.positions = np.asarray([1, 2, 3, 4, 5])
+        scan_module.axes["1"] = axis
+        destination.scan.scan_modules[1] = scan_module
+        self.mapper.destination = destination
+        self.mapper._calculate_positions()
+        for scan_module in self.mapper.destination.scan.scan_modules.values():
+            self.assertIsNotNone(scan_module.positions)
+        np.testing.assert_array_equal(
+            np.linspace(1, 25, 5),
+            self.mapper.destination.scan.scan_modules[1].positions,
+        )
+        np.testing.assert_array_equal(
+            np.array(
+                [
+                    [2, 3, 4, 5, 6],
+                    [8, 9, 10, 11, 12],
+                    [14, 15, 16, 17, 18],
+                    [20, 21, 22, 23, 24],
+                    [26, 27, 28, 29, 30],
+                ]
+            ).flatten(),
+            self.mapper.destination.scan.scan_modules[2].positions,
         )
 
     def test_map_channel_sets_deferred_trigger(self):

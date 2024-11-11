@@ -369,6 +369,17 @@ class TestStepRange(unittest.TestCase):
         )
         self.assertEqual("float64", self.step_function.positions.dtype.name)
 
+    def test_calculate_positions_with_floats_sets_positions(self):
+        self.step_function.start = -1.0
+        self.step_function.stop = 1.1
+        self.step_function.step_width = 0.05
+        self.step_function.calculate_positions()
+        np.testing.assert_array_equal(
+            np.arange(-1.0, 1.1, 0.05),
+            self.step_function.positions[:-1],
+        )
+        self.assertEqual("float64", self.step_function.positions.dtype.name)
+
     def test_stepwidth_zero_does_not_raise(self):
         self.step_function.start = 1
         self.step_function.stop = 1

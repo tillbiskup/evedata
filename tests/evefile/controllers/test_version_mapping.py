@@ -2605,6 +2605,40 @@ class TestVersionMapperV5(unittest.TestCase):
                 positions, dataset.importer[0].preprocessing[0].positions
             )
 
+    def test_with_scan_modules_adds_one_importer_preprocessing_to_data(self):
+        self.mapper.source = self.source
+        dataset_names = self.mapper.source.add_singlepoint_detector_data(
+            normalized=False
+        )
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[1].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        positions_1 = np.linspace(1, 5, 5)
+        self.destination.scan_modules[1].positions = positions_1
+        positions_2 = np.linspace(6, 10, 5)
+        self.destination.scan_modules[2].positions = positions_2
+        self.mapper.map(destination=self.destination)
+        for dataset in self.destination.scan_modules[2].data.values():
+            self.assertTrue(dataset.importer[0].preprocessing)
+            self.assertIsInstance(
+                dataset.importer[0].preprocessing[0],
+                preprocessing.SelectPositions,
+            )
+            np.testing.assert_array_equal(
+                positions_2, dataset.importer[0].preprocessing[0].positions
+            )
+
     def test_with_scan_modules_deepcopies_datasets_for_scan_modules(self):
         self.mapper.source = self.source
         dataset_names = self.mapper.source.add_singlepoint_detector_data(

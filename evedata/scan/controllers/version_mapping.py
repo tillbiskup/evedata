@@ -677,17 +677,16 @@ class VersionMapperV9m0(VersionMapper):
             )
         return axis
 
-    @staticmethod
-    def _map_axis_stepfunction_add(element):
+    def _map_axis_stepfunction_add(self, element):
         step_function = scan.StepRange()
-        step_function.start = float(
-            element.find("startstopstep").find("start").text
+        step_function.start = self._cast_value(
+            element.find("startstopstep").find("start")
         )
-        step_function.stop = float(
-            element.find("startstopstep").find("stop").text
+        step_function.stop = self._cast_value(
+            element.find("startstopstep").find("stop")
         )
-        step_function.step_width = float(
-            element.find("startstopstep").find("stepwidth").text
+        step_function.step_width = self._cast_value(
+            element.find("startstopstep").find("stepwidth")
         )
         step_function.is_main_axis = (
             element.find("startstopstep").find("ismainaxis").text.lower()
@@ -776,27 +775,32 @@ class VersionMapperV9m0(VersionMapper):
         types = {
             "double": float,
             "string": str,
+            "int": int,
         }
         return types[element_type](element.text)
 
     def _calculate_positions(self):
         for scan_module in self.destination.scan.scan_modules.values():
-            try:
-                scan_module.number_of_positions_per_pass = max(
-                    axis.positions.size for axis in scan_module.axes.values()
+            if not isinstance(scan_module, scan.DynamicSnapshotModule):
+                try:
+                    scan_module.number_of_positions_per_pass = max(
+                        axis.positions.size
+                        for axis in scan_module.axes.values()
+                    )
+                except ValueError:
+                    pass
+                scan_module.number_of_positions_per_pass *= (
+                    scan_module.number_of_measurements
                 )
-            except ValueError:
-                pass
-            scan_module.number_of_positions_per_pass *= (
-                scan_module.number_of_measurements
-            )
-            if scan_module.positionings:
-                scan_module.number_of_positions_per_pass += 1
+                if scan_module.positionings:
+                    scan_module.number_of_positions_per_pass += 1
 
         try:
-            root_module_id = list(self.destination.scan.scan_modules.keys())[
-                0
-            ]
+            root_module_id = [
+                mod.id
+                for mod in self.destination.scan.scan_modules.values()
+                if mod.parent == 0
+            ][0]
             self._traverse_n_positions(root_module_id)
             self._traverse_positions(root_module_id)
         except IndexError:
@@ -818,11 +822,11 @@ class VersionMapperV9m0(VersionMapper):
     def _traverse_positions(self, scan_module_id, startpos=1):
         scan_module = self.destination.scan.scan_modules[scan_module_id]
         if scan_module.positions is None:
-            scan_module.positions = np.array([])
+            scan_module.positions = np.array([], dtype=int)
         number_of_positions_per_pass = (
             scan_module.number_of_positions_per_pass
         )
-        if scan_module.positionings:
+        if hasattr(scan_module, "positionings") and scan_module.positionings:
             number_of_positions_per_pass -= 1
         for _ in range(number_of_positions_per_pass):
             scan_module.positions = np.append(scan_module.positions, startpos)
@@ -831,7 +835,7 @@ class VersionMapperV9m0(VersionMapper):
                 startpos = self._traverse_positions(
                     scan_module.nested, startpos
                 )
-        if scan_module.positionings:
+        if hasattr(scan_module, "positionings") and scan_module.positionings:
             scan_module.positions = np.append(scan_module.positions, startpos)
             for positioning in scan_module.positionings:
                 positioning.position = startpos

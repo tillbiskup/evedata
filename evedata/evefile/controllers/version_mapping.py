@@ -1812,11 +1812,11 @@ class VersionMapperV5(VersionMapper):
                             controllers.preprocessing.SelectPositions()
                         )
                         preprocessing.positions = scan_module.positions
-                        dataset = copy.deepcopy(dataset)
-                        dataset.importer[0].preprocessing.append(
+                        new_dataset = copy.deepcopy(dataset)
+                        new_dataset.importer[0].preprocessing.append(
                             preprocessing
                         )
-                        scan_module.data[dataset_name] = dataset
+                        scan_module.data[dataset_name] = new_dataset
                     if self.destination.scan.scan.scan_modules[
                         scan_module_name
                     ].has_mpskip() and isinstance(

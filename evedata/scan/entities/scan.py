@@ -1377,10 +1377,11 @@ class StepRange(StepFunction):
         else:
             self._positions = np.arange(
                 self.start,
-                self.stop + self.step_width,
+                self.stop,
                 self.step_width,
                 dtype=float,
             )
+            self._positions = np.append(self._positions, self.stop)
 
 
 class StepRanges(StepFunction):
