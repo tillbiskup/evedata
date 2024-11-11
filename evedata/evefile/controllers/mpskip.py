@@ -127,6 +127,15 @@ The basic assumptions underlying the handling of datasets with MPSKIP are:
 * The MPSKIP module is always the last and innermost scan module.
 
 
+.. important::
+
+    Both assumptions stated above are *not* valid for some particular
+    scans this group uses. There is one type of scans consisting of three
+    skip blocks attached to each other, but each of the skip blocks using
+    identical "channels". One way to separate the mpskip detector would be
+    to split first at PosCounts with Delta > 2, to separate the scan modules.
+
+
 Prerequisites
 =============
 
