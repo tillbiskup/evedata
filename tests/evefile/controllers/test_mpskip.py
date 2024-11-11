@@ -168,6 +168,7 @@ class MockFileScanModule:
         self.name = ""
         self.parent = -1
         self.data = {}
+        self.positions = None
 
 
 class TestMpskip(unittest.TestCase):
@@ -179,6 +180,7 @@ class TestMpskip(unittest.TestCase):
         self.source.scan.scan.add_scan_modules()
         self.source.add_scan_modules()
         skipdata = data.SkipData()
+        skipdata.positions = np.asarray([2, 3, 5, 6, 7, 9, 10, 11])
         self.source.scan_modules[2].data["skipdata"] = skipdata
 
     def test_instantiate_class(self):
@@ -271,6 +273,28 @@ class TestMpskip(unittest.TestCase):
     def test_map_adds_preprocessing_steps_to_devices(self):
         self.mapper.map(source=self.source)
         for name, device in self.mapper.source.scan_modules[1].data.items():
+            if name.startswith("nmEnerg"):  # dirty fix to skip existing axis
+                continue
+            self.assertIsInstance(
+                device.importer[0].preprocessing[0],
+                preprocessing.SelectPositions,
+            )
+            self.assertIsInstance(
+                device.importer[0].preprocessing[1],
+                mpskip.RearrangeRawValues,
+            )
+
+    def test_map_replaces_select_position_preprocessing_step(self):
+        for scan_module in self.source.scan_modules.values():
+            for name, dataset in scan_module.data.items():
+                if not name.startswith("skip"):
+                    preprocessing_step = preprocessing.SelectPositions()
+                    dataset.importer.append(MockDatasetImporter())
+                    dataset.importer[0].preprocessing.append(
+                        preprocessing_step
+                    )
+        self.mapper.map(source=self.source)
+        for name, device in self.mapper.source.scan_modules[1].data.items():
             self.assertIsInstance(
                 device.importer[0].preprocessing[0],
                 preprocessing.SelectPositions,
@@ -344,4 +368,34 @@ class TestMpskip(unittest.TestCase):
         self.assertEqual(
             channel_name,
             self.mapper.source.scan_modules[1].data[channel_name].metadata.pv,
+        )
+
+    def test_map_adds_preprocessing_step_to_parent_devices(self):
+        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
+            [2, 3, 5, 6, 7, 9, 10, 11]
+        )
+        dataset = self.source.scan_modules[1].data["nmEnerg:io2600wl2e.A"]
+        preprocessing_step = preprocessing.SelectPositions()
+        dataset.importer.append(MockDatasetImporter())
+        dataset.importer[0].preprocessing.append(preprocessing_step)
+        self.mapper.map(source=self.source)
+        device = self.mapper.source.scan_modules[1].data[
+            "nmEnerg:io2600wl2e.A"
+        ]
+        self.assertIsInstance(
+            device.importer[0].preprocessing[0],
+            preprocessing.SelectPositions,
+        )
+        np.testing.assert_array_equal(
+            np.asarray([1, 4, 8]),
+            device.importer[0].preprocessing[0].positions,
+        )
+
+    def test_map_sets_positions_in_parent_scan_module(self):
+        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
+            [2, 3, 5, 6, 7, 9, 10, 11]
+        )
+        self.mapper.map(source=self.source)
+        np.testing.assert_array_equal(
+            np.asarray([1, 4, 8]), self.source.scan_modules[1].positions
         )

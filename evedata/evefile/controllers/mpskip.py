@@ -364,6 +364,7 @@ class Mpskip:
 
     def __init__(self):
         self.source = None
+        self._skipdata = None
 
     def map(self, source=None):
         """
@@ -402,15 +403,17 @@ class Mpskip:
             ].channels
             if not name.startswith("MPSKIP")
         ]
-        skipdata = [
+        self._skipdata = [
             device
             for device in mpskip_module.data.values()
             if isinstance(device, datatypes.SkipData)
         ][0]
-        select_positions = preprocessing.SelectPositions()
-        select_positions.positions = skipdata.positions
+        parent_module.positions = self._skipdata.get_parent_positions()
         for device in parent_module.data.values():
-            device.importer[0].preprocessing.append(select_positions)
+            self._add_select_positions_step(
+                dataset=device,
+                positions=self._skipdata.get_parent_positions(),
+            )
         for name, device in mpskip_module.data.items():
             if name in channel_names_to_copy:
                 if "RBV" in name:
@@ -423,16 +426,31 @@ class Mpskip:
                     else:
                         new_channel = datatypes.AverageChannelData()
                     new_channel.metadata.copy_attributes_from(
-                        skipdata.metadata
+                        self._skipdata.metadata
                     )
                     new_channel.copy_attributes_from(device)
                     parent_module.data[name] = new_channel
-                parent_module.data[name].importer[0].preprocessing.append(
-                    select_positions
-                )
-                rearrange_raw_values = RearrangeRawValues()
-                rearrange_raw_values.skip_data = skipdata
-                parent_module.data[name].importer[0].preprocessing.append(
-                    rearrange_raw_values
+                self._add_preprocessing_steps_to_importer(
+                    dataset=parent_module.data[name]
                 )
         self.source.scan_modules.pop(mpskip_module.id)
+
+    def _add_preprocessing_steps_to_importer(self, dataset=None):
+        self._add_select_positions_step(
+            dataset=dataset, positions=self._skipdata.positions
+        )
+        rearrange_raw_values = RearrangeRawValues()
+        rearrange_raw_values.skip_data = self._skipdata
+        dataset.importer[0].preprocessing.append(rearrange_raw_values)
+
+    @staticmethod
+    def _add_select_positions_step(dataset=None, positions=None):
+        select_positions = preprocessing.SelectPositions()
+        select_positions.positions = positions
+        previous_select_positioning_step = False
+        for idx, step in enumerate(dataset.importer[0].preprocessing):
+            if isinstance(step, preprocessing.SelectPositions):
+                dataset.importer[0].preprocessing[idx] = select_positions
+                previous_select_positioning_step = True
+        if not previous_select_positioning_step:
+            dataset.importer[0].preprocessing.append(select_positions)
