@@ -353,6 +353,56 @@ MINIMAL_SCML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 </tns:scml>"""
 
 
+SCML_WITH_MIXED_SCAN_MODULES = """<?xml version="1.0" encoding="UTF-8"?>
+<tns:scml xsi:schemaLocation="http://www.ptb.de/epics/SCML scml.xsd"
+    xmlns:tns="http://www.ptb.de/epics/SCML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <location>TEST</location>
+    <version>9.0</version>
+    <scan>
+        <repeatcount>0</repeatcount>
+        <comment>test</comment>
+        <savefilename>/messung/test/daten/2024/kw42/interval-detector-test-</savefilename>
+        <confirmsave>false</confirmsave>
+        <autonumber>true</autonumber>
+        <savescandescription>true</savescandescription>
+        <chain id="1">
+            <pauseconditions/>
+            <scanmodules>
+                <scanmodule id="1">
+                    <name>SM 1</name>
+                    <xpos>228</xpos>
+                    <ypos>124</ypos>
+                    <parent>16</parent>
+                    <classic>
+                        <valuecount>1</valuecount>
+                        <settletime>0.0</settletime>
+                        <triggerdelay>0.0</triggerdelay>
+                        <triggerconfirmaxis>false</triggerconfirmaxis>
+                        <triggerconfirmchannel>false</triggerconfirmchannel>
+                    </classic>
+                </scanmodule>
+                <scanmodule id="16">
+                    <name>Dynamic Channel Snapshot</name>
+                    <xpos>179</xpos>
+                    <ypos>128</ypos>
+                    <parent>15</parent>
+                    <appended>1</appended>
+                    <dynamic_channel_values/>
+                </scanmodule>
+                <scanmodule id="15">
+                    <name>Dynamic Axis Snapshot</name>
+                    <xpos>90</xpos>
+                    <ypos>83</ypos>
+                    <parent>0</parent>
+                    <appended>16</appended>
+                    <dynamic_axis_positions/>
+                </scanmodule>
+            </scanmodules>
+        </chain>
+    </scan>
+</tns:scml>"""
+
+
 class MockSCML:
     def __init__(self):
         self.root = None
@@ -500,6 +550,17 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.assertEqual(
             len(connected_scan_modules),
             len(self.mapper.destination.scan.scan_modules.keys()),
+        )
+
+    def test_map_creates_scan_modules_in_correct_order(self):
+        self.mapper.source = SCML()
+        self.mapper.source.from_string(xml=SCML_WITH_MIXED_SCAN_MODULES)
+        destination = Scan()
+        self.mapper.map(destination=destination)
+        # Note: SM IDs are 15 > 16 > 1
+        self.assertListEqual(
+            [15, 16, 1],
+            list(self.mapper.destination.scan.scan_modules.keys()),
         )
 
     def test_map_sets_scan_module_attributes(self):

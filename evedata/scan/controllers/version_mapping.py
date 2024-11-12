@@ -547,18 +547,18 @@ class VersionMapperV9m0(VersionMapper):
 
         traverse(root_module_id)
 
-        connected_scan_modules = [
-            scan_module
+        connected_scan_modules = {
+            int(scan_module.get("id")): scan_module
             for scan_module in self.source.scan_modules
             if int(scan_module.get("id")) in connected_scan_module_ids
-        ]
-        for scan_module in connected_scan_modules:
-            self.destination.scan.scan_modules[int(scan_module.get("id"))] = (
-                self._map_scan_module(scan_module)
+        }
+        for scan_module_id in connected_scan_module_ids:
+            self.destination.scan.scan_modules[scan_module_id] = (
+                self._map_scan_module(connected_scan_modules[scan_module_id])
             )
         nested_scan_modules = [
             int(scan_module.find("nested").text)
-            for scan_module in connected_scan_modules
+            for scan_module in connected_scan_modules.values()
             if scan_module.find("nested") is not None
         ]
         for scan_module in nested_scan_modules:
