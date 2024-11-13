@@ -8,6 +8,8 @@ Data get stored by the eve engine using the HDF5 format. However, HDF5 is only t
 Status quo: eveH5 v7
 ====================
 
+Up and until eve 2.1 (mid-2024) and since eve 1.37 (05/2022), version 7 of the eveH5 scheme is used and its overall structure documented below.
+
 For a first graphical overview of the scheme, cf. :numref:`Fig. %s <fig-eveh5_v7>`.
 
 .. _fig-eveh5_v7:
@@ -19,9 +21,25 @@ For a first graphical overview of the scheme, cf. :numref:`Fig. %s <fig-eveh5_v7
     UML diagram of the eveH5 v7 scheme, the status quo as of eve 2.1, mid-2024, and since eve 1.37 (05/2022). Note, however, that eveH5 v6 (11/2018) and eveH5 v7 are mostly identical. You may click on the image for a larger view.
 
 
+Evolution: eveH5 v7.1
+=====================
 
-Future development: eveH5 v8
-============================
+Version 7.1 of the eveH5 scheme is an evolution of the status quo as of eve 2.1, released with eve 2.2 and meant to be fully backward-compatible. One important change is the shift (back) to a two-part version number, with MAJOR.MINOR having the same meaning as in `Semantic versioning <https://semver.org/>`_. Besides that, attributes relevant for debugging scans are added to the root group.
+
+For a first graphical overview of the scheme, cf. :numref:`Fig. %s <fig-eveh5_v7_1>`.
+
+.. _fig-eveh5_v7_1:
+
+.. figure:: uml/eveh5-v7_1.*
+    :align: center
+    :width: 750px
+
+    UML diagram of the eveH5 v7.1 scheme, to be released with eve 2.2, end-2024. This is mostly identical to eveH5 v7, only additional attributes are added to the root group. You may click on the image for a larger view.
+
+
+
+Future development: eveH5 v8.0
+==============================
 
 For a first graphical overview of the scheme, cf. :numref:`Fig. %s <fig-eveh5_v8>`.
 
