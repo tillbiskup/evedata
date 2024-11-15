@@ -121,6 +121,47 @@ class MockScan:
         self.scan_modules.update({inner_module.id: inner_module})
 
 
+class MockScanMultipleSkip(MockScan):
+
+    def add_scan_modules(self):
+        self.add_skip_scan_modules(offset=0)
+        self.add_between_scan_module(smid=3)
+        self.add_skip_scan_modules(offset=3)
+
+    def add_skip_scan_modules(self, offset=0):
+        outer_module = MockScanScanModule()
+        outer_module.id = 1 + offset
+        outer_module.name = f"WL{1 + offset}"
+        outer_module.parent = 0 + offset
+        outer_module.add_axis("nmEnerg:io2600wl2e.A")
+        self.scan_modules.update({outer_module.id: outer_module})
+
+        inner_module = MockScanScanModule()
+        inner_module.id = 2 + offset
+        inner_module.name = "Skip"
+        inner_module.parent = 1 + offset
+        channel_names = [
+            "MPSKIP:euvr01chan1",
+            "MPSKIP:euvr01skipcountchan1",
+            "K0617:gw24126chan1",
+            "A2980:gw24103chan1",
+            "PPESM9:pi03500000.RBVchan1",
+            "Energ:io2600e2wlchan1",
+        ]
+        for channel_name in channel_names:
+            inner_module.add_channel(channel_name)
+        inner_module.add_axis("Counter-mot")
+        self.scan_modules.update({inner_module.id: inner_module})
+
+    def add_between_scan_module(self, smid=0):
+        between_module = MockScanScanModule()
+        between_module.id = smid
+        between_module.name = f"Between{smid}"
+        between_module.parent = smid - 1
+        between_module.add_axis("nmEnerg:io2600wl2e.A")
+        self.scan_modules.update({between_module.id: between_module})
+
+
 class MockScanScanModule:
 
     def __init__(self):

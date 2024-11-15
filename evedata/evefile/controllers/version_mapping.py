@@ -414,6 +414,28 @@ data processing routines, a special fix is introduced, creating the missing
 values such that these additional values don't change the mean.
 
 
+.. note::
+
+    It turned out that there are scans containing not only one, but several
+    scan modules using the MPSKIP feature. Hence, it seems that not only
+    needs the MPSKIP dataset to be split into as many datasets as there are
+    scan modules with MPSKIP, but also the position list of the MPSKIP
+    detector to be read already during version mapping, to get the information
+    which positions belong to what scan module. Hence, the position lists of
+    the respective scan modules need to be updated.
+
+    Currently the only chance of (easily) figuring out borders between scan
+    modules using MPSKIP is to rely on a Delta PosCount of > 2. This would,
+    however, fail if two nested scan module blocks with the inner scan
+    module using MPSKIP would directly follow each other.
+
+    As the positions for each of the MPSKIP modules need to be calculated
+    anyway during mapping in the :class:`VersionMapper` class, the individual
+    MPSKIP datasets should get added a :class:`SelectPositions
+    <evedata.evefile.controllers.preprocessing.SelectPositions>`
+    preprocessing step with the respective positions.
+
+
 Fundamental change of eveH5 schema with v8
 ==========================================
 
