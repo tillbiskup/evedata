@@ -1126,6 +1126,26 @@ class TestSkipData(unittest.TestCase):
             parent_positions, self.data.get_parent_positions()
         )
 
+    def test_get_scan_module_positions(self):
+        self.data.positions = np.asarray(
+            [2, 3, 4, 6, 7, 8, 11, 12, 13, 15, 16, 17], dtype=int
+        )
+        scan_module_positions = np.asarray(
+            [[2, 3, 4, 6, 7, 8], [11, 12, 13, 15, 16, 17]], dtype=int
+        )
+        np.testing.assert_array_equal(
+            scan_module_positions, self.data.get_scan_module_positions()
+        )
+
+    def test_get_parent_positions_with_multiple_scan_modules(self):
+        self.data.positions = np.asarray(
+            [2, 3, 4, 6, 7, 8, 11, 12, 13, 15, 16, 17], dtype=int
+        )
+        parent_positions = np.asarray([1, 5, 10, 14], dtype=int)
+        np.testing.assert_array_equal(
+            parent_positions, self.data.get_parent_positions()
+        )
+
 
 class TestImporterPreprocessingStep(unittest.TestCase):
     def setUp(self):

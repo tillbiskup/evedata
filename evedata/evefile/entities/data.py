@@ -2089,9 +2089,27 @@ class SkipData(ChannelData):
             Positions of the parent scan module.
 
         """
-        return np.append(
-            self.positions[0] - 1,
-            self.positions[np.where(np.diff(self.positions) > 1)[0]] + 1,
+        positions_per_scan = np.split(
+            self.positions, np.where(np.diff(self.positions) > 1)[0] + 1
+        )
+        parent_positions = [
+            positions[0] - 1 for positions in positions_per_scan
+        ]
+        return np.asarray(parent_positions)
+
+    def get_scan_module_positions(self):
+        """
+        Obtain positions for the individual scan modules, in case of more
+        than one scan module with MPSKIP detector.
+
+        Returns
+        -------
+        scan_module_positions : :class:`list`
+            list of :class:`numpy.ndarray` objects
+
+        """
+        return np.split(
+            self.positions, np.where(np.diff(self.positions) > 2)[0] + 1
         )
 
 

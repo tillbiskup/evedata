@@ -1,7 +1,9 @@
 import datetime
 import logging
+import os
 import unittest
 
+import h5py
 import numpy as np
 
 import evedata.evefile.boundaries.evefile
@@ -1049,6 +1051,10 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination._create_scan_modules()
         self.logger = logging.getLogger(name="evedata")
         self.logger.setLevel(logging.ERROR)
+
+    def tearDown(self):
+        if os.path.exists(self.source.filename):
+            os.remove(self.source.filename)
 
     def destination_data(self, name="", scan_module="main"):
         return self.destination.scan_modules[scan_module].data[name]
@@ -2668,6 +2674,13 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.source = self.source
         dataset_names, _ = self.mapper.source.add_mpskip()
         mpskip_name = "MPSKIP:sx70001"
+        dataset_id = "Counter-mot"
+        h5_dataset = getattr(self.mapper.source.c1.main, dataset_id)
+        h5_dataset.data["PosCounter"] = [2, 3, 4, 7, 8, 9]
+        with h5py.File(self.source.filename, "w") as file:
+            c1 = file.create_group("c1")
+            main = c1.create_group("main")
+            main.create_dataset(dataset_id, data=h5_dataset.data)
         self.destination.scan_modules = {
             1: evedata.evefile.entities.file.ScanModule(),
             2: evedata.evefile.entities.file.ScanModule(),
@@ -2681,6 +2694,151 @@ class TestVersionMapperV5(unittest.TestCase):
         }
         self.mapper.map(destination=self.destination)
         self.assertIn(mpskip_name, self.destination.scan_modules[2].data)
+
+    def test_with_mpskips_adds_skipdata_to_correct_scan_modules(self):
+        self.mapper.source = self.source
+        dataset_names, _ = self.mapper.source.add_mpskip()
+        mpskip_name = "MPSKIP:sx70001"
+        dataset_id = "Counter-mot"
+        h5_dataset = getattr(self.mapper.source.c1.main, dataset_id)
+        h5_dataset.data["PosCounter"] = [2, 3, 4, 7, 8, 9]
+        with h5py.File(self.source.filename, "w") as file:
+            c1 = file.create_group("c1")
+            main = c1.create_group("main")
+            main.create_dataset(dataset_id, data=h5_dataset.data)
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+            3: evedata.evefile.entities.file.ScanModule(),
+            4: evedata.evefile.entities.file.ScanModule(),
+            5: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+            3: evedata.scan.entities.scan.ScanModule(),
+            4: evedata.scan.entities.scan.ScanModule(),
+            5: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.destination.scan.scan.scan_modules[5].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.mapper.map(destination=self.destination)
+        self.assertIn(mpskip_name, self.destination.scan_modules[2].data)
+        self.assertIn(mpskip_name, self.destination.scan_modules[5].data)
+
+    def test_with_mpskips_adds_preprocessing_to_skipdata(self):
+        self.mapper.source = self.source
+        dataset_names, _ = self.mapper.source.add_mpskip()
+        mpskip_name = "MPSKIP:sx70001"
+        dataset_id = "Counter-mot"
+        h5_dataset = getattr(self.mapper.source.c1.main, dataset_id)
+        h5_dataset.data["PosCounter"] = [2, 3, 4, 7, 8, 9]
+        with h5py.File(self.source.filename, "w") as file:
+            c1 = file.create_group("c1")
+            main = c1.create_group("main")
+            main.create_dataset(dataset_id, data=h5_dataset.data)
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+            3: evedata.evefile.entities.file.ScanModule(),
+            4: evedata.evefile.entities.file.ScanModule(),
+            5: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+            3: evedata.scan.entities.scan.ScanModule(),
+            4: evedata.scan.entities.scan.ScanModule(),
+            5: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.destination.scan.scan.scan_modules[5].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.mapper.map(destination=self.destination)
+        self.assertIsInstance(
+            self.destination.scan_modules[2]
+            .data[mpskip_name]
+            .importer[0]
+            .preprocessing[0],
+            preprocessing.SelectPositions,
+        )
+        self.assertIsInstance(
+            self.destination.scan_modules[5]
+            .data[mpskip_name]
+            .importer[0]
+            .preprocessing[0],
+            preprocessing.SelectPositions,
+        )
+
+    def test_with_mpskips_sets_positions(self):
+        self.mapper.source = self.source
+        dataset_names, _ = self.mapper.source.add_mpskip()
+        mpskip_name = "MPSKIP:sx70001"
+        dataset_id = "Counter-mot"
+        h5_dataset = getattr(self.mapper.source.c1.main, dataset_id)
+        h5_dataset.data["PosCounter"] = [2, 3, 4, 7, 8, 9]
+        with h5py.File(self.source.filename, "w") as file:
+            c1 = file.create_group("c1")
+            main = c1.create_group("main")
+            main.create_dataset(dataset_id, data=h5_dataset.data)
+        self.destination.scan_modules = {
+            1: evedata.evefile.entities.file.ScanModule(),
+            2: evedata.evefile.entities.file.ScanModule(),
+            3: evedata.evefile.entities.file.ScanModule(),
+            4: evedata.evefile.entities.file.ScanModule(),
+            5: evedata.evefile.entities.file.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules = {
+            1: evedata.scan.entities.scan.ScanModule(),
+            2: evedata.scan.entities.scan.ScanModule(),
+            3: evedata.scan.entities.scan.ScanModule(),
+            4: evedata.scan.entities.scan.ScanModule(),
+            5: evedata.scan.entities.scan.ScanModule(),
+        }
+        self.destination.scan.scan.scan_modules[2].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.destination.scan.scan.scan_modules[5].channels = {
+            name: "foo" for name in dataset_names
+        }
+        self.mapper.map(destination=self.destination)
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[2].data[mpskip_name].positions,
+            np.asarray([2, 3, 4]),
+        )
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[5].data[mpskip_name].positions,
+            np.asarray([7, 8, 9]),
+        )
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[2]
+            .data[mpskip_name]
+            .importer[0]
+            .preprocessing[0]
+            .positions,
+            np.asarray([2, 3, 4]),
+        )
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[5]
+            .data[mpskip_name]
+            .importer[0]
+            .preprocessing[0]
+            .positions,
+            np.asarray([7, 8, 9]),
+        )
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[2].positions, np.asarray([2, 3, 4])
+        )
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[5].positions, np.asarray([7, 8, 9])
+        )
 
     def test_failing_consistency_check_resets_scan_modules(self):
         self.mapper.source = self.source

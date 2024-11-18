@@ -1040,6 +1040,7 @@ class VersionMapperV5(VersionMapper):
     def __init__(self):
         super().__init__()
         self._data = {}
+        self._mpskip_module_index = 0
 
     def _set_dataset_names(self):
         super()._set_dataset_names()
@@ -1830,21 +1831,43 @@ class VersionMapperV5(VersionMapper):
                     if self.destination.scan.scan.scan_modules[
                         scan_module_name
                     ].has_device(dataset_name):
-                        preprocessing = (
-                            controllers.preprocessing.SelectPositions()
+                        self._map_dataset_to_scan_module(
+                            dataset, dataset_name, scan_module
                         )
-                        preprocessing.positions = scan_module.positions
-                        new_dataset = copy.deepcopy(dataset)
-                        new_dataset.importer[0].preprocessing.append(
-                            preprocessing
-                        )
-                        scan_module.data[dataset_name] = new_dataset
                     if self.destination.scan.scan.scan_modules[
                         scan_module_name
                     ].has_mpskip() and isinstance(
                         dataset, entities.data.SkipData
                     ):
-                        scan_module.data[dataset_name] = dataset
+                        dataset.get_data()
+                        self._map_mpskip_dataset_to_scan_module(
+                            dataset, dataset_name, scan_module
+                        )
+
+    @staticmethod
+    def _map_dataset_to_scan_module(
+        dataset=None, dataset_name="", scan_module=None
+    ):
+        preprocessing = controllers.preprocessing.SelectPositions()
+        preprocessing.positions = scan_module.positions
+        new_dataset = copy.deepcopy(dataset)
+        new_dataset.importer[0].preprocessing.append(preprocessing)
+        scan_module.data[dataset_name] = new_dataset
+
+    def _map_mpskip_dataset_to_scan_module(
+        self, dataset=None, dataset_name="", scan_module=None
+    ):
+        scan_module_positions = dataset.get_scan_module_positions()[
+            self._mpskip_module_index
+        ]
+        preprocessing = controllers.preprocessing.SelectPositions()
+        preprocessing.positions = scan_module_positions
+        new_dataset = copy.deepcopy(dataset)
+        new_dataset.importer[0].preprocessing.append(preprocessing)
+        new_dataset.positions = scan_module_positions
+        scan_module.positions = scan_module_positions
+        scan_module.data[dataset_name] = new_dataset
+        self._mpskip_module_index += 1
 
     def _map_log_messages(self):
         if not hasattr(self.source, "LiveComment"):
