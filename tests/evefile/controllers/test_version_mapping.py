@@ -2780,6 +2780,7 @@ class TestVersionMapperV5(unittest.TestCase):
     def test_with_mpskips_sets_positions(self):
         self.mapper.source = self.source
         dataset_names, _ = self.mapper.source.add_mpskip()
+        detector_names = self.mapper.source.add_singlepoint_detector_data()
         mpskip_name = "MPSKIP:sx70001"
         dataset_id = "Counter-mot"
         h5_dataset = getattr(self.mapper.source.c1.main, dataset_id)
@@ -2794,6 +2795,7 @@ class TestVersionMapperV5(unittest.TestCase):
             3: evedata.evefile.entities.file.ScanModule(),
             4: evedata.evefile.entities.file.ScanModule(),
             5: evedata.evefile.entities.file.ScanModule(),
+            6: evedata.evefile.entities.file.ScanModule(),
         }
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
@@ -2801,7 +2803,22 @@ class TestVersionMapperV5(unittest.TestCase):
             3: evedata.scan.entities.scan.ScanModule(),
             4: evedata.scan.entities.scan.ScanModule(),
             5: evedata.scan.entities.scan.ScanModule(),
+            6: evedata.scan.entities.scan.ScanModule(),
         }
+        self.destination.scan_modules[1].positions = np.asarray([1])
+        self.destination.scan_modules[2].positions = np.linspace(
+            2, 11, 10, dtype=int
+        )
+        self.destination.scan_modules[3].positions = np.asarray([12])
+        self.destination.scan_modules[4].positions = np.asarray([13])
+        self.destination.scan_modules[5].positions = np.linspace(
+            14, 23, 10, dtype=int
+        )
+        self.destination.scan_modules[6].positions = np.asarray([24, 25])
+        for scan_module_id in [1, 3, 4, 6]:
+            self.destination.scan.scan.scan_modules[
+                scan_module_id
+            ].channels = {name: "foo" for name in detector_names}
         self.destination.scan.scan.scan_modules[2].channels = {
             name: "foo" for name in dataset_names
         }
@@ -2834,10 +2851,22 @@ class TestVersionMapperV5(unittest.TestCase):
             np.asarray([7, 8, 9]),
         )
         np.testing.assert_array_equal(
+            self.destination.scan_modules[1].positions, np.asarray([1])
+        )
+        np.testing.assert_array_equal(
             self.destination.scan_modules[2].positions, np.asarray([2, 3, 4])
         )
         np.testing.assert_array_equal(
+            self.destination.scan_modules[3].positions, np.asarray([5])
+        )
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[4].positions, np.asarray([6])
+        )
+        np.testing.assert_array_equal(
             self.destination.scan_modules[5].positions, np.asarray([7, 8, 9])
+        )
+        np.testing.assert_array_equal(
+            self.destination.scan_modules[6].positions, np.asarray([10, 11])
         )
 
     def test_failing_consistency_check_resets_scan_modules(self):

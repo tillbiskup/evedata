@@ -1041,6 +1041,7 @@ class VersionMapperV5(VersionMapper):
         super().__init__()
         self._data = {}
         self._mpskip_module_index = 0
+        self._scan_module_position_offset = 0
 
     def _set_dataset_names(self):
         super()._set_dataset_names()
@@ -1817,17 +1818,19 @@ class VersionMapperV5(VersionMapper):
             )
 
     def _map_main_datasets_to_scan_modules(self):
-        for dataset_name, dataset in self._data.items():
-            if len(self.destination.scan_modules.keys()) == 1:
-                scan_module = list(self.destination.scan_modules.keys())[0]
+        if len(self.destination.scan_modules.keys()) == 1:
+            scan_module = list(self.destination.scan_modules.keys())[0]
+            for dataset_name, dataset in self._data.items():
                 self.destination.scan_modules[scan_module].data[
                     dataset_name
                 ] = dataset
-            else:
-                for (
-                    scan_module_name,
-                    scan_module,
-                ) in self.destination.scan_modules.items():
+        else:
+            for (
+                scan_module_name,
+                scan_module,
+            ) in self.destination.scan_modules.items():
+                scan_module.positions -= self._scan_module_position_offset
+                for dataset_name, dataset in self._data.items():
                     if self.destination.scan.scan.scan_modules[
                         scan_module_name
                     ].has_device(dataset_name):
@@ -1844,9 +1847,8 @@ class VersionMapperV5(VersionMapper):
                             dataset, dataset_name, scan_module
                         )
 
-    @staticmethod
     def _map_dataset_to_scan_module(
-        dataset=None, dataset_name="", scan_module=None
+        self, dataset=None, dataset_name="", scan_module=None
     ):
         preprocessing = controllers.preprocessing.SelectPositions()
         preprocessing.positions = scan_module.positions
@@ -1865,6 +1867,9 @@ class VersionMapperV5(VersionMapper):
         new_dataset = copy.deepcopy(dataset)
         new_dataset.importer[0].preprocessing.append(preprocessing)
         new_dataset.positions = scan_module_positions
+        self._scan_module_position_offset += (
+            scan_module.positions[-1] - scan_module_positions[-1]
+        )
         scan_module.positions = scan_module_positions
         scan_module.data[dataset_name] = new_dataset
         self._mpskip_module_index += 1
