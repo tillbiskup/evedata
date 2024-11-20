@@ -174,7 +174,7 @@ class Metadata:
             raise ValueError("No source provided to copy attributes from.")
         public_attributes = [
             item
-            for item in self.__dict__.keys()
+            for item in self.__dict__
             if not (item.startswith("_") or item == "metadata")
         ]
         for attribute in public_attributes:

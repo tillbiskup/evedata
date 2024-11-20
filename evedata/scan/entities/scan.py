@@ -344,7 +344,7 @@ class AbstractScanModule:
         """
         return False
 
-    def has_device(self, name=""):
+    def has_device(self, name=""):  # noqa
         """
         Check whether a scan module contains a given device.
 

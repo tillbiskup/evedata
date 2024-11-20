@@ -477,7 +477,8 @@ from collections.abc import Iterable
 
 import numpy as np
 
-from evedata.evefile import entities, controllers
+from evedata.evefile import entities
+from evedata.evefile.controllers import preprocessing
 
 logger = logging.getLogger(__name__)
 
@@ -1124,27 +1125,15 @@ class VersionMapperV5(VersionMapper):
 
     def _map_mpskip_datasets(self):
         # TODO: Map SkipData.metadata.max_attempts attribute from SCML
+        self._remove_mpskip_datasets_in_monitor_and_snapshot()
         mpskip_in_main = [
             item
             for item in self.datasets2map_in_main
             if item.startswith("MPSKIP")
         ]
-        mpskip_in_snapshot = [
-            item
-            for item in self.datasets2map_in_snapshot
-            if item.startswith("MPSKIP")
-        ]
-        # Remove datasets from snapshot, even if not in main
-        for item in mpskip_in_snapshot:
-            self.datasets2map_in_snapshot.remove(item)
         # Return if no MPSKIP dataset in main
         if not mpskip_in_main:
             return
-        mpskip_in_monitor = [
-            item
-            for item in self.datasets2map_in_monitor
-            if item.startswith("MPSKIP")
-        ]
         try:
             item = getattr(self._main_group, "Counter-mot")
         except AttributeError:
@@ -1189,9 +1178,23 @@ class VersionMapperV5(VersionMapper):
         self._data[dataset_name] = dataset
         for item in mpskip_in_main:
             self.datasets2map_in_main.remove(item)
+        self.datasets2map_in_main.remove("Counter-mot")
+
+    def _remove_mpskip_datasets_in_monitor_and_snapshot(self):
+        mpskip_in_snapshot = [
+            item
+            for item in self.datasets2map_in_snapshot
+            if item.startswith("MPSKIP")
+        ]
+        for item in mpskip_in_snapshot:
+            self.datasets2map_in_snapshot.remove(item)
+        mpskip_in_monitor = [
+            item
+            for item in self.datasets2map_in_monitor
+            if item.startswith("MPSKIP")
+        ]
         for item in mpskip_in_monitor:
             self.datasets2map_in_monitor.remove(item)
-        self.datasets2map_in_main.remove("Counter-mot")
 
     def _map_mca_dataset(self, hdf5_group=None):
         # TODO: Move up to VersionMapperV2 (at least the earliest one)
@@ -1850,10 +1853,10 @@ class VersionMapperV5(VersionMapper):
     def _map_dataset_to_scan_module(
         self, dataset=None, dataset_name="", scan_module=None
     ):
-        preprocessing = controllers.preprocessing.SelectPositions()
-        preprocessing.positions = scan_module.positions
+        preprocessing_step = preprocessing.SelectPositions()
+        preprocessing_step.positions = scan_module.positions
         new_dataset = copy.deepcopy(dataset)
-        new_dataset.importer[0].preprocessing.append(preprocessing)
+        new_dataset.importer[0].preprocessing.append(preprocessing_step)
         scan_module.data[dataset_name] = new_dataset
 
     def _map_mpskip_dataset_to_scan_module(
@@ -1862,10 +1865,10 @@ class VersionMapperV5(VersionMapper):
         scan_module_positions = dataset.get_scan_module_positions()[
             self._mpskip_module_index
         ]
-        preprocessing = controllers.preprocessing.SelectPositions()
-        preprocessing.positions = scan_module_positions
+        preprocessing_step = preprocessing.SelectPositions()
+        preprocessing_step.positions = scan_module_positions
         new_dataset = copy.deepcopy(dataset)
-        new_dataset.importer[0].preprocessing.append(preprocessing)
+        new_dataset.importer[0].preprocessing.append(preprocessing_step)
         new_dataset.positions = scan_module_positions
         self._scan_module_position_offset += (
             scan_module.positions[-1] - scan_module_positions[-1]

@@ -470,7 +470,7 @@ class Data:
             raise ValueError("No source provided to copy attributes from.")
         public_attributes = [
             item
-            for item in self.__dict__.keys()
+            for item in self.__dict__
             if not (item.startswith("_") or item == "metadata")
         ]
         for attribute in public_attributes:
@@ -2099,8 +2099,9 @@ class SkipData(ChannelData):
 
     def get_scan_module_positions(self):
         """
-        Obtain positions for the individual scan modules, in case of more
-        than one scan module with MPSKIP detector.
+        Obtain positions for the individual scan modules.
+
+        Used in case of more than one scan module with MPSKIP detector.
 
         Returns
         -------
