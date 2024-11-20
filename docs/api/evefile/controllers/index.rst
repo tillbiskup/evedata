@@ -10,9 +10,11 @@ evedata.evefile.controllers subpackage
 .. toctree::
     :maxdepth: 1
 
+    evedata.evefile.controllers.info
     evedata.evefile.controllers.mpskip
     evedata.evefile.controllers.preprocessing
     evedata.evefile.controllers.version_mapping
+
 
 
 
