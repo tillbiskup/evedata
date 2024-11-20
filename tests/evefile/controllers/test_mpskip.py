@@ -440,3 +440,64 @@ class TestMpskip(unittest.TestCase):
         np.testing.assert_array_equal(
             np.asarray([1, 4, 8]), self.source.scan_modules[1].positions
         )
+
+    def test_map_two_mpskips_adds_preprocessing_step_to_parent_devices(self):
+        self.source.scan.scan = MockScanMultipleSkip()
+        self.source.scan.scan.add_scan_modules()
+        self.source.add_scan_modules()
+        self.source.scan_modules[2].data["skipdata"] = data.SkipData()
+        self.source.scan_modules[5].data["skipdata"] = data.SkipData()
+        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
+            [2, 3, 5, 6, 7, 9, 10, 11]
+        )
+        self.source.scan_modules[5].data["skipdata"].positions = np.asarray(
+            [14, 15, 16, 18, 19, 21, 22, 23]
+        )
+        dataset = self.source.scan_modules[1].data["nmEnerg:io2600wl2e.A"]
+        preprocessing_step = preprocessing.SelectPositions()
+        dataset.importer.append(MockDatasetImporter())
+        dataset.importer[0].preprocessing.append(preprocessing_step)
+        dataset = self.source.scan_modules[4].data["nmEnerg:io2600wl2e.A"]
+        preprocessing_step = preprocessing.SelectPositions()
+        dataset.importer.append(MockDatasetImporter())
+        dataset.importer[0].preprocessing.append(preprocessing_step)
+        self.mapper.map(source=self.source)
+        device = self.mapper.source.scan_modules[1].data[
+            "nmEnerg:io2600wl2e.A"
+        ]
+        self.assertIsInstance(
+            device.importer[0].preprocessing[0],
+            preprocessing.SelectPositions,
+        )
+        np.testing.assert_array_equal(
+            np.asarray([1, 4, 8]),
+            device.importer[0].preprocessing[0].positions,
+        )
+        device = self.mapper.source.scan_modules[4].data[
+            "nmEnerg:io2600wl2e.A"
+        ]
+        self.assertIsInstance(
+            device.importer[0].preprocessing[0],
+            preprocessing.SelectPositions,
+        )
+        np.testing.assert_array_equal(
+            np.asarray([13, 17, 20]),
+            device.importer[0].preprocessing[0].positions,
+        )
+
+    def test_map_two_mpskips_sets_positions_in_parent_scan_module(self):
+        self.source.scan.scan = MockScanMultipleSkip()
+        self.source.scan.scan.add_scan_modules()
+        self.source.add_scan_modules()
+        self.source.scan_modules[2].data["skipdata"] = data.SkipData()
+        self.source.scan_modules[5].data["skipdata"] = data.SkipData()
+        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
+            [2, 3, 5, 6, 7, 9, 10, 11]
+        )
+        self.source.scan_modules[5].data["skipdata"].positions = np.asarray(
+            [14, 15, 16, 18, 19, 21, 22, 23]
+        )
+        self.mapper.map(source=self.source)
+        np.testing.assert_array_equal(
+            np.asarray([1, 4, 8]), self.source.scan_modules[1].positions
+        )

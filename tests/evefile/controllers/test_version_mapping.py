@@ -2566,10 +2566,11 @@ class TestVersionMapperV5(unittest.TestCase):
         dataset_names = self.mapper.source.add_singlepoint_detector_data(
             normalized=False
         )
-        self.destination.scan_modules = {
-            1: evedata.evefile.entities.file.ScanModule(),
-            2: evedata.evefile.entities.file.ScanModule(),
-        }
+        self.destination.scan_modules = {}
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.evefile.entities.file.ScanModule()
+            scan_module.positions = np.asarray([scan_module_id])
+            self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
             2: evedata.scan.entities.scan.ScanModule(),
@@ -2587,10 +2588,11 @@ class TestVersionMapperV5(unittest.TestCase):
         dataset_names = self.mapper.source.add_singlepoint_detector_data(
             normalized=False
         )
-        self.destination.scan_modules = {
-            1: evedata.evefile.entities.file.ScanModule(),
-            2: evedata.evefile.entities.file.ScanModule(),
-        }
+        self.destination.scan_modules = {}
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.evefile.entities.file.ScanModule()
+            scan_module.positions = np.asarray([scan_module_id])
+            self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
             2: evedata.scan.entities.scan.ScanModule(),
@@ -2650,10 +2652,11 @@ class TestVersionMapperV5(unittest.TestCase):
         dataset_names = self.mapper.source.add_singlepoint_detector_data(
             normalized=False
         )
-        self.destination.scan_modules = {
-            1: evedata.evefile.entities.file.ScanModule(),
-            2: evedata.evefile.entities.file.ScanModule(),
-        }
+        self.destination.scan_modules = {}
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.evefile.entities.file.ScanModule()
+            scan_module.positions = np.asarray([scan_module_id])
+            self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
             2: evedata.scan.entities.scan.ScanModule(),
@@ -2681,10 +2684,11 @@ class TestVersionMapperV5(unittest.TestCase):
             c1 = file.create_group("c1")
             main = c1.create_group("main")
             main.create_dataset(dataset_id, data=h5_dataset.data)
-        self.destination.scan_modules = {
-            1: evedata.evefile.entities.file.ScanModule(),
-            2: evedata.evefile.entities.file.ScanModule(),
-        }
+        self.destination.scan_modules = {}
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.evefile.entities.file.ScanModule()
+            scan_module.positions = np.asarray([scan_module_id])
+            self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
             2: evedata.scan.entities.scan.ScanModule(),
@@ -2706,13 +2710,11 @@ class TestVersionMapperV5(unittest.TestCase):
             c1 = file.create_group("c1")
             main = c1.create_group("main")
             main.create_dataset(dataset_id, data=h5_dataset.data)
-        self.destination.scan_modules = {
-            1: evedata.evefile.entities.file.ScanModule(),
-            2: evedata.evefile.entities.file.ScanModule(),
-            3: evedata.evefile.entities.file.ScanModule(),
-            4: evedata.evefile.entities.file.ScanModule(),
-            5: evedata.evefile.entities.file.ScanModule(),
-        }
+        self.destination.scan_modules = {}
+        for scan_module_id in [1, 2, 3, 4, 5]:
+            scan_module = evedata.evefile.entities.file.ScanModule()
+            scan_module.positions = np.asarray([scan_module_id])
+            self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
             2: evedata.scan.entities.scan.ScanModule(),
@@ -2741,13 +2743,11 @@ class TestVersionMapperV5(unittest.TestCase):
             c1 = file.create_group("c1")
             main = c1.create_group("main")
             main.create_dataset(dataset_id, data=h5_dataset.data)
-        self.destination.scan_modules = {
-            1: evedata.evefile.entities.file.ScanModule(),
-            2: evedata.evefile.entities.file.ScanModule(),
-            3: evedata.evefile.entities.file.ScanModule(),
-            4: evedata.evefile.entities.file.ScanModule(),
-            5: evedata.evefile.entities.file.ScanModule(),
-        }
+        self.destination.scan_modules = {}
+        for scan_module_id in [1, 2, 3, 4, 5]:
+            scan_module = evedata.evefile.entities.file.ScanModule()
+            scan_module.positions = np.asarray([scan_module_id])
+            self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
             2: evedata.scan.entities.scan.ScanModule(),
@@ -2938,10 +2938,11 @@ class TestVersionMapperV5(unittest.TestCase):
 
     def test_consistency_check_with_mpskip_logs_info(self):
         self.mapper.source = self.source
-        self.destination.scan_modules = {
-            1: evedata.evefile.entities.file.ScanModule(),
-            2: evedata.evefile.entities.file.ScanModule(),
-        }
+        self.destination.scan_modules = {}
+        for scan_module_id in [1, 2]:
+            scan_module = evedata.evefile.entities.file.ScanModule()
+            scan_module.positions = np.asarray([scan_module_id])
+            self.destination.scan_modules[scan_module_id] = scan_module
         for scan_module_id in [4, 5]:
             scan_module = evedata.scan.entities.scan.ScanModule()
             scan_module.number_of_positions = scan_module_id

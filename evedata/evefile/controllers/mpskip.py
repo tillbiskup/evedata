@@ -398,51 +398,56 @@ class Mpskip:
             logger.debug("No scan, hence no mpskip mapping.")
             return
 
-        mpskip_module_id = [
+        mpskip_module_ids = [
             scan_module.id
             for scan_module in self.source.scan.scan.scan_modules.values()
             if scan_module.has_mpskip()
-        ][0]
-        mpskip_module = self.source.scan_modules[mpskip_module_id]
-        parent_module = self.source.scan_modules[mpskip_module.parent]
-        channel_names_to_copy = [
-            name
-            for name in self.source.scan.scan.scan_modules[
-                mpskip_module_id
-            ].channels
-            if not name.startswith("MPSKIP")
         ]
-        self._skipdata = [
-            device
-            for device in mpskip_module.data.values()
-            if isinstance(device, datatypes.SkipData)
-        ][0]
-        parent_module.positions = self._skipdata.get_parent_positions()
-        for device in parent_module.data.values():
-            self._add_select_positions_step(
-                dataset=device,
-                positions=self._skipdata.get_parent_positions(),
-            )
-        for name, device in mpskip_module.data.items():
-            if name in channel_names_to_copy:
-                if "RBV" in name:
-                    new_axis = datatypes.AxisData()
-                    new_axis.copy_attributes_from(device)
-                    parent_module.data[name] = new_axis
-                else:
-                    if isinstance(device, datatypes.NormalizedChannelData):
-                        new_channel = datatypes.AverageNormalizedChannelData()
-                    else:
-                        new_channel = datatypes.AverageChannelData()
-                    new_channel.metadata.copy_attributes_from(
-                        self._skipdata.metadata
-                    )
-                    new_channel.copy_attributes_from(device)
-                    parent_module.data[name] = new_channel
-                self._add_preprocessing_steps_to_importer(
-                    dataset=parent_module.data[name]
+        for mpskip_module_id in mpskip_module_ids:
+            mpskip_module = self.source.scan_modules[mpskip_module_id]
+            parent_module = self.source.scan_modules[mpskip_module.parent]
+            channel_names_to_copy = [
+                name
+                for name in self.source.scan.scan.scan_modules[
+                    mpskip_module_id
+                ].channels
+                if not name.startswith("MPSKIP")
+            ]
+            self._skipdata = [
+                device
+                for device in mpskip_module.data.values()
+                if isinstance(device, datatypes.SkipData)
+            ][0]
+            parent_module.positions = self._skipdata.get_parent_positions()
+            for device in parent_module.data.values():
+                self._add_select_positions_step(
+                    dataset=device,
+                    positions=self._skipdata.get_parent_positions(),
                 )
-        self.source.scan_modules.pop(mpskip_module.id)
+            for name, device in mpskip_module.data.items():
+                if name in channel_names_to_copy:
+                    if "RBV" in name:
+                        new_axis = datatypes.AxisData()
+                        new_axis.copy_attributes_from(device)
+                        parent_module.data[name] = new_axis
+                    else:
+                        if isinstance(
+                            device, datatypes.NormalizedChannelData
+                        ):
+                            new_channel = (
+                                datatypes.AverageNormalizedChannelData()
+                            )
+                        else:
+                            new_channel = datatypes.AverageChannelData()
+                        new_channel.metadata.copy_attributes_from(
+                            self._skipdata.metadata
+                        )
+                        new_channel.copy_attributes_from(device)
+                        parent_module.data[name] = new_channel
+                    self._add_preprocessing_steps_to_importer(
+                        dataset=parent_module.data[name]
+                    )
+            self.source.scan_modules.pop(mpskip_module.id)
 
     def _add_preprocessing_steps_to_importer(self, dataset=None):
         self._add_select_positions_step(
