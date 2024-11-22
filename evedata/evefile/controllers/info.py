@@ -1,9 +1,54 @@
 """
 *Information on measurements, often relevant for debugging purposes.*
 
-Measurements contain often a lot of relevant information beyond the pure
+Measurements often contain a lot of relevant information beyond the pure
 data, such as the scan module structure of the scan as recreated from the
-saved scan description (SCML file).
+saved scan description (SCML file). Getting easy access to this kind of
+information is particularly helpful if something went wrong or led to
+unexpected results.
+
+The functionality provided in this module focuses primarily on users
+carrying out lower-level debug tasks, not normal end users who just want to
+work with their data, as well as on the developers of the ``evedata``
+package themselves. Note that the functionality operates mostly on
+:obj:`EveFile <evedata.evefile.boundaries.evefile.EveFile>` objects,
+hence the low-level user interface towards the eveH5 files, rather than the
+high-level :obj:`Measurement
+<evedata.measurement.boundaries.measurement.Measurement>` objects targeted
+at end users.
+
+
+Available functionality
+=======================
+
+* :class:`ScanModuleStructure`
+
+  Collect basic information of the scan module structure of a scan.
+
+
+Future plans
+============
+
+* :class:`EngineLogInformation` (preliminary name!)
+
+  Collect information necessary to identify the engine log files.
+
+  When something went wrong, one of the first steps admins usually try to do
+  (if the incident is not too far in the past) is to have a look at the
+  engine log files. However, currently it is rather tedious to identify the
+  relevant log files, and although only with eveH5 structure v7.1 all
+  relevant information will be available from an eveH5 file, a tool to
+  collect the relevant information and do some "informed guessing" on older
+  files is rather useful.
+
+  The relevant information contains: timestamp of start and end of the
+  measurement, host the engine runs on, user who started the engine,
+  and the port the engine listens on (currently not available from the eveH5
+  files).
+
+* Extending the :class:`ScanModuleStructure` class
+
+  * Display positionings for each scan module (if present)
 
 
 Module documentation
