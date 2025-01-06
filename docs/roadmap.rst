@@ -28,3 +28,11 @@ For version 0.1
 
 * import of most current eveH5 files, covering the entire information available
 
+
+Todos
+=====
+
+A list of todos, extracted from the code and documentation itself, and only meant as convenience for the main developers. Ideally, this list will be empty at some point.
+
+.. todolist::
+
