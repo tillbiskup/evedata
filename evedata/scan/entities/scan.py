@@ -82,6 +82,7 @@ Module documentation
 """
 
 import logging
+import os
 
 import numpy as np
 
@@ -1550,7 +1551,15 @@ class StepFile(StepFunction):
     Attributes
     ----------
     filename : :class:`str`
-        Short description
+        Path and name of the file containing the positions.
+
+        The file contains one position per line.
+
+        .. important::
+            Even if the file exists and is accessible, there is no
+            guarantee that the positions read from the file are the actual
+            positions used during the scan, as the file may have been
+            changed in the meantime.
 
 
     Examples
@@ -1575,14 +1584,18 @@ class StepFile(StepFunction):
         In case the attribute internally storing the positions has not yet
         been set, this method is called (once).
 
-        As no positions can be calculated, a warning is logged and an
-        empty numpy array set as positions.
+        If the attribute :attr:`filename` is set and the file accessible,
+        the contents of the file are read and set as positions. Otherwise,
+        a warning is logged and an empty numpy array set as positions.
 
         """
-        logger.warning(
-            "Step function 'file' does not allow to obtain positions."
-        )
-        self._positions = np.asarray([])
+        if self.filename and os.path.exists(self.filename):
+            self._positions = np.loadtxt(self.filename)
+        else:
+            logger.warning(
+                "Step function 'file' does not allow to obtain positions."
+            )
+            self._positions = np.asarray([])
 
 
 class StepList(StepFunction):

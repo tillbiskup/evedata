@@ -1,4 +1,5 @@
 import logging
+import os.path
 import unittest
 
 import numpy as np
@@ -502,6 +503,15 @@ class TestStepFile(unittest.TestCase):
         self.step_function = scan.StepFile()
         self.logger = logging.getLogger(name="evedata")
         self.logger.setLevel(logging.ERROR)
+        self.filename = "test.list"
+
+    def tearDown(self):
+        if os.path.exists(self.filename):
+            os.remove(self.filename)
+
+    def write_file(self):
+        data = np.asarray([1, 1.5, 2, 2.5, 3])
+        np.savetxt(self.filename, data, "%2.1f")
 
     def test_instantiate_class(self):
         pass
@@ -515,7 +525,7 @@ class TestStepFile(unittest.TestCase):
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.step_function, attribute))
 
-    def test_calculate_positions_sets_empty_array(self):
+    def test_calculate_positions_wo_file_sets_empty_array(self):
         self.logger.setLevel(logging.ERROR)
         self.step_function.calculate_positions()
         self.assertIsInstance(self.step_function.positions, np.ndarray)
@@ -523,7 +533,7 @@ class TestStepFile(unittest.TestCase):
             np.asarray([]), self.step_function.positions
         )
 
-    def test_calculate_positions_logs_warning(self):
+    def test_calculate_positions_wo_file_logs_warning(self):
         self.logger.setLevel(logging.WARN)
         with self.assertLogs(level=logging.WARN) as captured:
             self.step_function.calculate_positions()
@@ -532,6 +542,20 @@ class TestStepFile(unittest.TestCase):
             captured.records[0].getMessage(),
             "Step function 'file' does not allow to obtain positions.",
         )
+
+    def test_calculate_positions_with_file_sets_positions(self):
+        self.write_file()
+        self.step_function.filename = self.filename
+        self.step_function.calculate_positions()
+        positions = np.loadtxt(self.filename)
+        np.testing.assert_array_equal(positions, self.step_function.positions)
+
+    def test_calculate_positions_with_file_does_not_log_warning(self):
+        self.write_file()
+        self.step_function.filename = self.filename
+        self.logger.setLevel(logging.WARN)
+        with self.assertNoLogs(level=logging.WARN) as captured:
+            self.step_function.calculate_positions()
 
 
 class TestStepList(unittest.TestCase):
