@@ -110,7 +110,7 @@ class TestScanModule(unittest.TestCase):
             "appended",
             "nested",
             "data",
-            "positions",
+            "position_counts",
             "device_names",
         ]
         for attribute in attributes:

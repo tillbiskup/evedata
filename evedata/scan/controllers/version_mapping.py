@@ -821,22 +821,26 @@ class VersionMapperV9m0(VersionMapper):
 
     def _traverse_positions(self, scan_module_id, startpos=1):
         scan_module = self.destination.scan.scan_modules[scan_module_id]
-        if scan_module.positions is None:
-            scan_module.positions = np.array([], dtype=int)
+        if scan_module.position_counts is None:
+            scan_module.position_counts = np.array([], dtype=int)
         number_of_positions_per_pass = (
             scan_module.number_of_positions_per_pass
         )
         if hasattr(scan_module, "positionings") and scan_module.positionings:
             number_of_positions_per_pass -= 1
         for _ in range(number_of_positions_per_pass):
-            scan_module.positions = np.append(scan_module.positions, startpos)
+            scan_module.position_counts = np.append(
+                scan_module.position_counts, startpos
+            )
             startpos += 1
             if scan_module.nested:
                 startpos = self._traverse_positions(
                     scan_module.nested, startpos
                 )
         if hasattr(scan_module, "positionings") and scan_module.positionings:
-            scan_module.positions = np.append(scan_module.positions, startpos)
+            scan_module.position_counts = np.append(
+                scan_module.position_counts, startpos
+            )
             for positioning in scan_module.positionings:
                 positioning.position = startpos
             startpos += 1

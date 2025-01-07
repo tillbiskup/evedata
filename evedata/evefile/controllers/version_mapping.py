@@ -888,7 +888,7 @@ class VersionMapper:
         # TODO: Check whether axis has an encoder (how? mapping?)
         dataset = entities.data.NonencodedAxisData()
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -973,7 +973,7 @@ class VersionMapper:
     def _map_channel_snapshot_dataset(self, hdf5_dataset=None):
         dataset = entities.data.NonencodedAxisData()
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -1113,7 +1113,7 @@ class VersionMapperV5(VersionMapper):
         timestampdata = self.source.c1.meta.PosCountTimer
         dataset = entities.data.TimestampData()
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -1141,7 +1141,7 @@ class VersionMapperV5(VersionMapper):
         dataset = entities.data.SkipData()
         self.set_basic_metadata(hdf5_item=item, dataset=dataset)
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -1208,7 +1208,7 @@ class VersionMapperV5(VersionMapper):
     def _mca_dataset_set_data(self, dataset=None, hdf5_group=None):
         # Create positions vector and add it (needs to be done here)
         positions = [int(i) for i in hdf5_group.item_names()]
-        dataset.positions = np.asarray(positions, dtype="i4")
+        dataset.position_counts = np.asarray(positions, dtype="i4")
         # Create and add importers for each individual array
         for position in hdf5_group:
             importer_mapping = {
@@ -1247,7 +1247,7 @@ class VersionMapperV5(VersionMapper):
             if attribute.startswith("R"):
                 roi = entities.data.MCAChannelROIData()
                 importer_mapping = {
-                    0: "positions",
+                    0: "position_counts",
                     1: "data",
                 }
                 importer = self.get_hdf5_dataset_importer(
@@ -1375,7 +1375,7 @@ class VersionMapperV5(VersionMapper):
         # TODO: Deal with situations where this dataset does not exist
         hdf5_name = f"{camera}:TIFF1:chan1"
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -1483,7 +1483,7 @@ class VersionMapperV5(VersionMapper):
     def _sample_camera_set_data(self, camera="", dataset=None):
         hdf5_name = f"{camera}:uvc1:chan1"
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -1609,7 +1609,7 @@ class VersionMapperV5(VersionMapper):
         self, hdf5_name=None, normalized_datasets=None
     ):
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -1656,7 +1656,7 @@ class VersionMapperV5(VersionMapper):
 
     def _map_interval_dataset(self, hdf5_name=None, normalized=False):
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         if normalized:
@@ -1728,7 +1728,7 @@ class VersionMapperV5(VersionMapper):
             basename = hdf5_name
             dataset = entities.data.AverageChannelData()
         importer_mapping = {
-            0: "positions",
+            0: "position_counts",
             1: "data",
         }
         importer = self.get_hdf5_dataset_importer(
@@ -1813,7 +1813,7 @@ class VersionMapperV5(VersionMapper):
         actual_positions = self.source.c1.meta.PosCountTimer.shape[0]
         if calculated_positions != actual_positions:
             scan_module = entities.file.ScanModule()
-            scan_module.positions = np.arange(actual_positions) + 1
+            scan_module.position_counts = np.arange(actual_positions) + 1
             self.destination.scan_modules = {scan_module.name: scan_module}
             logger.warning(
                 "Calculated positions don't match actual positions: "
@@ -1832,7 +1832,9 @@ class VersionMapperV5(VersionMapper):
                 scan_module_name,
                 scan_module,
             ) in self.destination.scan_modules.items():
-                scan_module.positions -= self._scan_module_position_offset
+                scan_module.position_counts -= (
+                    self._scan_module_position_offset
+                )
                 for dataset_name, dataset in self._data.items():
                     if self.destination.scan.scan.scan_modules[
                         scan_module_name
@@ -1854,7 +1856,7 @@ class VersionMapperV5(VersionMapper):
         self, dataset=None, dataset_name="", scan_module=None
     ):
         preprocessing_step = preprocessing.SelectPositions()
-        preprocessing_step.positions = scan_module.positions
+        preprocessing_step.position_counts = scan_module.position_counts
         new_dataset = copy.deepcopy(dataset)
         new_dataset.importer[0].preprocessing.append(preprocessing_step)
         scan_module.data[dataset_name] = new_dataset
@@ -1866,14 +1868,14 @@ class VersionMapperV5(VersionMapper):
             self._mpskip_module_index
         ]
         preprocessing_step = preprocessing.SelectPositions()
-        preprocessing_step.positions = scan_module_positions
+        preprocessing_step.position_counts = scan_module_positions
         new_dataset = copy.deepcopy(dataset)
         new_dataset.importer[0].preprocessing.append(preprocessing_step)
-        new_dataset.positions = scan_module_positions
+        new_dataset.position_counts = scan_module_positions
         self._scan_module_position_offset += (
-            scan_module.positions[-1] - scan_module_positions[-1]
+            scan_module.position_counts[-1] - scan_module_positions[-1]
         )
-        scan_module.positions = scan_module_positions
+        scan_module.position_counts = scan_module_positions
         scan_module.data[dataset_name] = new_dataset
         self._mpskip_module_index += 1
 

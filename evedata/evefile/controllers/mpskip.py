@@ -313,7 +313,7 @@ class RearrangeRawValues(datatypes.ImporterPreprocessingStep):
         self.skip_data = None
 
     def _process(self, data=None):
-        cut_at = np.where(np.diff(self.skip_data.positions) > 1)[0] + 1
+        cut_at = np.where(np.diff(self.skip_data.position_counts) > 1)[0] + 1
         new_positions = self.skip_data.get_parent_positions()
         np.dtype(data.dtype.fields)
         new_dtype = dict(data.dtype.fields)
@@ -418,7 +418,9 @@ class Mpskip:
                 for device in mpskip_module.data.values()
                 if isinstance(device, datatypes.SkipData)
             ][0]
-            parent_module.positions = self._skipdata.get_parent_positions()
+            parent_module.position_counts = (
+                self._skipdata.get_parent_positions()
+            )
             for device in parent_module.data.values():
                 self._add_select_positions_step(
                     dataset=device,
@@ -451,7 +453,7 @@ class Mpskip:
 
     def _add_preprocessing_steps_to_importer(self, dataset=None):
         self._add_select_positions_step(
-            dataset=dataset, positions=self._skipdata.positions
+            dataset=dataset, positions=self._skipdata.position_counts
         )
         rearrange_raw_values = RearrangeRawValues()
         rearrange_raw_values.skip_data = self._skipdata
@@ -460,7 +462,7 @@ class Mpskip:
     @staticmethod
     def _add_select_positions_step(dataset=None, positions=None):
         select_positions = preprocessing.SelectPositions()
-        select_positions.positions = positions
+        select_positions.position_counts = positions
         previous_select_positioning_step = False
         for idx, step in enumerate(dataset.importer[0].preprocessing):
             if isinstance(step, preprocessing.SelectPositions):

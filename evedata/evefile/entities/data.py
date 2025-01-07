@@ -553,16 +553,16 @@ class MeasureData(Data):
     def __init__(self):
         super().__init__()
         self.metadata = metadata.MeasureMetadata()
-        self._positions = None
+        self._position_counts = None
 
     @property
-    def positions(self):
+    def position_counts(self):
         """
-        Position values data are recorded for.
+        Position counts data are recorded for.
 
         Each data "point" corresponds to an overall position of all
         actuators (motor axes) of the setup and is assigned an individual
-        "position count".
+        "position count" (an integer number).
 
         Actual data recorded from the device.
 
@@ -578,13 +578,13 @@ class MeasureData(Data):
             The actual data type (:class:`numpy.dtype`) is usually int.
 
         """
-        if self._positions is None:
+        if self._position_counts is None:
             self.get_data()
-        return self._positions
+        return self._position_counts
 
-    @positions.setter
-    def positions(self, positions=None):
-        self._positions = positions
+    @position_counts.setter
+    def position_counts(self, positions=None):
+        self._position_counts = positions
 
     def _import_from_hdf5dataimporter(self, importer=None):
         """
@@ -603,7 +603,7 @@ class MeasureData(Data):
 
         """
         super()._import_from_hdf5dataimporter(importer=importer)
-        sort_indices = np.argsort(self.positions)
+        sort_indices = np.argsort(self.position_counts)
         for attribute in importer.mapping.values():
             setattr(self, attribute, getattr(self, attribute)[sort_indices])
 
@@ -696,7 +696,9 @@ class AxisData(MeasureData):
 
         """
         super()._import_from_hdf5dataimporter(importer=importer)
-        indices = np.where(np.diff([*self.positions, self.positions[-1] + 1]))
+        indices = np.where(
+            np.diff([*self.position_counts, self.position_counts[-1] + 1])
+        )
         for attribute in importer.mapping.values():
             setattr(self, attribute, getattr(self, attribute)[indices])
 
@@ -752,7 +754,10 @@ class ChannelData(MeasureData):
         """
         super()._import_from_hdf5dataimporter(importer=importer)
         indices = (
-            np.where(((self.positions[:-1] - self.positions[1:]) + 1) > 0)[0]
+            np.where(
+                ((self.position_counts[:-1] - self.position_counts[1:]) + 1)
+                > 0
+            )[0]
             + 1
         )
         for attribute in importer.mapping.values():
@@ -824,7 +829,7 @@ class TimestampData(MeasureData):
         time = np.asarray(time)
         time = np.where(time < 0, self.data[0], time)
         idx = np.digitize(time, self.data)
-        return self.positions[idx - 1]
+        return self.position_counts[idx - 1]
 
 
 class NonnumericChannelData(ChannelData):
@@ -2090,7 +2095,8 @@ class SkipData(ChannelData):
 
         """
         positions_per_scan = np.split(
-            self.positions, np.where(np.diff(self.positions) > 1)[0] + 1
+            self.position_counts,
+            np.where(np.diff(self.position_counts) > 1)[0] + 1,
         )
         parent_positions = [
             positions[0] - 1 for positions in positions_per_scan
@@ -2110,7 +2116,8 @@ class SkipData(ChannelData):
 
         """
         return np.split(
-            self.positions, np.where(np.diff(self.positions) > 2)[0] + 1
+            self.position_counts,
+            np.where(np.diff(self.position_counts) > 2)[0] + 1,
         )
 
 

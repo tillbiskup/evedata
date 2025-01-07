@@ -1283,7 +1283,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             self.mapper.source.c1.meta.PosCountTimer.dtype.names[
                 0
-            ]: "positions",
+            ]: "position_counts",
             self.mapper.source.c1.meta.PosCountTimer.dtype.names[1]: "data",
         }
         self.assertDictEqual(
@@ -1322,7 +1322,7 @@ class TestVersionMapperV5(unittest.TestCase):
         )
         positions = [int(i) for i in self.source.c1.main.array.item_names()]
         self.assertListEqual(
-            positions, list(self.destination_data("array").positions)
+            positions, list(self.destination_data("array").position_counts)
         )
         for idx, pos in enumerate(self.source.c1.main.array.item_names()):
             self.assertEqual(
@@ -1524,7 +1524,7 @@ class TestVersionMapperV5(unittest.TestCase):
             axis1.filename, self.destination_data("axis1").importer[0].source
         )
         mapping_dict = {
-            axis1.dtype.names[0]: "positions",
+            axis1.dtype.names[0]: "position_counts",
             axis1.dtype.names[1]: "data",
         }
         self.assertDictEqual(
@@ -1571,7 +1571,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(
                 self.mapper.source.c1.main, f"{camera_name}:TIFF1:chan1"
-            ).dtype.names[0]: "positions",
+            ).dtype.names[0]: "position_counts",
             getattr(
                 self.mapper.source.c1.main, f"{camera_name}:TIFF1:chan1"
             ).dtype.names[1]: "data",
@@ -1741,7 +1741,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(
                 self.mapper.source.c1.main, f"{camera_name}:uvc1:chan1"
-            ).dtype.names[0]: "positions",
+            ).dtype.names[0]: "position_counts",
             getattr(
                 self.mapper.source.c1.main, f"{camera_name}:uvc1:chan1"
             ).dtype.names[1]: "data",
@@ -1881,7 +1881,7 @@ class TestVersionMapperV5(unittest.TestCase):
             mapping_dict = {
                 getattr(self.mapper.source.c1.main, dataset).dtype.names[
                     0
-                ]: "positions",
+                ]: "position_counts",
                 getattr(self.mapper.source.c1.main, dataset).dtype.names[
                     1
                 ]: "data",
@@ -2011,7 +2011,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(self.mapper.source.c1.main, dataset).dtype.names[
                 0
-            ]: "positions",
+            ]: "position_counts",
             getattr(self.mapper.source.c1.main, dataset).dtype.names[
                 1
             ]: "data",
@@ -2086,7 +2086,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(
                 self.mapper.source.c1.main.normalized, dataset
-            ).dtype.names[0]: "positions",
+            ).dtype.names[0]: "position_counts",
             getattr(
                 self.mapper.source.c1.main.normalized, dataset
             ).dtype.names[1]: "data",
@@ -2176,7 +2176,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(self.mapper.source.c1.main, dataset).dtype.names[
                 0
-            ]: "positions",
+            ]: "position_counts",
             getattr(self.mapper.source.c1.main, dataset).dtype.names[
                 1
             ]: "data",
@@ -2200,7 +2200,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(self.mapper.source.c1.main, dataset).dtype.names[
                 0
-            ]: "positions",
+            ]: "position_counts",
             getattr(self.mapper.source.c1.main, dataset).dtype.names[
                 1
             ]: "data",
@@ -2310,7 +2310,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
                 0
-            ]: "positions",
+            ]: "position_counts",
             getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
                 1
             ]: "data",
@@ -2354,7 +2354,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
                 0
-            ]: "positions",
+            ]: "position_counts",
             getattr(self.mapper.source.c1.main, base_dataset).dtype.names[
                 1
             ]: "data",
@@ -2470,7 +2470,7 @@ class TestVersionMapperV5(unittest.TestCase):
         mapping_dict = {
             getattr(self.mapper.source.c1.main, dataset_id).dtype.names[
                 0
-            ]: "positions",
+            ]: "position_counts",
             getattr(self.mapper.source.c1.main, dataset_id).dtype.names[
                 1
             ]: "data",
@@ -2569,7 +2569,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination.scan_modules = {}
         for scan_module_id in [1, 2]:
             scan_module = evedata.evefile.entities.file.ScanModule()
-            scan_module.positions = np.asarray([scan_module_id])
+            scan_module.position_counts = np.asarray([scan_module_id])
             self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
@@ -2591,7 +2591,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination.scan_modules = {}
         for scan_module_id in [1, 2]:
             scan_module = evedata.evefile.entities.file.ScanModule()
-            scan_module.positions = np.asarray([scan_module_id])
+            scan_module.position_counts = np.asarray([scan_module_id])
             self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
@@ -2601,7 +2601,7 @@ class TestVersionMapperV5(unittest.TestCase):
             name: "foo" for name in dataset_names
         }
         positions = np.linspace(1, 5, 5)
-        self.destination.scan_modules[2].positions = positions
+        self.destination.scan_modules[2].position_counts = positions
         self.mapper.map(destination=self.destination)
         for dataset in self.destination.scan_modules[2].data.values():
             self.assertTrue(dataset.importer[0].preprocessing)
@@ -2610,7 +2610,8 @@ class TestVersionMapperV5(unittest.TestCase):
                 preprocessing.SelectPositions,
             )
             np.testing.assert_array_equal(
-                positions, dataset.importer[0].preprocessing[0].positions
+                positions,
+                dataset.importer[0].preprocessing[0].position_counts,
             )
 
     def test_with_scan_modules_adds_one_importer_preprocessing_to_data(self):
@@ -2633,9 +2634,9 @@ class TestVersionMapperV5(unittest.TestCase):
             name: "foo" for name in dataset_names
         }
         positions_1 = np.linspace(1, 5, 5)
-        self.destination.scan_modules[1].positions = positions_1
+        self.destination.scan_modules[1].position_counts = positions_1
         positions_2 = np.linspace(6, 10, 5)
-        self.destination.scan_modules[2].positions = positions_2
+        self.destination.scan_modules[2].position_counts = positions_2
         self.mapper.map(destination=self.destination)
         for dataset in self.destination.scan_modules[2].data.values():
             self.assertTrue(dataset.importer[0].preprocessing)
@@ -2644,7 +2645,8 @@ class TestVersionMapperV5(unittest.TestCase):
                 preprocessing.SelectPositions,
             )
             np.testing.assert_array_equal(
-                positions_2, dataset.importer[0].preprocessing[0].positions
+                positions_2,
+                dataset.importer[0].preprocessing[0].position_counts,
             )
 
     def test_with_scan_modules_deepcopies_datasets_for_scan_modules(self):
@@ -2655,7 +2657,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination.scan_modules = {}
         for scan_module_id in [1, 2]:
             scan_module = evedata.evefile.entities.file.ScanModule()
-            scan_module.positions = np.asarray([scan_module_id])
+            scan_module.position_counts = np.asarray([scan_module_id])
             self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
@@ -2687,7 +2689,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination.scan_modules = {}
         for scan_module_id in [1, 2]:
             scan_module = evedata.evefile.entities.file.ScanModule()
-            scan_module.positions = np.asarray([scan_module_id])
+            scan_module.position_counts = np.asarray([scan_module_id])
             self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
@@ -2713,7 +2715,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination.scan_modules = {}
         for scan_module_id in [1, 2, 3, 4, 5]:
             scan_module = evedata.evefile.entities.file.ScanModule()
-            scan_module.positions = np.asarray([scan_module_id])
+            scan_module.position_counts = np.asarray([scan_module_id])
             self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
@@ -2746,7 +2748,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination.scan_modules = {}
         for scan_module_id in [1, 2, 3, 4, 5]:
             scan_module = evedata.evefile.entities.file.ScanModule()
-            scan_module.positions = np.asarray([scan_module_id])
+            scan_module.position_counts = np.asarray([scan_module_id])
             self.destination.scan_modules[scan_module_id] = scan_module
         self.destination.scan.scan.scan_modules = {
             1: evedata.scan.entities.scan.ScanModule(),
@@ -2805,16 +2807,18 @@ class TestVersionMapperV5(unittest.TestCase):
             5: evedata.scan.entities.scan.ScanModule(),
             6: evedata.scan.entities.scan.ScanModule(),
         }
-        self.destination.scan_modules[1].positions = np.asarray([1])
-        self.destination.scan_modules[2].positions = np.linspace(
+        self.destination.scan_modules[1].position_counts = np.asarray([1])
+        self.destination.scan_modules[2].position_counts = np.linspace(
             2, 11, 10, dtype=int
         )
-        self.destination.scan_modules[3].positions = np.asarray([12])
-        self.destination.scan_modules[4].positions = np.asarray([13])
-        self.destination.scan_modules[5].positions = np.linspace(
+        self.destination.scan_modules[3].position_counts = np.asarray([12])
+        self.destination.scan_modules[4].position_counts = np.asarray([13])
+        self.destination.scan_modules[5].position_counts = np.linspace(
             14, 23, 10, dtype=int
         )
-        self.destination.scan_modules[6].positions = np.asarray([24, 25])
+        self.destination.scan_modules[6].position_counts = np.asarray(
+            [24, 25]
+        )
         for scan_module_id in [1, 3, 4, 6]:
             self.destination.scan.scan.scan_modules[
                 scan_module_id
@@ -2827,11 +2831,15 @@ class TestVersionMapperV5(unittest.TestCase):
         }
         self.mapper.map(destination=self.destination)
         np.testing.assert_array_equal(
-            self.destination.scan_modules[2].data[mpskip_name].positions,
+            self.destination.scan_modules[2]
+            .data[mpskip_name]
+            .position_counts,
             np.asarray([2, 3, 4]),
         )
         np.testing.assert_array_equal(
-            self.destination.scan_modules[5].data[mpskip_name].positions,
+            self.destination.scan_modules[5]
+            .data[mpskip_name]
+            .position_counts,
             np.asarray([7, 8, 9]),
         )
         np.testing.assert_array_equal(
@@ -2839,7 +2847,7 @@ class TestVersionMapperV5(unittest.TestCase):
             .data[mpskip_name]
             .importer[0]
             .preprocessing[0]
-            .positions,
+            .position_counts,
             np.asarray([2, 3, 4]),
         )
         np.testing.assert_array_equal(
@@ -2847,26 +2855,29 @@ class TestVersionMapperV5(unittest.TestCase):
             .data[mpskip_name]
             .importer[0]
             .preprocessing[0]
-            .positions,
+            .position_counts,
             np.asarray([7, 8, 9]),
         )
         np.testing.assert_array_equal(
-            self.destination.scan_modules[1].positions, np.asarray([1])
+            self.destination.scan_modules[1].position_counts, np.asarray([1])
         )
         np.testing.assert_array_equal(
-            self.destination.scan_modules[2].positions, np.asarray([2, 3, 4])
+            self.destination.scan_modules[2].position_counts,
+            np.asarray([2, 3, 4]),
         )
         np.testing.assert_array_equal(
-            self.destination.scan_modules[3].positions, np.asarray([5])
+            self.destination.scan_modules[3].position_counts, np.asarray([5])
         )
         np.testing.assert_array_equal(
-            self.destination.scan_modules[4].positions, np.asarray([6])
+            self.destination.scan_modules[4].position_counts, np.asarray([6])
         )
         np.testing.assert_array_equal(
-            self.destination.scan_modules[5].positions, np.asarray([7, 8, 9])
+            self.destination.scan_modules[5].position_counts,
+            np.asarray([7, 8, 9]),
         )
         np.testing.assert_array_equal(
-            self.destination.scan_modules[6].positions, np.asarray([10, 11])
+            self.destination.scan_modules[6].position_counts,
+            np.asarray([10, 11]),
         )
 
     def test_failing_consistency_check_resets_scan_modules(self):
@@ -2907,7 +2918,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.mapper.map(destination=self.destination)
         np.testing.assert_array_equal(
             np.arange(len(data_)) + 1,
-            self.mapper.destination.scan_modules["main"].positions,
+            self.mapper.destination.scan_modules["main"].position_counts,
         )
 
     def test_failing_consistency_check_logs_warning(self):
@@ -2941,7 +2952,7 @@ class TestVersionMapperV5(unittest.TestCase):
         self.destination.scan_modules = {}
         for scan_module_id in [1, 2]:
             scan_module = evedata.evefile.entities.file.ScanModule()
-            scan_module.positions = np.asarray([scan_module_id])
+            scan_module.position_counts = np.asarray([scan_module_id])
             self.destination.scan_modules[scan_module_id] = scan_module
         for scan_module_id in [4, 5]:
             scan_module = evedata.scan.entities.scan.ScanModule()

@@ -25,7 +25,7 @@ class AbstractScanModule {
     is_nested : boolean
     number_of_positions : integer
     number_of_positions_per_pass : integer
-    positions : numpy.array
+    position_counts : numpy.array
 }
 
 class ScanModule extends AbstractScanModule {

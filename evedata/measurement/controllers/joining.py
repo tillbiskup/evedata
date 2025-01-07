@@ -389,8 +389,10 @@ class AxesLastFill(Join):
             if axes[idx][0] in self.measurement.device_snapshots:
                 self.measurement.device_snapshots[axes[idx][0]].get_data()
                 axes_positions = np.searchsorted(
-                    axes_device.positions,
-                    self.measurement.device_snapshots[axes[idx][0]].positions,
+                    axes_device.position_counts,
+                    self.measurement.device_snapshots[
+                        axes[idx][0]
+                    ].position_counts,
                 )
                 snapshot_values = getattr(
                     self.measurement.device_snapshots[axes[idx][0]],
@@ -398,8 +400,10 @@ class AxesLastFill(Join):
                 )
                 values = np.insert(values, axes_positions, snapshot_values)
             else:
-                axes_positions = axes_device.positions
-            positions = np.digitize(data_device.positions, axes_positions) - 1
+                axes_positions = axes_device.position_counts
+            positions = (
+                np.digitize(data_device.position_counts, axes_positions) - 1
+            )
             values = values[positions]
             # Set values to special value where no previous axis values exist
             if np.any(np.where(positions < 0)):

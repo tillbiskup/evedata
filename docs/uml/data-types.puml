@@ -6,7 +6,7 @@ class Data {
 }
 
 class MeasureData extends Data {
-    positions
+    position_counts
 }
 
 note left of MeasureData

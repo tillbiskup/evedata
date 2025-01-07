@@ -18,7 +18,7 @@ class TestSelectPositions(unittest.TestCase):
 
     def test_has_attributes(self):
         attributes = [
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -31,7 +31,7 @@ class TestSelectPositions(unittest.TestCase):
         for idx, name in enumerate(dtype.names):
             data[name] = raw_data[:, idx]
         positions = np.array([2, 3, 5])
-        self.processing.positions = positions
+        self.processing.position_counts = positions
         result = self.processing.process(data)
         np.testing.assert_array_equal(positions, result[dtype.names[0]])
         np.testing.assert_array_equal(
@@ -45,6 +45,6 @@ class TestSelectPositions(unittest.TestCase):
         data = np.ndarray(raw_data.shape[0], dtype=dtype)
         for idx, name in enumerate(dtype.names):
             data[name] = raw_data[:, idx]
-        self.processing.positions = None
+        self.processing.position_counts = None
         result = self.processing.process(data)
         np.testing.assert_array_equal(raw_data[:, 0], result["PosCounter"])

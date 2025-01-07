@@ -19,7 +19,7 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1])
+        scan_module.position_counts = np.asarray([1])
         scan_modules = {1: scan_module}
         scan_module_structure = info.ScanModuleStructure(
             scan_modules=scan_modules
@@ -30,7 +30,7 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1])
+        scan_module.position_counts = np.asarray([1])
         self.scan_module_structure.scan_modules = {1: scan_module}
         self.scan_module_structure.create()
         self.assertTrue(self.scan_module_structure.structure)
@@ -44,7 +44,7 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1, 2, 3])
+        scan_module.position_counts = np.asarray([1, 2, 3])
         self.scan_module_structure.scan_modules = {1: scan_module}
         self.scan_module_structure.create()
         self.assertIn(
@@ -59,14 +59,14 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module1.id = 1
         scan_module1.name = "Diodes"
         scan_module1.appended = 2
-        scan_module1.positions = np.asarray([1, 2, 3])
+        scan_module1.position_counts = np.asarray([1, 2, 3])
         self.scan_module_structure.scan_modules[scan_module1.id] = (
             scan_module1
         )
         scan_module2 = file.ScanModule()
         scan_module2.id = 2
         scan_module2.name = "MB"
-        scan_module2.positions = np.asarray([4, 5, 6, 7, 8])
+        scan_module2.position_counts = np.asarray([4, 5, 6, 7, 8])
         self.scan_module_structure.scan_modules[scan_module2.id] = (
             scan_module2
         )
@@ -74,15 +74,15 @@ class TestScanModuleStructure(unittest.TestCase):
         self.assertIn(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module1.id}: {scan_module1.name} - #"
-            f"{len(scan_module1.positions)} ["
-            f"{scan_module1.positions[0]}..{scan_module1.positions[-1]}]",
+            f"{len(scan_module1.position_counts)} ["
+            f"{scan_module1.position_counts[0]}..{scan_module1.position_counts[-1]}]",
             self.scan_module_structure.structure[0],
         )
         self.assertIn(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module2.id}: {scan_module2.name} - #"
-            f"{len(scan_module2.positions)} ["
-            f"{scan_module2.positions[0]}..{scan_module2.positions[-1]}]",
+            f"{len(scan_module2.position_counts)} ["
+            f"{scan_module2.position_counts[0]}..{scan_module2.position_counts[-1]}]",
             self.scan_module_structure.structure[1],
         )
 
@@ -90,13 +90,13 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1])
+        scan_module.position_counts = np.asarray([1])
         self.scan_module_structure.scan_modules = {1: scan_module}
         self.scan_module_structure.create()
         self.assertIn(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module.id}: {scan_module.name} - #"
-            f"{len(scan_module.positions)} [{scan_module.positions[0]}]",
+            f"{len(scan_module.position_counts)} [{scan_module.position_counts[0]}]",
             self.scan_module_structure.structure[0],
         )
 
@@ -104,14 +104,14 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1, 2, 3, 4])
+        scan_module.position_counts = np.asarray([1, 2, 3, 4])
         self.scan_module_structure.scan_modules = {1: scan_module}
         self.scan_module_structure.create()
         self.assertIn(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module.id}: {scan_module.name} - #"
-            f"{len(scan_module.positions)} [{scan_module.positions[0]}.."
-            f"{scan_module.positions[-1]}]",
+            f"{len(scan_module.position_counts)} [{scan_module.position_counts[0]}.."
+            f"{scan_module.position_counts[-1]}]",
             self.scan_module_structure.structure[0],
         )
 
@@ -120,14 +120,14 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module1.id = 1
         scan_module1.name = "Diodes"
         scan_module1.nested = 2
-        scan_module1.positions = np.asarray([1, 2, 3])
+        scan_module1.position_counts = np.asarray([1, 2, 3])
         self.scan_module_structure.scan_modules[scan_module1.id] = (
             scan_module1
         )
         scan_module2 = file.ScanModule()
         scan_module2.id = 2
         scan_module2.name = "MB"
-        scan_module2.positions = np.asarray([4, 5, 6, 7, 8])
+        scan_module2.position_counts = np.asarray([4, 5, 6, 7, 8])
         self.scan_module_structure.scan_modules[scan_module2.id] = (
             scan_module2
         )
@@ -135,16 +135,16 @@ class TestScanModuleStructure(unittest.TestCase):
         self.assertIn(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module1.id}: {scan_module1.name} - #"
-            f"{len(scan_module1.positions)} ["
-            f"{scan_module1.positions[0]}..{scan_module1.positions[-1]}]",
+            f"{len(scan_module1.position_counts)} ["
+            f"{scan_module1.position_counts[0]}..{scan_module1.position_counts[-1]}]",
             self.scan_module_structure.structure[0],
         )
         self.assertIn(
             f"{self.scan_module_structure.indentation}"
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module2.id}: {scan_module2.name} - #"
-            f"{len(scan_module2.positions)} ["
-            f"{scan_module2.positions[0]}..{scan_module2.positions[-1]}]",
+            f"{len(scan_module2.position_counts)} ["
+            f"{scan_module2.position_counts[0]}..{scan_module2.position_counts[-1]}]",
             self.scan_module_structure.structure[1],
         )
 
@@ -154,21 +154,21 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module1.name = "Diodes"
         scan_module1.nested = 2
         scan_module1.appended = 3
-        scan_module1.positions = np.asarray([1, 2, 3])
+        scan_module1.position_counts = np.asarray([1, 2, 3])
         self.scan_module_structure.scan_modules[scan_module1.id] = (
             scan_module1
         )
         scan_module2 = file.ScanModule()
         scan_module2.id = 2
         scan_module2.name = "MB"
-        scan_module2.positions = np.asarray([4, 5, 6, 7, 8])
+        scan_module2.position_counts = np.asarray([4, 5, 6, 7, 8])
         self.scan_module_structure.scan_modules[scan_module2.id] = (
             scan_module2
         )
         scan_module3 = file.ScanModule()
         scan_module3.id = 3
         scan_module3.name = "DetX"
-        scan_module3.positions = np.asarray([9, 10])
+        scan_module3.position_counts = np.asarray([9, 10])
         self.scan_module_structure.scan_modules[scan_module3.id] = (
             scan_module3
         )
@@ -176,23 +176,23 @@ class TestScanModuleStructure(unittest.TestCase):
         self.assertIn(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module1.id}: {scan_module1.name} - #"
-            f"{len(scan_module1.positions)} ["
-            f"{scan_module1.positions[0]}..{scan_module1.positions[-1]}]",
+            f"{len(scan_module1.position_counts)} ["
+            f"{scan_module1.position_counts[0]}..{scan_module1.position_counts[-1]}]",
             self.scan_module_structure.structure[0],
         )
         self.assertIn(
             f"{self.scan_module_structure.indentation}"
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module2.id}: {scan_module2.name} - #"
-            f"{len(scan_module2.positions)} ["
-            f"{scan_module2.positions[0]}..{scan_module2.positions[-1]}]",
+            f"{len(scan_module2.position_counts)} ["
+            f"{scan_module2.position_counts[0]}..{scan_module2.position_counts[-1]}]",
             self.scan_module_structure.structure[1],
         )
         self.assertEqual(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module3.id}: {scan_module3.name} - #"
-            f"{len(scan_module3.positions)} ["
-            f"{scan_module3.positions[0]}..{scan_module3.positions[-1]}]",
+            f"{len(scan_module3.position_counts)} ["
+            f"{scan_module3.position_counts[0]}..{scan_module3.position_counts[-1]}]",
             self.scan_module_structure.structure[2],
         )
 
@@ -200,7 +200,7 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1])
+        scan_module.position_counts = np.asarray([1])
         axis = data.AxisData()
         axis.metadata.id = "MotK7002:gw24807Col1scanner"
         axis.metadata.name = "Matrix_input"
@@ -218,7 +218,7 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1])
+        scan_module.position_counts = np.asarray([1])
         channel = data.ChannelData()
         channel.metadata.id = "K0617:gw24825chan1"
         channel.metadata.name = "Keithley_MSC"
@@ -237,14 +237,14 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module1.id = 1
         scan_module1.name = "Diodes"
         scan_module1.nested = 2
-        scan_module1.positions = np.asarray([1, 2, 3])
+        scan_module1.position_counts = np.asarray([1, 2, 3])
         self.scan_module_structure.scan_modules[scan_module1.id] = (
             scan_module1
         )
         scan_module2 = file.ScanModule()
         scan_module2.id = 2
         scan_module2.name = "MB"
-        scan_module2.positions = np.asarray([4, 5, 6, 7, 8])
+        scan_module2.position_counts = np.asarray([4, 5, 6, 7, 8])
         self.scan_module_structure.scan_modules[scan_module2.id] = (
             scan_module2
         )
@@ -269,7 +269,7 @@ class TestScanModuleStructure(unittest.TestCase):
         scan_module = file.ScanModule()
         scan_module.id = 1
         scan_module.name = "Diodes"
-        scan_module.positions = np.asarray([1, 2, 3])
+        scan_module.position_counts = np.asarray([1, 2, 3])
         self.scan_module_structure.scan_modules = {1: scan_module}
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -277,7 +277,7 @@ class TestScanModuleStructure(unittest.TestCase):
         self.assertIn(
             f"{self.scan_module_structure.scan_module_marker} "
             f"{scan_module.id}: {scan_module.name} - #"
-            f"{len(scan_module.positions)} ["
-            f"{scan_module.positions[0]}..{scan_module.positions[-1]}]",
+            f"{len(scan_module.position_counts)} ["
+            f"{scan_module.position_counts[0]}..{scan_module.position_counts[-1]}]",
             output.getvalue(),
         )

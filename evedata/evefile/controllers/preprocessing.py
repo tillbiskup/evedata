@@ -56,11 +56,12 @@ class SelectPositions(ImporterPreprocessingStep):
 
     Attributes
     ----------
-    positions : :class:`list` | :class:`numpy.ndarray`
-        Positions of the dataset to be selected.
+    position_counts : :class:`list` | :class:`numpy.ndarray`
+        Position counts of the dataset to be selected.
 
-        These positions are interpreted as values in the first column of the
-        corresponding HDF5 dataset. Typically, this is the "position count".
+        These position counts are interpreted as values in the first column
+        of the corresponding HDF5 dataset. Typically, this is the
+        "position count".
 
 
     Examples
@@ -80,13 +81,13 @@ class SelectPositions(ImporterPreprocessingStep):
 
     def __init__(self):
         super().__init__()
-        self.positions = []
+        self.position_counts = []
 
     def _process(self, data=None):
-        if self.positions is not None:
+        if self.position_counts is not None:
             data = data[
                 np.nonzero(
-                    np.isin(data[data.dtype.names[0]], self.positions)
+                    np.isin(data[data.dtype.names[0]], self.position_counts)
                 )[0]
             ]
         return data

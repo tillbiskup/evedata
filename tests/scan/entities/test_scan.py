@@ -80,7 +80,7 @@ class TestAbstractScanModule(unittest.TestCase):
             "is_nested",
             "number_of_positions",
             "number_of_positions_per_pass",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):

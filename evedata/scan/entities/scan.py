@@ -288,12 +288,12 @@ class AbstractScanModule:
 
         Default: 0
 
-    positions : :class:`numpy.array`
-        Actual positions created during the scan module.
+    position_counts : :class:`numpy.array`
+        Actual position counts created during the scan module.
 
-        These positions cannot necessarily be inferred from the definition
-        of the scan module itself, but sometimes only be obtained from the
-        actual measurement.
+        These position counts cannot necessarily be inferred from the
+        definition of the scan module itself, but sometimes only be
+        obtained from the actual measurement.
 
 
     Examples
@@ -315,7 +315,7 @@ class AbstractScanModule:
         self.is_nested = False
         self.number_of_positions = 0
         self.number_of_positions_per_pass = 0
-        self.positions = None
+        self.position_counts = None
 
     def has_mpskip(self):
         """
@@ -452,7 +452,7 @@ class ScanModule(AbstractScanModule):
 
         Default: 0
 
-    positions : :class:`numpy.array`
+    position_counts : :class:`numpy.array`
         Actual positions created during the scan module.
 
         These positions cannot necessarily be inferred from the definition
@@ -799,7 +799,7 @@ class StaticSnapshotModule(AbstractScanModule):
 
         Default: 1
 
-    positions : :class:`list` | :class:`numpy.array`
+    position_counts : :class:`list` | :class:`numpy.array`
         Actual positions created during the scan module.
 
         These positions cannot necessarily be inferred from the definition
@@ -1007,7 +1007,7 @@ class DynamicSnapshotModule(AbstractScanModule):
 
         Default: 1
 
-    positions : :class:`list` | :class:`numpy.array`
+    position_counts : :class:`list` | :class:`numpy.array`
         Actual positions created during the scan module.
 
         These positions cannot necessarily be inferred from the definition

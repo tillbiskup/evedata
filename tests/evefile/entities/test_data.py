@@ -123,7 +123,7 @@ class TestData(unittest.TestCase):
         importer = data.HDF5DataImporter(source=self.filename)
         importer.item = "/c1/meta/PosCountTimer"
         importer.mapping = {
-            "PosCounter": "positions",
+            "PosCounter": "position_counts",
             "PosCountTimer": "data",
         }
         self.data.importer.append(importer)
@@ -231,7 +231,7 @@ class TestMeasureData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -246,25 +246,25 @@ class TestMeasureData(unittest.TestCase):
         importer = data.HDF5DataImporter(source=self.filename)
         importer.item = "/c1/meta/PosCountTimer"
         importer.mapping = {
-            "PosCounter": "positions",
+            "PosCounter": "position_counts",
             "PosCountTimer": "data",
         }
         self.data.importer.append(importer)
         self.data.get_data()
-        self.assertTrue(np.all(np.diff(self.data.positions) >= 0))
+        self.assertTrue(np.all(np.diff(self.data.position_counts) >= 0))
         self.assertFalse(np.all(np.diff(self.data.data) >= 0))
 
     def test_setting_positions_sets_positions(self):
-        self.data.positions = np.random.random(5)
-        self.assertGreater(len(self.data.positions), 0)
+        self.data.position_counts = np.random.random(5)
+        self.assertGreater(len(self.data.position_counts), 0)
 
     def test_accessing_positions_calls_get_data_if_not_loaded(self):
-        _ = self.mock_data.positions
+        _ = self.mock_data.position_counts
         self.assertTrue(self.mock_data.get_data_called)
 
     def test_accessing_positions_with_positions_does_not_call_get_data(self):
-        self.mock_data.positions = np.random.random(5)
-        _ = self.mock_data.positions
+        self.mock_data.position_counts = np.random.random(5)
+        _ = self.mock_data.position_counts
         self.assertFalse(self.mock_data.get_data_called)
 
 
@@ -280,7 +280,7 @@ class TestDeviceData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -307,7 +307,7 @@ class TestAxisData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "set_values",
         ]
         for attribute in attributes:
@@ -323,12 +323,12 @@ class TestAxisData(unittest.TestCase):
         importer = data.HDF5DataImporter(source=self.filename)
         importer.item = "/c1/meta/PosCountTimer"
         importer.mapping = {
-            "PosCounter": "positions",
+            "PosCounter": "position_counts",
             "PosCountTimer": "data",
         }
         self.data.importer.append(importer)
         self.data.get_data()
-        self.assertTrue(np.all(np.diff(self.data.positions) > 0))
+        self.assertTrue(np.all(np.diff(self.data.position_counts) > 0))
         self.assertTrue(np.any(self.data.data % 2))
         self.assertEqual(h5file.shape, len(self.data.data))
 
@@ -338,7 +338,7 @@ class TestAxisData(unittest.TestCase):
         importer = data.HDF5DataImporter(source=self.filename)
         importer.item = "/c1/meta/PosCountTimer"
         importer.mapping = {
-            "PosCounter": "positions",
+            "PosCounter": "position_counts",
             "PosCountTimer": "data",
         }
         self.data.importer.append(importer)
@@ -351,7 +351,7 @@ class TestAxisData(unittest.TestCase):
         importer = data.HDF5DataImporter(source=self.filename)
         importer.item = "/c1/meta/PosCountTimer"
         importer.mapping = {
-            "PosCounter": "positions",
+            "PosCounter": "position_counts",
             "PosCountTimer": "data",
         }
         self.data.importer.append(importer)
@@ -376,7 +376,7 @@ class TestChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -391,12 +391,12 @@ class TestChannelData(unittest.TestCase):
         importer = data.HDF5DataImporter(source=self.filename)
         importer.item = "/c1/meta/PosCountTimer"
         importer.mapping = {
-            "PosCounter": "positions",
+            "PosCounter": "position_counts",
             "PosCountTimer": "data",
         }
         self.data.importer.append(importer)
         self.data.get_data()
-        self.assertTrue(np.all(np.diff(self.data.positions) > 0))
+        self.assertTrue(np.all(np.diff(self.data.position_counts) > 0))
         self.assertFalse(np.any(self.data.data % 2))
 
     def test_get_data_with_gaps_in_position_counts_returns_data(self):
@@ -405,7 +405,7 @@ class TestChannelData(unittest.TestCase):
         importer = data.HDF5DataImporter(source=self.filename)
         importer.item = "/c1/meta/PosCountTimer"
         importer.mapping = {
-            "PosCounter": "positions",
+            "PosCounter": "position_counts",
             "PosCountTimer": "data",
         }
         self.data.importer.append(importer)
@@ -425,7 +425,7 @@ class TestTimestampData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -435,28 +435,32 @@ class TestTimestampData(unittest.TestCase):
         self.assertIsInstance(self.data.metadata, metadata.TimestampMetadata)
 
     def test_get_position_returns_position(self):
-        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.position_counts = np.linspace(start=4, stop=23, num=20)
         self.data.data = np.linspace(start=0, stop=19, num=20)
-        self.assertEqual(self.data.positions[3], self.data.get_position(3.2))
+        self.assertEqual(
+            self.data.position_counts[3], self.data.get_position(3.2)
+        )
 
     def test_get_position_with_array_returns_position_array(self):
-        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.position_counts = np.linspace(start=4, stop=23, num=20)
         self.data.data = np.linspace(start=0, stop=19, num=20)
         np.testing.assert_array_equal(
-            self.data.positions[[3, 5, 6]],
+            self.data.position_counts[[3, 5, 6]],
             self.data.get_position([3.2, 5.5, 6.8]),
         )
 
     def test_get_position_for_minus_one_returns_first_position(self):
-        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.position_counts = np.linspace(start=4, stop=23, num=20)
         self.data.data = np.linspace(start=0, stop=19, num=20)
-        self.assertEqual(self.data.positions[0], self.data.get_position(-1))
+        self.assertEqual(
+            self.data.position_counts[0], self.data.get_position(-1)
+        )
 
     def test_get_position_with_minus_one_in_array(self):
-        self.data.positions = np.linspace(start=4, stop=23, num=20)
+        self.data.position_counts = np.linspace(start=4, stop=23, num=20)
         self.data.data = np.linspace(start=0, stop=19, num=20)
         np.testing.assert_array_equal(
-            self.data.positions[[0, 3, 5, 6]],
+            self.data.position_counts[[0, 3, 5, 6]],
             self.data.get_position([-1, 3.2, 5.5, 6.8]),
         )
 
@@ -473,7 +477,7 @@ class TestNonnumericChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -497,7 +501,7 @@ class TestSinglePointChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -521,7 +525,7 @@ class TestAverageChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "raw_data",
             "attempts",
         ]
@@ -564,7 +568,7 @@ class TestIntervalChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "raw_data",
             "counts",
         ]
@@ -612,7 +616,7 @@ class TestArrayChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -650,7 +654,7 @@ class TestAreaChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -696,7 +700,7 @@ class TestSinglePointNormalizedChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "normalized_data",
             "normalizing_data",
         ]
@@ -722,7 +726,7 @@ class TestAverageNormalizedChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "raw_data",
             "attempts",
             "normalized_data",
@@ -750,7 +754,7 @@ class TestIntervalNormalizedChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "raw_data",
             "counts",
             "normalized_data",
@@ -778,7 +782,7 @@ class TestScopeChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -802,7 +806,7 @@ class TestMCAChannelData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "roi",
             "life_time",
             "real_time",
@@ -829,7 +833,7 @@ class TestMCAChannelROIData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "label",
             "marker",
         ]
@@ -850,7 +854,7 @@ class TestScientificCameraData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "roi",
             "statistics",
             "acquire_time",
@@ -879,7 +883,7 @@ class TestScientificCameraROIData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "label",
             "marker",
         ]
@@ -900,7 +904,7 @@ class TestScientificCameraStatisticsData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "background_width",
             "min_value",
             "min_x",
@@ -935,7 +939,7 @@ class TestSampleCameraData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -959,7 +963,7 @@ class TestNonencodedAxisData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
             "set_values",
             "filled_data",
         ]
@@ -1108,7 +1112,7 @@ class TestSkipData(unittest.TestCase):
             "metadata",
             "options",
             "data",
-            "positions",
+            "position_counts",
         ]
         for attribute in attributes:
             with self.subTest(attribute=attribute):
@@ -1118,7 +1122,7 @@ class TestSkipData(unittest.TestCase):
         self.assertIsInstance(self.data.metadata, metadata.SkipMetadata)
 
     def test_get_parent_positions(self):
-        self.data.positions = np.asarray(
+        self.data.position_counts = np.asarray(
             [2, 3, 4, 6, 7, 8, 9, 11, 12, 14, 15, 16], dtype=int
         )
         parent_positions = np.asarray([1, 5, 10, 13], dtype=int)
@@ -1127,7 +1131,7 @@ class TestSkipData(unittest.TestCase):
         )
 
     def test_get_scan_module_positions(self):
-        self.data.positions = np.asarray(
+        self.data.position_counts = np.asarray(
             [2, 3, 4, 6, 7, 8, 11, 12, 13, 15, 16, 17], dtype=int
         )
         scan_module_positions = np.asarray(
@@ -1138,7 +1142,7 @@ class TestSkipData(unittest.TestCase):
         )
 
     def test_get_parent_positions_with_multiple_scan_modules(self):
-        self.data.positions = np.asarray(
+        self.data.position_counts = np.asarray(
             [2, 3, 4, 6, 7, 8, 11, 12, 13, 15, 16, 17], dtype=int
         )
         parent_positions = np.asarray([1, 5, 10, 14], dtype=int)

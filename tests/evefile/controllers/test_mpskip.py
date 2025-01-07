@@ -25,7 +25,7 @@ class TestRearrangeRawValues(unittest.TestCase):
         )
         self.data["foo"] = np.arange(12)
         self.skip_data = data.SkipData()
-        self.skip_data.positions = self.data["PosCounter"]
+        self.skip_data.position_counts = self.data["PosCounter"]
         self.skip_data.data = np.array([1, 2, 1, 2, 3, 1, 2, 3, 4, 1, 2, 3])
 
     def test_instantiate_class(self):
@@ -221,7 +221,7 @@ class TestMpskip(unittest.TestCase):
         self.source.scan.scan.add_scan_modules()
         self.source.add_scan_modules()
         skipdata = data.SkipData()
-        skipdata.positions = np.asarray([2, 3, 5, 6, 7, 9, 10, 11])
+        skipdata.position_counts = np.asarray([2, 3, 5, 6, 7, 9, 10, 11])
         self.source.scan_modules[2].data["skipdata"] = skipdata
 
     def test_instantiate_class(self):
@@ -412,8 +412,8 @@ class TestMpskip(unittest.TestCase):
         )
 
     def test_map_adds_preprocessing_step_to_parent_devices(self):
-        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
-            [2, 3, 5, 6, 7, 9, 10, 11]
+        self.source.scan_modules[2].data["skipdata"].position_counts = (
+            np.asarray([2, 3, 5, 6, 7, 9, 10, 11])
         )
         dataset = self.source.scan_modules[1].data["nmEnerg:io2600wl2e.A"]
         preprocessing_step = preprocessing.SelectPositions()
@@ -429,16 +429,16 @@ class TestMpskip(unittest.TestCase):
         )
         np.testing.assert_array_equal(
             np.asarray([1, 4, 8]),
-            device.importer[0].preprocessing[0].positions,
+            device.importer[0].preprocessing[0].position_counts,
         )
 
     def test_map_sets_positions_in_parent_scan_module(self):
-        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
-            [2, 3, 5, 6, 7, 9, 10, 11]
+        self.source.scan_modules[2].data["skipdata"].position_counts = (
+            np.asarray([2, 3, 5, 6, 7, 9, 10, 11])
         )
         self.mapper.map(source=self.source)
         np.testing.assert_array_equal(
-            np.asarray([1, 4, 8]), self.source.scan_modules[1].positions
+            np.asarray([1, 4, 8]), self.source.scan_modules[1].position_counts
         )
 
     def test_map_two_mpskips_adds_preprocessing_step_to_parent_devices(self):
@@ -447,11 +447,11 @@ class TestMpskip(unittest.TestCase):
         self.source.add_scan_modules()
         self.source.scan_modules[2].data["skipdata"] = data.SkipData()
         self.source.scan_modules[5].data["skipdata"] = data.SkipData()
-        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
-            [2, 3, 5, 6, 7, 9, 10, 11]
+        self.source.scan_modules[2].data["skipdata"].position_counts = (
+            np.asarray([2, 3, 5, 6, 7, 9, 10, 11])
         )
-        self.source.scan_modules[5].data["skipdata"].positions = np.asarray(
-            [14, 15, 16, 18, 19, 21, 22, 23]
+        self.source.scan_modules[5].data["skipdata"].position_counts = (
+            np.asarray([14, 15, 16, 18, 19, 21, 22, 23])
         )
         dataset = self.source.scan_modules[1].data["nmEnerg:io2600wl2e.A"]
         preprocessing_step = preprocessing.SelectPositions()
@@ -471,7 +471,7 @@ class TestMpskip(unittest.TestCase):
         )
         np.testing.assert_array_equal(
             np.asarray([1, 4, 8]),
-            device.importer[0].preprocessing[0].positions,
+            device.importer[0].preprocessing[0].position_counts,
         )
         device = self.mapper.source.scan_modules[4].data[
             "nmEnerg:io2600wl2e.A"
@@ -482,7 +482,7 @@ class TestMpskip(unittest.TestCase):
         )
         np.testing.assert_array_equal(
             np.asarray([13, 17, 20]),
-            device.importer[0].preprocessing[0].positions,
+            device.importer[0].preprocessing[0].position_counts,
         )
 
     def test_map_two_mpskips_sets_positions_in_parent_scan_module(self):
@@ -491,13 +491,13 @@ class TestMpskip(unittest.TestCase):
         self.source.add_scan_modules()
         self.source.scan_modules[2].data["skipdata"] = data.SkipData()
         self.source.scan_modules[5].data["skipdata"] = data.SkipData()
-        self.source.scan_modules[2].data["skipdata"].positions = np.asarray(
-            [2, 3, 5, 6, 7, 9, 10, 11]
+        self.source.scan_modules[2].data["skipdata"].position_counts = (
+            np.asarray([2, 3, 5, 6, 7, 9, 10, 11])
         )
-        self.source.scan_modules[5].data["skipdata"].positions = np.asarray(
-            [14, 15, 16, 18, 19, 21, 22, 23]
+        self.source.scan_modules[5].data["skipdata"].position_counts = (
+            np.asarray([14, 15, 16, 18, 19, 21, 22, 23])
         )
         self.mapper.map(source=self.source)
         np.testing.assert_array_equal(
-            np.asarray([1, 4, 8]), self.source.scan_modules[1].positions
+            np.asarray([1, 4, 8]), self.source.scan_modules[1].position_counts
         )

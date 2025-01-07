@@ -478,25 +478,25 @@ class TestMeasurement(unittest.TestCase):
         common_elements = (
             self.measurement.scan_modules["main"]
             .data[name]
-            .positions[
+            .position_counts[
                 np.isin(
                     self.measurement.scan_modules["main"]
                     .data[name]
-                    .positions,
+                    .position_counts,
                     self.measurement.scan_modules["main"]
                     .data[self.measurement.current_data]
-                    .positions,
+                    .position_counts,
                 )
             ]
         )
         data_indices = np.searchsorted(
             self.measurement.scan_modules["main"]
             .data[self.measurement.current_data]
-            .positions,
+            .position_counts,
             common_elements,
         )
         axes_indices = np.searchsorted(
-            self.measurement.scan_modules["main"].data[name].positions,
+            self.measurement.scan_modules["main"].data[name].position_counts,
             common_elements,
         )
         np.testing.assert_array_equal(
@@ -547,25 +547,27 @@ class TestMeasurement(unittest.TestCase):
         common_elements = (
             self.measurement.scan_modules["main"]
             .data[dataset_id]
-            .positions[
+            .position_counts[
                 np.isin(
                     self.measurement.scan_modules["main"]
                     .data[dataset_id]
-                    .positions,
+                    .position_counts,
                     self.measurement.scan_modules["main"]
                     .data[self.measurement.current_data]
-                    .positions,
+                    .position_counts,
                 )
             ]
         )
         data_indices = np.searchsorted(
             self.measurement.scan_modules["main"]
             .data[self.measurement.current_data]
-            .positions,
+            .position_counts,
             common_elements,
         )
         axes_indices = np.searchsorted(
-            self.measurement.scan_modules["main"].data[dataset_id].positions,
+            self.measurement.scan_modules["main"]
+            .data[dataset_id]
+            .position_counts,
             common_elements,
         )
         np.testing.assert_array_equal(
@@ -622,7 +624,7 @@ class TestMeasurement(unittest.TestCase):
         h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimChan:01"
-        field = "positions"
+        field = "position_counts"
         self.measurement.set_data(name=name, field=field)
         np.testing.assert_array_equal(
             self.measurement.data.data,
@@ -634,7 +636,7 @@ class TestMeasurement(unittest.TestCase):
         h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         name = "SimMot:01"
-        field = "positions"
+        field = "position_counts"
         self.measurement.set_axes(
             names=[name], fields=[field], scan_module="main"
         )
@@ -648,7 +650,7 @@ class TestMeasurement(unittest.TestCase):
         h5file.create(scml=False)
         self.measurement.load(filename=self.filename)
         names = ["SimMot:01"]
-        fields = ["positions", "data"]
+        fields = ["position_counts", "data"]
         with self.assertRaisesRegex(
             IndexError, "Names and fields need to " "be of same length"
         ):
@@ -663,15 +665,15 @@ class TestMeasurement(unittest.TestCase):
         name = "SimChan:02"
         self.measurement.set_data(name=name)
         common_positions = np.intersect1d(
-            self.measurement.scan_modules["main"].data[name].positions,
+            self.measurement.scan_modules["main"].data[name].position_counts,
             self.measurement.scan_modules["main"]
             .data[self.measurement.current_axes[0]]
-            .positions,
+            .position_counts,
         ).astype(int)
         axes_positions = np.isin(
             self.measurement.scan_modules["main"]
             .data[self.measurement.current_axes[0]]
-            .positions,
+            .position_counts,
             common_positions,
         )
         np.testing.assert_array_equal(
@@ -692,13 +694,13 @@ class TestMeasurement(unittest.TestCase):
         common_positions = np.intersect1d(
             self.measurement.scan_modules["main"]
             .data[self.measurement.current_data]
-            .positions,
-            self.measurement.scan_modules["main"].data[name].positions,
+            .position_counts,
+            self.measurement.scan_modules["main"].data[name].position_counts,
         ).astype(int)
         axes_positions = np.isin(
             self.measurement.scan_modules["main"]
             .data[self.measurement.current_axes[0]]
-            .positions,
+            .position_counts,
             common_positions,
         )
         self.assertEqual(

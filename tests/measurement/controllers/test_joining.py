@@ -9,7 +9,7 @@ from evedata.measurement.controllers import joining
 class MockDevice:
     def __init__(self, data=np.random.random(5), positions=np.arange(2, 7)):
         self.data = data
-        self.positions = positions
+        self.position_counts = positions
 
     def get_data(self):
         pass
@@ -199,27 +199,27 @@ class TestAxesLastFill(unittest.TestCase):
 
     def test_join_with_data_attribute_returns_correct_values(self):
         result = self.join.join(
-            data=("SimChan:01", "positions"),
+            data=("SimChan:01", "position_counts"),
             axes=(("SimMot:01", None),),
             scan_module="main",
         )
         np.testing.assert_array_equal(
             self.join.measurement.scan_modules["main"]
             .data["SimChan:01"]
-            .positions,
+            .position_counts,
             result[0],
         )
 
     def test_join_with_axes_attribute_returns_correct_values(self):
         result = self.join.join(
             data=("SimChan:01", None),
-            axes=(("SimMot:01", "positions"),),
+            axes=(("SimMot:01", "position_counts"),),
             scan_module="main",
         )
         np.testing.assert_array_equal(
             self.join.measurement.scan_modules["main"]
             .data["SimMot:01"]
-            .positions,
+            .position_counts,
             result[1],
         )
 

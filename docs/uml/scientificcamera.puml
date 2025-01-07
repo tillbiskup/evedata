@@ -12,7 +12,7 @@ class Data {
 Data *- Metadata
 
 class MeasureData extends Data {
-    {field} positions : np.ndarray(dtype=int)
+    {field} position_counts : np.ndarray(dtype=int)
 }
 
 MeasureData *- MeasureMetadata

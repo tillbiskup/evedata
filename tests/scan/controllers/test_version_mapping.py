@@ -1492,10 +1492,10 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.mapper.destination = destination
         self.mapper._calculate_positions()
         for scan_module in self.mapper.destination.scan.scan_modules.values():
-            self.assertIsNotNone(scan_module.positions)
+            self.assertIsNotNone(scan_module.position_counts)
         np.testing.assert_array_equal(
             np.linspace(1, 25, 5),
-            self.mapper.destination.scan.scan_modules[1].positions,
+            self.mapper.destination.scan.scan_modules[1].position_counts,
         )
         np.testing.assert_array_equal(
             np.array(
@@ -1507,7 +1507,7 @@ class TestVersionMapperV9m0(unittest.TestCase):
                     [26, 27, 28, 29, 30],
                 ]
             ).flatten(),
-            self.mapper.destination.scan.scan_modules[2].positions,
+            self.mapper.destination.scan.scan_modules[2].position_counts,
         )
 
     def test_positions_with_nested_and_appended_scan_module(self):
@@ -1533,10 +1533,10 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.mapper.destination = destination
         self.mapper._calculate_positions()
         for scan_module in self.mapper.destination.scan.scan_modules.values():
-            self.assertIsNotNone(scan_module.positions)
+            self.assertIsNotNone(scan_module.position_counts)
         np.testing.assert_array_equal(
             np.linspace(1, 3 * 3, 3),
-            self.mapper.destination.scan.scan_modules[1].positions,
+            self.mapper.destination.scan.scan_modules[1].position_counts,
         )
         np.testing.assert_array_equal(
             np.array(
@@ -1546,11 +1546,11 @@ class TestVersionMapperV9m0(unittest.TestCase):
                     [10, 11, 12],
                 ]
             ).flatten(),
-            self.mapper.destination.scan.scan_modules[2].positions,
+            self.mapper.destination.scan.scan_modules[2].position_counts,
         )
         np.testing.assert_array_equal(
             np.linspace(13, 15, 3),
-            self.mapper.destination.scan.scan_modules[3].positions,
+            self.mapper.destination.scan.scan_modules[3].position_counts,
         )
 
     def test_positions_with_appended_scan_module_and_positioning(self):
@@ -1571,14 +1571,14 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.mapper.destination = destination
         self.mapper._calculate_positions()
         for scan_module in self.mapper.destination.scan.scan_modules.values():
-            self.assertIsNotNone(scan_module.positions)
+            self.assertIsNotNone(scan_module.position_counts)
         np.testing.assert_array_equal(
             np.linspace(1, 6, 6),
-            self.mapper.destination.scan.scan_modules[1].positions,
+            self.mapper.destination.scan.scan_modules[1].position_counts,
         )
         np.testing.assert_array_equal(
             np.linspace(7, 11, 5),
-            self.mapper.destination.scan.scan_modules[2].positions,
+            self.mapper.destination.scan.scan_modules[2].position_counts,
         )
 
     def test_positions_with_nested_scan_module_and_positioning(self):
@@ -1599,14 +1599,14 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.mapper.destination = destination
         self.mapper._calculate_positions()
         for scan_module in self.mapper.destination.scan.scan_modules.values():
-            self.assertIsNotNone(scan_module.positions)
+            self.assertIsNotNone(scan_module.position_counts)
         np.testing.assert_array_equal(
             np.array([1, 7]),
-            self.mapper.destination.scan.scan_modules[1].positions,
+            self.mapper.destination.scan.scan_modules[1].position_counts,
         )
         np.testing.assert_array_equal(
             np.linspace(2, 6, 5),
-            self.mapper.destination.scan.scan_modules[2].positions,
+            self.mapper.destination.scan.scan_modules[2].position_counts,
         )
 
     def test_positions_with_nested_scan_modules_with_positioning(self):
@@ -1634,14 +1634,14 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.mapper.destination = destination
         self.mapper._calculate_positions()
         for scan_module in self.mapper.destination.scan.scan_modules.values():
-            self.assertIsNotNone(scan_module.positions)
+            self.assertIsNotNone(scan_module.position_counts)
         np.testing.assert_array_equal(
             np.array([1]),
-            self.mapper.destination.scan.scan_modules[1].positions,
+            self.mapper.destination.scan.scan_modules[1].position_counts,
         )
         np.testing.assert_array_equal(
             np.linspace(2, 7, 6),
-            self.mapper.destination.scan.scan_modules[2].positions,
+            self.mapper.destination.scan.scan_modules[2].position_counts,
         )
         self.assertEqual(
             6,
@@ -1657,7 +1657,7 @@ class TestVersionMapperV9m0(unittest.TestCase):
         )
         np.testing.assert_array_equal(
             np.linspace(8, 13, 6),
-            self.mapper.destination.scan.scan_modules[3].positions,
+            self.mapper.destination.scan.scan_modules[3].position_counts,
         )
         self.assertEqual(
             6,
@@ -1704,10 +1704,10 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.mapper.destination = destination
         self.mapper._calculate_positions()
         for scan_module in self.mapper.destination.scan.scan_modules.values():
-            self.assertIsNotNone(scan_module.positions)
+            self.assertIsNotNone(scan_module.position_counts)
         np.testing.assert_array_equal(
             np.linspace(2, 6, 5),
-            self.mapper.destination.scan.scan_modules[2].positions,
+            self.mapper.destination.scan.scan_modules[2].position_counts,
         )
 
     def test_positions_with_nested_scan_module_and_different_order(self):
@@ -1727,10 +1727,10 @@ class TestVersionMapperV9m0(unittest.TestCase):
         self.mapper.destination = destination
         self.mapper._calculate_positions()
         for scan_module in self.mapper.destination.scan.scan_modules.values():
-            self.assertIsNotNone(scan_module.positions)
+            self.assertIsNotNone(scan_module.position_counts)
         np.testing.assert_array_equal(
             np.linspace(1, 25, 5),
-            self.mapper.destination.scan.scan_modules[1].positions,
+            self.mapper.destination.scan.scan_modules[1].position_counts,
         )
         np.testing.assert_array_equal(
             np.array(
@@ -1742,7 +1742,7 @@ class TestVersionMapperV9m0(unittest.TestCase):
                     [26, 27, 28, 29, 30],
                 ]
             ).flatten(),
-            self.mapper.destination.scan.scan_modules[2].positions,
+            self.mapper.destination.scan.scan_modules[2].position_counts,
         )
 
     def test_map_channel_sets_deferred_trigger(self):
