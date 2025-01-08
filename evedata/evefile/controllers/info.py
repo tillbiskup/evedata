@@ -257,13 +257,16 @@ class ScanModuleStructure:
     def _create_scan_module_information(self, scan_module):
         indentation = self.indentation * self._indentation_level
         if len(scan_module.position_counts) > 1:
-            positions = f"{scan_module.position_counts[0]}..{scan_module.position_counts[-1]}"
+            position_counts = (
+                f"{scan_module.position_counts[0]}.."
+                f"{scan_module.position_counts[-1]}"
+            )
         else:
-            positions = f"{scan_module.position_counts[0]}"
+            position_counts = f"{scan_module.position_counts[0]}"
         self._structure.append(
             f"{indentation}{self.scan_module_marker} "
             f"{scan_module.id}: {scan_module.name} - #"
-            f"{len(scan_module.position_counts)} [{positions}]"
+            f"{len(scan_module.position_counts)} [{position_counts}]"
         )
 
     def _create_device_information(self, device):

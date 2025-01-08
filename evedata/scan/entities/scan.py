@@ -454,11 +454,11 @@ class ScanModule(AbstractScanModule):
         Default: 0
 
     position_counts : :class:`numpy.array`
-        Actual positions created during the scan module.
+        Actual position counts created during the scan module.
 
-        These positions cannot necessarily be inferred from the definition
-        of the scan module itself, but sometimes only be obtained from the
-        actual measurement.
+        These position counts cannot necessarily be inferred from the
+        definition of the scan module itself, but sometimes only be
+        obtained from the actual measurement.
 
     axes : :class:`dict`
         Motor axes actively being used in the scan module.
