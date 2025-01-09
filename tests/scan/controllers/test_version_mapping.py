@@ -871,7 +871,7 @@ class TestVersionMapperV9m0(unittest.TestCase):
                             <axisid>Counter-mot</axisid>
                             <stepfunction>File</stepfunction>
                             <positionmode>absolute</positionmode>
-                            <stepfilename>/dev/null</stepfilename>
+                            <stepfilename>/nonexisting/file</stepfilename>
                         </smaxis>"""
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
@@ -881,7 +881,7 @@ class TestVersionMapperV9m0(unittest.TestCase):
         destination = Scan()
         self.mapper.map(destination=destination)
         self.assertEqual(
-            "/dev/null",
+            "/nonexisting/file",
             self.mapper.destination.scan.scan_modules[1]
             .axes["Counter-mot"]
             .step_function.filename,
@@ -892,7 +892,7 @@ class TestVersionMapperV9m0(unittest.TestCase):
                             <axisid>Counter-mot</axisid>
                             <stepfunction>File</stepfunction>
                             <positionmode>absolute</positionmode>
-                            <stepfilename>/dev/null</stepfilename>
+                            <stepfilename>/nonexisting/file</stepfilename>
                         </smaxis>"""
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()
@@ -913,7 +913,7 @@ class TestVersionMapperV9m0(unittest.TestCase):
                             <axisid>Counter-mot</axisid>
                             <stepfunction>File</stepfunction>
                             <positionmode>absolute</positionmode>
-                            <stepfilename>/dev/null</stepfilename>
+                            <stepfilename>/nonexisting/file</stepfilename>
                         </smaxis>"""
         template = Template(MINIMAL_SCML_TEMPLATE)
         self.mapper.source = SCML()

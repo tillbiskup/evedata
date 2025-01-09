@@ -1,5 +1,6 @@
 import logging
 import os.path
+import sys
 import unittest
 
 import numpy as np
@@ -550,6 +551,7 @@ class TestStepFile(unittest.TestCase):
         positions = np.loadtxt(self.filename)
         np.testing.assert_array_equal(positions, self.step_function.positions)
 
+    @unittest.skipIf(sys.version_info < (3, 10), "Python < 3.10")
     def test_calculate_positions_with_file_does_not_log_warning(self):
         self.write_file()
         self.step_function.filename = self.filename
