@@ -19,7 +19,7 @@ setuptools.setup(
     author_email="till.biskup@ptb.de",
     url="https://www.ptb.de/cms/en/ptb/fachabteilungen/abt7/ptb-sr.html",
     project_urls={
-        "Documentation": "https://evedata.rtfd.io/",
+        "Documentation": "https://evedata.docs.radiometry.de/",
         "Source": "https://github.com/PTB-SR/evedata",
     },
     packages=setuptools.find_packages(exclude=("tests", "docs")),
