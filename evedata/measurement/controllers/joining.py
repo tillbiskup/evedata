@@ -339,6 +339,10 @@ class AxesLastFill(Join):
     Of course, as in all cases, the (integer) positions are used as common
     reference for the values of all devices.
 
+    .. important::
+        If there is more than one snapshot, always the newest snapshot
+        previous to the current axis position should be used. Check whether
+        this is implemented already.
 
     Attributes
     ----------
