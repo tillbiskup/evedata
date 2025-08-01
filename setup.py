@@ -20,7 +20,7 @@ setuptools.setup(
     url="https://www.ptb.de/cms/en/ptb/fachabteilungen/abt7/ptb-sr.html",
     project_urls={
         "Documentation": "https://evedata.docs.radiometry.de/",
-        "Source": "https://github.com/PTB-SR/evedata",
+        "Source": "https://github.com/tillbiskup/evedata",
     },
     packages=setuptools.find_packages(exclude=("tests", "docs")),
     license="GPLv3",
