@@ -252,24 +252,24 @@ class EveFile(File):
 
     .. code-block::
 
-        evefile = EveFile()
-        evefile.load(filename="my_measurement_file.h5")
-
-    Of course, you could alternatively set the filename first,
-    thus shortening the :meth:`load` method call:
-
-    .. code-block::
-
-        evefile = EveFile()
-        evefile.filename = "my_measurement_file.h5"
-        evefile.load()
-
-    A third option would be to set the filename upon initialising the object:
-
-    .. code-block::
-
         evefile = EveFile(filename="my_measurement_file.h5")
         evefile.load()
+
+
+    .. todo::
+        Shall the constructor be slightly changed, so that loading a file
+        becomes standard? May be more convenient for the users. To retain
+        testability, one could think of an additional parameter, like so:
+
+        .. code-block::
+
+            def __init__(self, filename="", load=True):
+                ...
+                if load:
+                    self.load()
+
+        This would just need an (anyway necessary) check for the filename
+        to be present in the :meth:`load` method.
 
 
     """
