@@ -574,8 +574,7 @@ class Measurement(entities.Measurement):
         self._current_axes = []
         self._evefile = None
         self._join = None
-        self._join_type = join_type
-        self.join_type = self._join_type
+        self.join_type = join_type
 
     @property
     def filename(self):
