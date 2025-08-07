@@ -199,6 +199,15 @@ class Metadata:
         self.preferred_normalisation_channel = ""
 
     def __str__(self):
+        """
+        Human-readable representation of the metadata.
+
+        Returns
+        -------
+        output : :class:`str`
+            Multiline string with one attribute per line
+
+        """
         output = []
         # Note: Attributes are listed manually here for explicit ordering
         attributes = [
@@ -216,7 +225,7 @@ class Metadata:
             "preferred_normalisation_channel",
         ]
         attribute_name_length = max(
-            [len(attribute) for attribute in attributes]
+            len(attribute) for attribute in attributes
         )
         for attribute in attributes:
             output.append(
@@ -314,6 +323,15 @@ class LogMessage:
         self.message = message
 
     def __str__(self):
+        """
+        Human-readable representation of the log message.
+
+        Returns
+        -------
+        output : :class:`str`
+            String containing timestamp and log message
+
+        """
         return f"{self.timestamp.isoformat()}: {self.message}"
 
 
