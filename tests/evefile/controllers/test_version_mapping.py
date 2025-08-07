@@ -2970,6 +2970,10 @@ class TestVersionMapperV5(unittest.TestCase):
             "Cannot perform consistency check due to MPSKIP module.",
         )
 
+    def test_map_without_main_group(self):
+        self.mapper.source = MockEveH5()
+        self.mapper.map(destination=self.destination)
+
 
 class TestVersionMapperV6(unittest.TestCase):
     def setUp(self):

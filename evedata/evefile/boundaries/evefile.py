@@ -341,11 +341,11 @@ class EveFile(File):
 
         Returns
         -------
-        data : :class:`evedata.evefile.entities.Data` | :class:`list`
+        data : :class:`evedata.evefile.entities.data.Data` | :class:`list`
             Data object(s) corresponding to the name(s).
 
             In case of a list of data objects, each object is of type
-            :class:`evedata.evefile.entities.Data`.
+            :class:`evedata.evefile.entities.data.Data`.
 
         """
         data = []
