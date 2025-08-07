@@ -198,6 +198,33 @@ class Metadata:
         self.preferred_channel = ""
         self.preferred_normalisation_channel = ""
 
+    def __str__(self):
+        output = []
+        # Note: Attributes are listed manually here for explicit ordering
+        attributes = [
+            "filename",
+            "eveh5_version",
+            "eve_version",
+            "xml_version",
+            "measurement_station",
+            "start",
+            "end",
+            "description",
+            "simulation",
+            "preferred_axis",
+            "preferred_channel",
+            "preferred_normalisation_channel",
+        ]
+        attribute_name_length = max(
+            [len(attribute) for attribute in attributes]
+        )
+        for attribute in attributes:
+            output.append(
+                f"{attribute:>{attribute_name_length}}:"
+                f" {getattr(self, attribute)}"
+            )
+        return "\n".join(output)
+
 
 class Scan(evedata.scan.boundaries.scan.Scan):
     """
@@ -285,6 +312,9 @@ class LogMessage:
         timestamp, message = string.split(": ", maxsplit=1)
         self.timestamp = datetime.datetime.fromisoformat(timestamp)
         self.message = message
+
+    def __str__(self):
+        return f"{self.timestamp.isoformat()}: {self.message}"
 
 
 class ScanModule:

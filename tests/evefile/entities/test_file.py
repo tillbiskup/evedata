@@ -1,5 +1,7 @@
+import contextlib
 import datetime
 import unittest
+from io import StringIO
 
 from evedata.evefile.entities import file, data
 
@@ -52,6 +54,17 @@ class TestMetadata(unittest.TestCase):
             with self.subTest(attribute=attribute):
                 self.assertTrue(hasattr(self.metadata, attribute))
 
+    def test_print_prints_attribute_names(self):
+        temp_stdout = StringIO()
+        with contextlib.redirect_stdout(temp_stdout):
+            print(self.metadata)
+        output = temp_stdout.getvalue().strip()
+        attributes = [
+            item for item in dir(self.metadata) if not item.startswith("_")
+        ]
+        for attribute in attributes:
+            self.assertIn(attribute, output)
+
 
 class TestScan(unittest.TestCase):
     def setUp(self):
@@ -93,6 +106,15 @@ class TestLogMessage(unittest.TestCase):
             self.log_message.timestamp,
         )
         self.assertEqual(message, self.log_message.message)
+
+    def test_print_prints_log_message(self):
+        string = "2024-07-25T10:04:03: Lorem ipsum"
+        self.log_message.from_string(string)
+        temp_stdout = StringIO()
+        with contextlib.redirect_stdout(temp_stdout):
+            print(self.log_message)
+        output = temp_stdout.getvalue().strip()
+        self.assertEqual(string, output)
 
 
 class TestScanModule(unittest.TestCase):
