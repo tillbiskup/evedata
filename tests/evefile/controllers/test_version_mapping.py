@@ -2417,7 +2417,7 @@ class TestVersionMapperV5(unittest.TestCase):
         for dataset in datasets:
             self.assertIsInstance(
                 self.destination.snapshots[dataset],
-                evedata.evefile.entities.data.AxisData,
+                evedata.evefile.entities.data.ChannelData,
             )
 
     def test_map_channel_snapshot_datasets_removes_from_2map(self):
