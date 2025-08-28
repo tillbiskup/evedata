@@ -167,7 +167,7 @@ From the user's (engineer, scientist) perspective, there is no such thing as dif
     The practice is currently different, but that is nothing the development of the ``evedata`` package and the connected infrastructure is concerned with. Eventually, there will be *one* supported interface to the data files (``evedata``) and a series of modular and capable tools that can be easily extended by the users (``radiometry``).
 
 
-At least the relevant (practically occuring) versions of eveH5 files should be supported by the ``evedata`` package. Which versions these are will be the result of a detailed statistics over all measurement files present.
+At least the relevant (practically occurring) versions of eveH5 files should be supported by the ``evedata`` package. Which versions these are will be the result of a detailed statistics over all measurement files present.
 
 
 .. note::

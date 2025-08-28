@@ -10,8 +10,8 @@ r"""
 
 Data are organised in "datasets" within HDF5, and the
 :mod:`evedata.evefile.entities.data` module provides the relevant entities
-to describe these datasets. Although currently (as of 07/2024, eve version
-2.1) neither average nor interval detector channels save the individual
+to describe these datasets. Although currently (as of 08/2025, eve version
+2.2) neither average nor interval detector channels save the individual
 data points, at least the former is a clear need of the
 engineers/scientists. Hence, the data model already respects this use
 case. As per position (count) there can be a variable number of measured
@@ -489,9 +489,17 @@ class MonitorData(Data):
     """
     Data from devices monitored, but not controlled by the eve engine.
 
+    Monitors are a concept stemming from the underlying `EPICS layer
+    <https://epics-controls.org/>`_ and are closely related to telemetry in
+    general. In short: You register a certain "device", record an initial
+    value, and from then on only changes to this value (together with a
+    timestamp). This allows you to record any relevant changes in your setup
+    with minimal overhead and data storage.
+
     In contrast to :class:`MeasureData`, :class:`MonitorData` do not have
     a position as primary axis, but a timestamp in milliseconds, *i.e.*,
-    the :attr:`milliseconds` attribute.
+    the :attr:`milliseconds` attribute. This means that without further ado,
+    you cannot plot monitor data against other data.
 
 
     Attributes
