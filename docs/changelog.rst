@@ -14,3 +14,14 @@ Not yet released
 
 * ...
 
+
+Version 0.1.0-rc.1
+==================
+
+Released 2025-08-28
+
+* First public pre-release (release candidate)
+* Basic import of eveH5 files down to eveH5 version 5
+* Basic import of scan description (SCML) if present
+* Mapping of HDF5 datasets to data objects
+* Mapping of data objects to scan modules

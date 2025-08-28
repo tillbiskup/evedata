@@ -1,3 +1,8 @@
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.16979551.svg
+   :target: https://doi.org/10.5281/zenodo.16979551
+   :align: right
+
 =======
 evedata
 =======
@@ -43,11 +48,11 @@ Related projects
 
 There is a number of related packages users of the evedata package may well be interested in, as they have a similar scope, focussing on working with synchrotron radiometry data.
 
-* radiometry
+* `radiometry <https://docs.radiometry.de>`_
 
   A Python package for **processing and analysing (synchrotron) radiometry data** in a **reproducible** and mostly **automated** fashion. Currently, it focusses on data obtained at one of the beamlines at **BESSY-II or MLS in Berlin**, mostly operated by the German National Metrology Institute, the `Physikalisch-Technische Bundesanstalt (PTB) <https://www.ptb.de/>`_.
 
-* evedataviewer
+* `evedataviewer <https://evedataviewer.docs.radiometry.de>`_
 
   A Python package for **graphically inspecting data** contained in EVE files, *i.e.* data **obtained at one of the beamlines at BESSY-II or MLS in Berlin**, mostly operated by the German National Metrology Institute, the `Physikalisch-Technische Bundesanstalt (PTB) <https://www.ptb.de/>`_.
 
